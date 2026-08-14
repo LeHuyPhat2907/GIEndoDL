@@ -62,9 +62,10 @@ GIEndoDL/
 ├── LICENSE               # Giấy phép mã nguồn mở MIT
 ├── requirements.txt      # Thư viện Python phụ thuộc
 └── README.md             # Tài liệu hướng dẫn dự án
+```
 
-🚀 Hướng dẫn Cài đặt & Khởi chạy
-1. Yêu cầu Hệ thống
+## 🚀 4. Hướng dẫn Cài đặt & Khởi chạy
+# Yêu cầu Hệ thống
 Python >= 3.9
 CUDA >= 11.8 (Khuyên dùng GPU NVIDIA T4/V100/A100 hoặc RTX series)
 PyTorch >= 2.0
