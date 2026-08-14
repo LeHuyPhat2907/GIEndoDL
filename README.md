@@ -66,13 +66,13 @@ GIEndoDL/
 
 ## 🚀 4. Hướng dẫn Cài đặt & Khởi chạy
 ### Yêu cầu Hệ thống
-Python >= 3.9
-CUDA >= 11.8 (Khuyên dùng GPU NVIDIA T4/V100/A100 hoặc RTX series)
-PyTorch >= 2.0
+- Python >= 3.9
+- CUDA >= 11.8 (Khuyên dùng GPU NVIDIA T4/V100/A100 hoặc RTX series)
+- PyTorch >= 2.0
 
 ### Clone repository
-git clone https://github.com/username/GIEndoDL.git
-cd GIEndoDL
+- git clone https://github.com/username/GIEndoDL.git
+- cd GIEndoDL
 
 ### Tạo môi trường ảo (tùy chọn)
 python -m venv venv
@@ -85,9 +85,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 ## 📜 Giấy phép & Trích dẫn (License & Citation)
-GIEndoDL Project - Bachelor Thesis (2026)
-HCMC University of Industry and Trade (HUIT)
-Phát hành theo giấy phép MIT License.
+- GIEndoDL Project - Bachelor Thesis (2026)
+- HCMC University of Industry and Trade (HUIT)
+- Phát hành theo giấy phép MIT License.
 
 
 
