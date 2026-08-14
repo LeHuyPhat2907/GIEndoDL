@@ -1,0 +1,68 @@
+# ==========================================
+# 1. DATASETS & HEAVY FILES (Dữ liệu nặng)
+# ==========================================
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.zip
+*.tar.gz
+*.7z
+
+# ==========================================
+# 2. MODEL WEIGHTS & CHECKPOINTS (Trọng số mô hình)
+# ==========================================
+checkpoints/*
+!checkpoints/.gitkeep
+*.pth
+*.pt
+*.onnx
+*.bin
+*.h5
+*.ckpt
+
+# ==========================================
+# 3. EXPERIMENT LOGS & TRACKING (Nhật ký huấn luyện)
+# ==========================================
+wandb/
+runs/
+logs/
+*.log
+*.tfevents*
+
+# ==========================================
+# 4. PYTHON & VIRTUAL ENVIRONMENT (Môi trường & Cache)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# ==========================================
+# 5. JUPYTER NOTEBOOKS & IDE CONFIG (Cấu hình công cụ)
+# ==========================================
+.ipynb_checkpoints/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# 6. ENVIRONMENT VARIABLES & SECRETS (Mật khẩu & API Key)
+# ==========================================
+.env
+.env.local
+*.pem
+
+# ==========================================
+# 7. OS SPECIFIC FILES (File tạm hệ điều hành)
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
