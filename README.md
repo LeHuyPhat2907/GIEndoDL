@@ -106,6 +106,7 @@ graph LR
     G11 --> G16["GĐ16: Bài báo<br/>10 tasks"]
     G15 --> G17["GĐ17: Báo cáo<br/>6 tasks"]
     G16 --> G17
+```
 
 ## 📜 Giấy phép & Trích dẫn (License & Citation)
 - GIEndoDL Project - Bachelor Thesis (2026)
