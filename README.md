@@ -84,10 +84,35 @@ source venv/bin/activate
 ### Cài đặt các thư viện phụ thuộc
 pip install -r requirements.txt
 
+## 📈 5. Pipeline Huấn luyện & Đánh giá (Workflow)
+```mermaid
+graph LR
+    G1["GĐ1: Tổng quan<br/>20 tasks"] --> G2["GĐ2: Thu thập ĐL<br/>16 tasks"]
+    G2 --> G3["GĐ3: Tiền xử lý<br/>19 tasks"]
+    G3 --> G4["GĐ4: Cân bằng lớp<br/>8 tasks"]
+    G4 --> G5["GĐ5: Env & Baseline<br/>12 tasks"]
+    G5 --> G6["GĐ6: CNN Training<br/>10 tasks"]
+    G5 --> G7["GĐ7: Transformer<br/>8 tasks"]
+    G6 --> G8["GĐ8: CNN-CBAM-Trans<br/>15 tasks"]
+    G7 --> G8
+    G8 --> G9["GĐ9: SupCon<br/>10 tasks"]
+    G9 --> G10["GĐ10: HP Tuning<br/>12 tasks"]
+    G10 --> G11["GĐ11: Evaluation<br/>15 tasks"]
+    G11 --> G12["GĐ12: XAI<br/>9 tasks"]
+    G12 --> G13["GĐ13: Web App<br/>13 tasks"]
+    G12 --> G14["GĐ14: CBMIR<br/>6 tasks"]
+    G13 --> G15["GĐ15: Integration<br/>11 tasks"]
+    G14 --> G15
+    G11 --> G16["GĐ16: Bài báo<br/>10 tasks"]
+    G15 --> G17["GĐ17: Báo cáo<br/>6 tasks"]
+    G16 --> G17
+
 ## 📜 Giấy phép & Trích dẫn (License & Citation)
 - GIEndoDL Project - Bachelor Thesis (2026)
 - HCMC University of Industry and Trade (HUIT)
 - Phát hành theo giấy phép MIT License.
+
+
 
 
 
