@@ -1,0 +1,21 @@
+# See https://pre-commit.com for more information
+repos:
+  # 1. Bộ kiểm tra cơ bản (khoảng trắng thừa, kiểm tra YAML, chặn commit file lớn)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace       # Xóa khoảng trắng thừa ở cuối dòng
+      - id: end-of-file-fixer         # Đảm bảo file luôn kết thúc bằng 1 dòng trống
+      - id: check-yaml                # Kiểm tra cú pháp file cấu hình YAML
+      - id: check-added-large-files   # Chặn nếu vô tình thêm file > 1000KB vào git
+        args: ['--maxkb=1000']
+
+  # 2. Ruff - Bộ Linter & Formatter Python siêu nhanh chuẩn PEP8 (thay thế Flake8 + Black)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      # Kiểm tra và sửa lỗi cú pháp, import thừa
+      - id: ruff
+        args: [--fix]
+      # Tự động định dạng code (Format code đẹp mắt)
+      - id: ruff-format
