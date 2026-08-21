@@ -6,9 +6,9 @@
 [![TRIPOD-AI](https://img.shields.io/badge/Compliance-TRIPOD--AI-orange.svg)](docs/)
 [![Dataset](https://img.shields.io/badge/Dataset-HyperKvasir-brightgreen.svg)](https://endoskop.kvasir.no/)
 
-> **TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM (HUIT)**  
-> **KHOA CÔNG NGHỆ THÔNG TIN**  
-> **Khóa luận Cử nhân Công nghệ Thông tin (Hướng Nghiên cứu Khoa học)**  
+> **TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM (HUIT)**
+> **KHOA CÔNG NGHỆ THÔNG TIN**
+> **Khóa luận Cử nhân Công nghệ Thông tin (Hướng Nghiên cứu Khoa học)**
 > **Đề tài:** Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi.
 
 ---
@@ -112,8 +112,3 @@ graph LR
 - GIEndoDL Project - Bachelor Thesis (2026)
 - HCMC University of Industry and Trade (HUIT)
 - Phát hành theo giấy phép MIT License.
-
-
-
-
-
