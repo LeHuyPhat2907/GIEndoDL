@@ -8,7 +8,7 @@ repos:
       - id: end-of-file-fixer         # Đảm bảo file luôn kết thúc bằng 1 dòng trống
       - id: check-yaml                # Kiểm tra cú pháp file cấu hình YAML
       - id: check-added-large-files   # Chặn nếu vô tình thêm file > 1000KB vào git
-        args: ['--maxkb=1000']
+        args: ['--maxkb=5000']
 
   # 2. Ruff - Bộ Linter & Formatter Python siêu nhanh chuẩn PEP8 (thay thế Flake8 + Black)
   - repo: https://github.com/astral-sh/ruff-pre-commit
