@@ -1,0 +1,9 @@
+{
+    "num_classes": 4,
+    "class_to_idx": {
+        "Anatomical_Landmarks": 0,
+        "Pathological_Findings": 1,
+        "Quality_of_Mucosal_Views": 2,
+        "Therapeutic_Interventions": 3
+    }
+}
