@@ -93,7 +93,7 @@ def verify_kvasir_seg(raw_dir: str, output_fig_dir: str):
     plt.savefig(output_img_path, dpi=300)
     plt.close()
 
-    print(f"\n✅ Đã lưu hình ảnh trực quan mẫu tại: {output_img_path}")
+    print(f"\nĐã lưu hình ảnh trực quan mẫu tại: {output_img_path}")
     print("=" * 70)
 
 
