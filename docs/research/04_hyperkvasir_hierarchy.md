@@ -52,3 +52,17 @@ graph TD
     Lower --> L_Ther[Therapeutic Interventions]
     Lower --> L_Qual[Quality of Mucosal Views]
 ```
+
+## 3. Ba Phát hiện Khoa học Then chốt (Key Research Insights)
+### 3.1. Hiện tượng Mất cân bằng Lớp Cực đoan (Extreme Class Imbalance)
+Chỉ số:
+Imbalance Ratio (IR) = Max (bbps-2-3) / Min (hemorrhoids) = 1148 / 6 ≈ 191.3 : 1
+
+Cơ sở khoa học: Sự chênh lệch tới 191 lần chứng minh các hàm mất mát tiêu chuẩn (như Cross-Entropy) sẽ khiến mạng học sâu bị chi phối bởi các lớp đông, dẫn đến tỷ lệ chẩn đoán sai (False Negative) rất cao trên các bệnh lý hiếm.
+--> Giải pháp đề tài: Bắt buộc áp dụng Weighted Sampling và Class-Balanced Focal Loss ở Giai đoạn 4.
+### 3.2. Thách thức Phân loại Siêu chi tiết (Fine-grained Sub-classes)
+Các bệnh lý viêm loét đại tràng được chia nhỏ theo 6 thang điểm Mayo (grade-0-1 đến grade-3), viêm thực quản chia theo chuẩn LA (grade-a, grade-b-d), và Barrett thực quản có 2 thể hình thái.
+--> Giải pháp đề tài: Tích hợp Khối chú ý CBAM (trích xuất pit-pattern vi mạch) và Contrastive Learning (SupCon) ở Giai đoạn 8 & 9 để phân tách không gian đặc trưng giữa các phân lớp khó nhầm lẫn.
+
+## 4. Đoạn văn Trích dẫn Mẫu cho Khóa luận
+"Phân tích cấu trúc phân cấp bộ dữ liệu HyperKvasir cho thấy sự hiện diện của 23 lớp thuộc 4 nhóm chức năng trên 2 phân vùng giải phẫu (Upper & Lower GI). Đáng chú ý, dữ liệu tồn tại hiện tượng mất cân bằng lớp cực đoan với tỷ lệ chênh lệch Imbalance Ratio lên tới 191:1 (dao động từ 1,148 ảnh đối với bbps-2-3 xuống chỉ còn 6 ảnh đối với hemorrhoids). Bên cạnh đó, việc phân loại chi tiết các cấp độ viêm loét đại tràng (Mayo score) và Barrett thực quản đặt ra bài toán phân loại siêu chi tiết (fine-grained), tạo tiền đề bắt buộc cho việc ứng dụng kỹ thuật lấy mẫu có trọng số (Weighted Sampling), hàm Focal Loss và cơ chế Attention nhằm tối ưu hóa khả năng nhận diện các bệnh lý nguy cơ cao."
