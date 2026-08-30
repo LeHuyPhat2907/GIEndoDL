@@ -1,0 +1,24 @@
+{
+    "dataset_name": "HyperKvasir",
+    "total_images_analyzed": 2500,
+    "mean_rgb": [
+        0.5729,
+        0.3557,
+        0.2515
+    ],
+    "std_rgb": [
+        0.3105,
+        0.2116,
+        0.1834
+    ],
+    "imagenet_mean_rgb": [
+        0.485,
+        0.456,
+        0.406
+    ],
+    "imagenet_std_rgb": [
+        0.229,
+        0.224,
+        0.225
+    ]
+}
