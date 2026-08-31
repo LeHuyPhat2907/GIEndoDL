@@ -1,4 +1,4 @@
-"""Module xây dựng các pipeline Data Augmentation chuẩn y tế bằng thư viện Albumentations."""
+"""Module xây dựng các pipeline Data Augmentation Hình học & Màu sắc chuẩn y tế bằng Albumentations."""
 
 from typing import Tuple
 import albumentations as A
@@ -19,11 +19,28 @@ class MedicalDataAugmenter:
         self.mean = mean
         self.std = std
 
-    def get_train_transforms(self) -> A.Compose:
-        """Pipeline tăng cường cho tập Huấn luyện (Train Split)."""
+    def get_color_transforms(self) -> A.Compose:
+        """Pipeline tăng cường màu sắc đã hiệu chuẩn an toàn y khoa."""
         return A.Compose(
             [
-                # 1. Bảo toàn hình học tự do trong không gian ruột
+                # 1. Hiệu chỉnh sáng/tương phản/bão hòa vừa phải
+                A.ColorJitter(
+                    brightness=0.15,
+                    contrast=0.15,
+                    saturation=0.15,
+                    hue=0.04,  # Giới hạn góc lệch Hue <= 8 độ để bảo toàn sắc tố hồng niêm mạc
+                    p=0.6,
+                ),
+                # 2. Điều chỉnh Gamma phi tuyến tính
+                A.RandomGamma(gamma_limit=(85, 115), p=0.4),
+            ]
+        )
+
+    def get_full_training_pipeline(self) -> A.Compose:
+        """Pipeline tăng cường toàn diện: Hình học + Màu sắc + Chuẩn hóa Tensor."""
+        return A.Compose(
+            [
+                # Biến đổi hình học
                 A.HorizontalFlip(p=0.5),
                 A.VerticalFlip(p=0.5),
                 A.RandomRotate90(p=0.5),
@@ -35,7 +52,6 @@ class MedicalDataAugmenter:
                     border_mode=cv2.BORDER_REFLECT,
                     p=0.5,
                 ),
-                # 2. Random Crop & Resize để tập trung vào các vùng rãnh tổn thương
                 A.RandomResizedCrop(
                     size=self.img_size,
                     scale=(0.80, 1.0),
@@ -43,22 +59,16 @@ class MedicalDataAugmenter:
                     interpolation=cv2.INTER_CUBIC,
                     p=0.5,
                 ),
-                # Đảm bảo kích thước chuẩn cuối cùng
-                A.Resize(
-                    height=self.img_size[1],
-                    width=self.img_size[0],
-                    interpolation=cv2.INTER_CUBIC,
+                # Biến đổi màu sắc an toàn
+                A.ColorJitter(
+                    brightness=0.15,
+                    contrast=0.15,
+                    saturation=0.15,
+                    hue=0.04,
+                    p=0.5,
                 ),
-                # 3. Chuẩn hóa Tensor
-                A.Normalize(mean=self.mean, std=self.std),
-                ToTensorV2(),
-            ]
-        )
-
-    def get_val_test_transforms(self) -> A.Compose:
-        """Pipeline chuẩn hóa cố định cho tập Validation & Test (Không biến dạng ngẫu nhiên)."""
-        return A.Compose(
-            [
+                A.RandomGamma(gamma_limit=(85, 115), p=0.3),
+                # Chuẩn hóa Tensor cuối cùng
                 A.Resize(
                     height=self.img_size[1],
                     width=self.img_size[0],
