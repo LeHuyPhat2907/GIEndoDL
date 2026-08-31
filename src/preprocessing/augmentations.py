@@ -1,4 +1,4 @@
-"""Module xây dựng các pipeline Data Augmentation Hình học & Màu sắc chuẩn y tế bằng Albumentations."""
+"""Module xây dựng các pipeline Data Augmentation Hình học, Màu sắc & Biến dạng Mô mềm chuyên biệt Y tế."""
 
 from typing import Tuple
 import albumentations as A
@@ -19,28 +19,42 @@ class MedicalDataAugmenter:
         self.mean = mean
         self.std = std
 
-    def get_color_transforms(self) -> A.Compose:
-        """Pipeline tăng cường màu sắc đã hiệu chuẩn an toàn y khoa."""
+    def get_deformable_transforms(self) -> A.Compose:
+        """Pipeline biến dạng cơ sinh học mô mềm và thấu kính quang học y tế."""
         return A.Compose(
             [
-                # 1. Hiệu chỉnh sáng/tương phản/bão hòa vừa phải
-                A.ColorJitter(
-                    brightness=0.15,
-                    contrast=0.15,
-                    saturation=0.15,
-                    hue=0.04,  # Giới hạn góc lệch Hue <= 8 độ để bảo toàn sắc tố hồng niêm mạc
-                    p=0.6,
+                # 1. Biến dạng đàn hồi (Mô phỏng sóng nhu động ruột co bóp)
+                A.ElasticTransform(
+                    alpha=1.0,
+                    sigma=50,
+                    interpolation=cv2.INTER_CUBIC,
+                    border_mode=cv2.BORDER_REFLECT,
+                    p=0.4,
                 ),
-                # 2. Điều chỉnh Gamma phi tuyến tính
-                A.RandomGamma(gamma_limit=(85, 115), p=0.4),
+                # 2. Biến dạng lưới (Mô phỏng áp lực bơm khí CO2 làm giãn thành ruột)
+                A.GridDistortion(
+                    num_steps=5,
+                    distort_limit=0.15,
+                    interpolation=cv2.INTER_CUBIC,
+                    border_mode=cv2.BORDER_REFLECT,
+                    p=0.4,
+                ),
+                # 3. Biến dạng quang học (Mô phỏng thấu kính góc rộng mắt cá 140-170 độ)
+                A.OpticalDistortion(
+                    distort_limit=0.15,
+                    shift_limit=0.05,
+                    interpolation=cv2.INTER_CUBIC,
+                    border_mode=cv2.BORDER_REFLECT,
+                    p=0.4,
+                ),
             ]
         )
 
     def get_full_training_pipeline(self) -> A.Compose:
-        """Pipeline tăng cường toàn diện: Hình học + Màu sắc + Chuẩn hóa Tensor."""
+        """Pipeline tăng cường toàn diện đỉnh cao: Hình học + Biến dạng Mô mềm + Màu sắc + Tensor."""
         return A.Compose(
             [
-                # Biến đổi hình học
+                # 1. Biến đổi hình học đa hướng
                 A.HorizontalFlip(p=0.5),
                 A.VerticalFlip(p=0.5),
                 A.RandomRotate90(p=0.5),
@@ -59,7 +73,34 @@ class MedicalDataAugmenter:
                     interpolation=cv2.INTER_CUBIC,
                     p=0.5,
                 ),
-                # Biến đổi màu sắc an toàn
+                # 2. Biến dạng cơ sinh học mô mềm y tế
+                A.OneOf(
+                    [
+                        A.ElasticTransform(
+                            alpha=1.0,
+                            sigma=40,
+                            interpolation=cv2.INTER_CUBIC,
+                            border_mode=cv2.BORDER_REFLECT,
+                            p=1.0,
+                        ),
+                        A.GridDistortion(
+                            num_steps=5,
+                            distort_limit=0.12,
+                            interpolation=cv2.INTER_CUBIC,
+                            border_mode=cv2.BORDER_REFLECT,
+                            p=1.0,
+                        ),
+                        A.OpticalDistortion(
+                            distort_limit=0.12,
+                            shift_limit=0.04,
+                            interpolation=cv2.INTER_CUBIC,
+                            border_mode=cv2.BORDER_REFLECT,
+                            p=1.0,
+                        ),
+                    ],
+                    p=0.4,
+                ),
+                # 3. Hiệu chuẩn màu sắc an toàn
                 A.ColorJitter(
                     brightness=0.15,
                     contrast=0.15,
@@ -68,7 +109,7 @@ class MedicalDataAugmenter:
                     p=0.5,
                 ),
                 A.RandomGamma(gamma_limit=(85, 115), p=0.3),
-                # Chuẩn hóa Tensor cuối cùng
+                # 4. Chuẩn hóa kích thước và Tensor
                 A.Resize(
                     height=self.img_size[1],
                     width=self.img_size[0],
