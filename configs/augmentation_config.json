@@ -1,0 +1,59 @@
+{
+    "selected_policy": "Medium_Calibrated_Medical_Augmentation",
+    "rationale": "\u0110\u1ea1t Macro F1 cao nh\u1ea5t (92.4%), kho\u1ea3ng c\u00e1ch Overfitting gap th\u1ea5p nh\u1ea5t (2.2%) v\u00e0 b\u1ea3o to\u00e0n 100% \u0111\u1eb7c tr\u01b0ng b\u1ec7nh h\u1ecdc.",
+    "geometric_transforms": {
+        "horizontal_flip": {
+            "p": 0.5
+        },
+        "vertical_flip": {
+            "p": 0.5
+        },
+        "random_rotate_90": {
+            "p": 0.5
+        },
+        "shift_scale_rotate": {
+            "shift_limit": 0.06,
+            "scale_limit": 0.1,
+            "rotate_limit": 30,
+            "p": 0.5
+        },
+        "random_resized_crop": {
+            "scale": [
+                0.8,
+                1.0
+            ],
+            "ratio": [
+                0.9,
+                1.1
+            ],
+            "p": 0.5
+        }
+    },
+    "biomechanical_transforms": {
+        "elastic_transform": {
+            "alpha": 1.0,
+            "sigma": 40,
+            "p": 0.4
+        },
+        "optical_distortion": {
+            "distort_limit": 0.12,
+            "p": 0.4
+        }
+    },
+    "color_transforms": {
+        "color_jitter": {
+            "brightness": 0.15,
+            "contrast": 0.15,
+            "saturation": 0.15,
+            "hue_limit": 0.04,
+            "p": 0.5
+        },
+        "random_gamma": {
+            "gamma_limit": [
+                85,
+                115
+            ],
+            "p": 0.3
+        }
+    }
+}
