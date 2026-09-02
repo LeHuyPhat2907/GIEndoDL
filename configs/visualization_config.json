@@ -1,0 +1,12 @@
+{
+    "figure_standards": {
+        "dpi": 300,
+        "format": "PNG / Vector SVG ready",
+        "font_family": "DejaVu Sans",
+        "color_palette": "YlGnBu & Seaborn Deep"
+    },
+    "generated_artifacts": [
+        "docs/figures/44_training_visualization_dashboard.png",
+        "docs/figures/45_full_confusion_matrix_heatmap.png"
+    ]
+}
