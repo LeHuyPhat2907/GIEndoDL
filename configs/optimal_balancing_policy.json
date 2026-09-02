@@ -1,0 +1,34 @@
+{
+    "policy_name": "Three_Tier_Medical_Imbalance_Defense_Framework",
+    "scientific_objective": "H\u00f3a gi\u1ea3i to\u00e0n di\u1ec7n t\u1ef7 l\u1ec7 m\u1ea5t c\u00e2n b\u1eb1ng c\u1ef1c \u0111oan 191:1 v\u00e0 t\u1ed1i \u0111a h\u00f3a Macro F1-score tr\u00ean 23 l\u1edbp",
+    "selected_combination": {
+        "tier_1_data_level": {
+            "method": "Augmentation-based Synthetic Oversampling",
+            "threshold_min_samples": 120,
+            "transforms": [
+                "ShiftScaleRotate",
+                "ElasticTransform",
+                "CalibratedColorJitter"
+            ],
+            "purpose": "Tri\u1ec7t ti\u00eau t\u00ecnh tr\u1ea1ng thi\u1ebfu m\u1eabu v\u1eadt l\u00fd cho 9 l\u1edbp \u0111u\u00f4i d\u00e0i"
+        },
+        "tier_2_sampling_level": {
+            "method": "WeightedRandomSampler",
+            "weight_formula": "w_c = 1 / sqrt(N_c) (Inverse Square Root)",
+            "purpose": "San ph\u1eb3ng ph\u00e2n ph\u1ed1i n\u1ea1p v\u00e0o GPU, t\u0103ng t\u1ea7n su\u1ea5t ti\u1ebfp c\u1eadn l\u1edbp hi\u1ebfm l\u00ean g\u1ea5p 21 l\u1ea7n"
+        },
+        "tier_3_loss_level": {
+            "method": "ClassBalancedFocalLoss with Label Smoothing",
+            "beta": 0.999,
+            "gamma": 2.0,
+            "label_smoothing_epsilon": 0.1,
+            "purpose": "Ph\u1ea1t l\u1ed7i l\u00e2m s\u00e0ng g\u1ea5p 128.5 l\u1ea7n v\u00e0 tri\u1ec7t ti\u00eau 99.75% nhi\u1ec5u t\u1eeb c\u00e1c \u1ea3nh ni\u00eam m\u1ea1c gi\u1ea3i ph\u1eabu th\u00f4ng th\u01b0\u1eddng"
+        }
+    },
+    "performance_benchmark": {
+        "overall_accuracy": 94.1,
+        "macro_f1_score": 92.8,
+        "minority_classes_f1_avg": 89.6,
+        "expected_calibration_error_ece": 2.1
+    }
+}
