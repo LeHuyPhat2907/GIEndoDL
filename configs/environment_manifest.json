@@ -1,0 +1,80 @@
+{
+    "manifest_name": "GIEndoDL_Python_Environment_Manifest",
+    "description": "Danh m\u1ee5c phi\u00ean b\u1ea3n \u0111\u00f3ng b\u0103ng \u0111\u1ea3m b\u1ea3o t\u00ednh t\u00e1i l\u1eadp 100% tr\u00ean c\u1ea3 Local PC v\u00e0 Google Colab",
+    "cuda_available": false,
+    "device_count": 0,
+    "packages": [
+        {
+            "package": "Python",
+            "installed": "3.10.20",
+            "target": ">=3.10",
+            "category": "Runtime"
+        },
+        {
+            "package": "PyTorch (torch)",
+            "installed": "2.13.0+cpu",
+            "target": ">=2.0.0",
+            "category": "Deep Learning"
+        },
+        {
+            "package": "TorchVision",
+            "installed": "0.28.0+cpu",
+            "target": ">=0.15.0",
+            "category": "Deep Learning"
+        },
+        {
+            "package": "timm (PyTorch Models)",
+            "installed": "1.0.29",
+            "target": ">=1.0.9",
+            "category": "Model Architectures"
+        },
+        {
+            "package": "HuggingFace Transformers",
+            "installed": "5.16.1",
+            "target": ">=4.40.0",
+            "category": "Model Architectures"
+        },
+        {
+            "package": "Albumentations",
+            "installed": "2.0.8",
+            "target": ">=1.4.0",
+            "category": "Data Augmentation"
+        },
+        {
+            "package": "OpenCV (cv2)",
+            "installed": "5.0.0",
+            "target": ">=4.8.0",
+            "category": "Image Processing"
+        },
+        {
+            "package": "NumPy",
+            "installed": "2.2.6",
+            "target": ">=1.24.0, <2.0.0",
+            "category": "Scientific Computing"
+        },
+        {
+            "package": "Pandas",
+            "installed": "2.3.3",
+            "target": ">=2.0.0",
+            "category": "Data Analysis"
+        },
+        {
+            "package": "Scikit-Learn",
+            "installed": "1.7.2",
+            "target": ">=1.3.0",
+            "category": "Machine Learning"
+        },
+        {
+            "package": "Matplotlib",
+            "installed": "3.10.9",
+            "target": ">=3.7.0",
+            "category": "Visualization"
+        },
+        {
+            "package": "Seaborn",
+            "installed": "0.13.2",
+            "target": ">=0.12.0",
+            "category": "Visualization"
+        }
+    ]
+}
