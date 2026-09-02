@@ -1,0 +1,29 @@
+{
+    "current_runtime": {
+        "is_colab": false,
+        "environment_type": "Local Machine (Dev & Debug Mode)",
+        "os_platform": "Windows",
+        "python_version": "3.10.20",
+        "torch_device": "cpu",
+        "cuda_available": false,
+        "gpu_name": "N/A (CPU Mode)",
+        "num_workers": 0,
+        "pin_memory": false,
+        "use_amp": false,
+        "data_dir": "D:\\PhatProject\\GIEndoDL\\data\\processed"
+    },
+    "workflow_division": {
+        "local_workstation": {
+            "os": "Windows 11 / WSL2",
+            "role": "M\u00e3 ngu\u1ed3n, Debug, Vi\u1ebft unit tests, Th\u1eed nghi\u1ec7m 1-2 batches, Qu\u1ea3n l\u00fd Git",
+            "device": "CPU / Low Memory",
+            "speed": "Nhanh t\u1ee9c th\u00ec, kh\u00f4ng ph\u1ee5 thu\u1ed9c k\u1ebft n\u1ed1i Internet"
+        },
+        "colab_cloud": {
+            "os": "Ubuntu Linux",
+            "role": "Hu\u1ea5n luy\u1ec7n quy m\u00f4 l\u1edbn 50-100 Epochs, Tinh ch\u1ec9nh m\u00f4 h\u00ecnh, \u0110\u00e1nh gi\u00e1 to\u00e0n b\u1ed9 23 l\u1edbp",
+            "device": "NVIDIA Tesla T4 GPU (15.3 GB VRAM)",
+            "speed": "Nhanh g\u1ea5p 8 l\u1ea7n nh\u1edd Tensor Cores AMP FP16"
+        }
+    }
+}
