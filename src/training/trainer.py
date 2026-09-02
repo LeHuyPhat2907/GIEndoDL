@@ -117,9 +117,9 @@ class ModularTrainer:
         self.model.train()
         running_loss = 0.0
 
-        for images, targets in self.train_loader:
-            images = images.to(self.device, non_blocking=True)
-            targets = targets.to(self.device, non_blocking=True)
+        for batch in self.train_loader:
+            images = batch[0].to(self.device, non_blocking=True)
+            targets = batch[1].to(self.device, non_blocking=True)
 
             self.optimizer.zero_grad()
 
@@ -144,9 +144,9 @@ class ModularTrainer:
         all_targets = []
 
         with torch.no_grad():
-            for images, targets in self.val_loader:
-                images = images.to(self.device, non_blocking=True)
-                targets = targets.to(self.device, non_blocking=True)
+            for batch in self.val_loader:
+                images = batch[0].to(self.device, non_blocking=True)
+                targets = batch[1].to(self.device, non_blocking=True)
 
                 with torch.cuda.amp.autocast(enabled=self.use_amp):
                     outputs = self.model(images)

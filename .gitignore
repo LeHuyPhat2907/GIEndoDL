@@ -2,9 +2,10 @@
 # 1. DATASETS & HEAVY FILES (Dữ liệu nặng)
 # ==========================================
 data/raw/*
-data/processed/*
 !data/raw/.gitkeep
+data/processed/*
 !data/processed/.gitkeep
+!data/processed/*.csv
 *.zip
 *.tar.gz
 *.7z
