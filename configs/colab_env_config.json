@@ -1,0 +1,13 @@
+{
+    "platform": "Google Colab (Free Tier - 0 USD)",
+    "gpu_model": "NVIDIA Tesla T4 (Colab Free Default)",
+    "gpu_vram_gb": 15.0,
+    "gpu_architecture": "Turing (with Tensor Cores)",
+    "mixed_precision_support": true,
+    "cuda_version": "12.2 / 11.8",
+    "cudnn_version": 8900,
+    "recommended_batch_size": 32,
+    "recommended_workers_colab": 2,
+    "mixed_precision_amp": true,
+    "drive_checkpoint_sync": true
+}
