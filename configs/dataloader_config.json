@@ -1,0 +1,42 @@
+{
+    "batch_size_training": 32,
+    "batch_size_evaluation": 64,
+    "recommended_workers_windows": 2,
+    "recommended_workers_colab_linux": 4,
+    "pin_memory": true,
+    "persistent_workers": true,
+    "prefetch_factor": 2,
+    "img_size": [
+        224,
+        224
+    ],
+    "high_res_img_size": [
+        384,
+        384
+    ],
+    "drop_last_train": true,
+    "drop_last_val_test": false,
+    "benchmark_summary": [
+        {
+            "Config_Name": "1. Single Worker (Baseline)",
+            "Workers": 0,
+            "Throughput_Samples_Sec": 49.5,
+            "Batch_Latency_ms": 646.3,
+            "Speedup": 1.0
+        },
+        {
+            "Config_Name": "2. Dual Workers (Balanced)",
+            "Workers": 2,
+            "Throughput_Samples_Sec": 106.2,
+            "Batch_Latency_ms": 301.2,
+            "Speedup": 2.15
+        },
+        {
+            "Config_Name": "3. Quad Workers (High Speed)",
+            "Workers": 4,
+            "Throughput_Samples_Sec": 181.0,
+            "Batch_Latency_ms": 176.8,
+            "Speedup": 3.66
+        }
+    ]
+}
