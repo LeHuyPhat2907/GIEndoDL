@@ -1,0 +1,8 @@
+{
+    "loss_name": "FocalLoss",
+    "reference_paper": "Focal Loss for Dense Object Detection (Lin et al., ICCV 2017)",
+    "optimal_gamma": 2.0,
+    "gamma_rationale": "Gamma=2.0 gi\u1ea3m 400 l\u1ea7n \u1ea3nh h\u01b0\u1edfng c\u1ee7a m\u1eabu d\u1ec5 (p=0.95) trong khi b\u1ea3o to\u00e0n 72% m\u1ee9c ph\u1ea1t c\u1ee7a m\u1eabu kh\u00f3 (p=0.15).",
+    "alpha_mode": "class_balanced_weights",
+    "reduction": "mean"
+}
