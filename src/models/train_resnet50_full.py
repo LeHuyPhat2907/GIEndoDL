@@ -1,16 +1,15 @@
-"""Script huấn luyện chuyên sâu ResNet-50 mở khóa toàn bộ các tầng (Full Fine-Tuning 100 Epochs)."""
+"""Script huấn luyện toàn diện ResNet-50 mở khóa toàn bộ các tầng (100 Epochs Real Training)."""
 
-import json
+import argparse
 import os
 from pathlib import Path
+import shutil
 import sys
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import numpy as np
+import pandas as pd
 import seaborn as sns
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 
 # Thiết lập đường dẫn root an toàn
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -18,6 +17,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 try:
+    from src.dataset.dataloader_factory import get_dataloaders
     from src.models.resnet50 import build_resnet50_baseline
     from src.training.checkpoint_manager import (
         ComprehensiveCheckpointManager,
@@ -27,12 +27,37 @@ try:
     from src.utils.reproducibility import set_seed
 except ImportError:
     from checkpoint_manager import ComprehensiveCheckpointManager, TrainingLogger
+    from dataloader_factory import get_dataloaders
     from resnet50 import build_resnet50_baseline
     from trainer import ModularTrainer
     from reproducibility import set_seed
 
 
-def run_full_finetuning_resnet50(config_dir: str, fig_dir: str, doc_dir: str):
+def auto_extract_data():
+    """Tự động tìm và giải nén dữ liệu trên Colab nếu chưa có."""
+    target_data = Path("/content/data/labeled-images")
+    if target_data.exists():
+        return
+
+    print("📦 Đang kiểm tra file nén dữ liệu trên Colab...")
+    zip_candidates = [
+        Path("/content/hyperkvasir_data.zip"),
+        Path("/content/drive/MyDrive/hyperkvasir_data.zip"),
+    ]
+
+    for z in zip_candidates:
+        if z.exists():
+            print(
+                f"⚡ Tìm thấy file zip tại: {z} ➔ Đang giải nén vào /content/data/..."
+            )
+            shutil.unpack_archive(str(z), "/content/data")
+            print("✅ Giải nén dữ liệu thành công!")
+            return
+
+
+def run_full_finetuning_resnet50(
+    config_dir: str, fig_dir: str, doc_dir: str, mode: str = "train", epochs: int = 100
+):
     cfg_path = Path(config_dir)
     fig_path = Path(fig_dir)
     doc_path = Path(doc_dir)
@@ -43,80 +68,85 @@ def run_full_finetuning_resnet50(config_dir: str, fig_dir: str, doc_dir: str):
 
     print("=" * 75)
     print(
-        "🔥 ĐANG KHỞI ĐỘNG TIẾN TRÌNH FULL FINE-TUNING RESNET-50 (100 EPOCHS CHUYÊN SÂU)..."
+        f"🔥 BẮT ĐẦU TIẾN TRÌNH HUẤN LUYỆN RESNET-50 FULL FINE-TUNING ({epochs} EPOCHS)..."
     )
     print("=" * 75)
 
-    # 1. Khóa hạt giống ngẫu nhiên
     set_seed(42)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(
+        f"🖥️ Thiết bị sử dụng: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU Mode'})"
+    )
 
     chk_dir = ROOT_DIR / "models" / "checkpoints" / "resnet50_full"
     chk_dir.mkdir(parents=True, exist_ok=True)
 
-    full_config = {
-        "model_name": "ResNet-50 (Full End-to-End Fine-Tuned 100 Epochs)",
-        "strategy": "Unfreeze All Layers (100 Epochs Deep Domain Adaptation)",
-        "num_classes": 23,
-        "epochs": 100,
-        "batch_size": 32,
-        "optimizer": {
-            "name": "AdamW",
-            "learning_rate": 1e-4,
-            "weight_decay": 1e-4,
-        },
-        "scheduler": {
-            "name": "CosineAnnealingLR",
-            "T_max": 100,
-            "eta_min": 1e-6,
-        },
-        "regularization": {
-            "label_smoothing": 0.10,
-            "head_dropout": 0.30,
-        },
-        "performance_outcome": {
-            "head_only_baseline_f1": 88.54,
-            "full_finetune_50ep_f1": 91.82,
-            "full_finetune_100ep_f1": 92.48,
-            "f1_improvement_over_baseline": "+3.94%",
-            "overall_accuracy": 93.10,
-            "ovr_auc_roc": 98.85,
-        },
-    }
+    # 1. Tự động kiểm tra dữ liệu
+    auto_extract_data()
 
-    opt_json_p = cfg_path / "resnet50_full_finetune_config.json"
-    with open(opt_json_p, "w", encoding="utf-8") as f:
-        json.dump(full_config, f, indent=4)
-    print(f"✅ Đã lưu cấu hình huấn luyện 100 Epochs tại: {opt_json_p}")
-
-    # 2. Khởi tạo mô hình và mở khóa tất cả các tầng
-    print(
-        "📦 Khởi tạo mô hình và xác nhận mở khóa 100% tầng (Unfreezing All Layers)..."
+    proc_path = ROOT_DIR / "data" / "processed"
+    raw_images_dir = (
+        Path("/content/data/labeled-images")
+        if Path("/content/data/labeled-images").exists()
+        else (ROOT_DIR / "data" / "raw" / "labeled-images")
     )
+
+    has_real_data = raw_images_dir.exists() and (proc_path / "train_split.csv").exists()
+
+    # 2. Khởi tạo DataLoaders
+    if has_real_data and mode == "train":
+        print(f"📂 Nạp tập dữ liệu thật từ: {raw_images_dir}")
+        loaders = get_dataloaders(
+            processed_dir=str(proc_path),
+            raw_images_dir=str(raw_images_dir),
+            batch_size=32 if torch.cuda.is_available() else 16,
+            num_workers=2 if torch.cuda.is_available() else 0,
+        )
+        train_loader = loaders["train"]
+        val_loader = loaders["val"]
+        print(
+            f"✅ Đã nạp thành công: {len(train_loader.dataset)} mẫu Train, {len(val_loader.dataset)} mẫu Val"
+        )
+    else:
+        print("⚡ Chế độ kiểm thử nhanh: Sử dụng Tensor giả lập...")
+        from torch.utils.data import DataLoader, TensorDataset
+
+        train_loader = DataLoader(
+            TensorDataset(torch.randn(64, 3, 224, 224), torch.randint(0, 23, (64,))),
+            batch_size=16,
+        )
+        val_loader = DataLoader(
+            TensorDataset(torch.randn(32, 3, 224, 224), torch.randint(0, 23, (32,))),
+            batch_size=16,
+        )
+        epochs = 5  # Rút ngắn nếu kiểm thử
+
+    # 3. Khởi tạo mô hình
+    print("📦 Khởi tạo ResNet-50 (Mở khóa 100% tất cả các tầng)...")
     model = build_resnet50_baseline(
-        num_classes=23, pretrained=False, freeze_backbone=False
+        num_classes=23, pretrained=torch.cuda.is_available(), freeze_backbone=False
     )
-
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"✅ Tổng tham số:       {total_params / 1e6:.2f} Triệu")
-    print(f"✅ Tham số huấn luyện: {trainable_params / 1e6:.2f} Triệu (100% Unfrozen)")
-
-    # 3. Khởi tạo quy trình kiểm chứng
-    dummy_train_x = torch.randn(64, 3, 224, 224)
-    dummy_train_y = torch.randint(0, 23, (64,))
-    train_loader = DataLoader(
-        TensorDataset(dummy_train_x, dummy_train_y), batch_size=16
-    )
-    val_loader = DataLoader(TensorDataset(dummy_train_x, dummy_train_y), batch_size=16)
+    model = model.to(device)
 
     criterion = nn.CrossEntropyLoss(label_smoothing=0.10)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=epochs, eta_min=1e-6
+    )
+
+    run_config = {
+        "model": "ResNet-50 Full Fine-Tuning",
+        "epochs": epochs,
+        "device": str(device),
+        "learning_rate": 1e-4,
+        "label_smoothing": 0.10,
+    }
 
     logger = TrainingLogger(log_dir=str(chk_dir))
     chk_manager = ComprehensiveCheckpointManager(
         checkpoint_dir=str(chk_dir),
         metric_name="val_macro_f1",
-        run_config=full_config,
+        run_config=run_config,
     )
 
     trainer = ModularTrainer(
@@ -125,259 +155,100 @@ def run_full_finetuning_resnet50(config_dir: str, fig_dir: str, doc_dir: str):
         val_loader=val_loader,
         criterion=criterion,
         optimizer=optimizer,
+        scheduler=scheduler,
+        device=device,
         config={"use_amp": torch.cuda.is_available()},
     )
 
-    # Chạy vòng lặp kiểm chứng
-    trainer.train_one_epoch()
-    trainer.validate()
+    history = []
+    print("=" * 75)
+    print("🔄 BẮT ĐẦU CHẠY HUẤN LUYỆN TỪNG EPOCH THẬT SỰ TRÊN GPU:")
 
-    # Tạo tiến trình mô phỏng 100 Epochs đầy đủ
-    epochs_100 = np.arange(1, 101)
-    train_loss_100 = [
-        round(
-            float(2.5 * np.exp(-0.045 * e) + 0.11 + np.random.uniform(-0.008, 0.008)), 4
-        )
-        for e in epochs_100
-    ]
-    val_loss_100 = [
-        round(
-            float(2.2 * np.exp(-0.042 * e) + 0.28 + np.random.uniform(-0.012, 0.012)), 4
-        )
-        for e in epochs_100
-    ]
-    val_acc_100 = [
-        round(float(70.0 + 23.10 / (1 + np.exp(-0.08 * (e - 18)))), 2)
-        for e in epochs_100
-    ]
-    val_f1_100 = [
-        round(float(65.0 + 27.48 / (1 + np.exp(-0.08 * (e - 18)))), 2)
-        for e in epochs_100
-    ]
-    lr_schedule_100 = [
-        round(float(1e-4 * 0.5 * (1 + np.cos(np.pi * e / 100))), 6) for e in epochs_100
-    ]
+    for ep in range(1, epochs + 1):
+        tr_loss = trainer.train_one_epoch()
+        v_loss, v_acc, v_f1 = trainer.validate()
+        scheduler.step()
 
-    for idx, ep in enumerate(epochs_100):
-        m = {
-            "epoch": int(ep),
-            "train_loss": train_loss_100[idx],
-            "val_loss": val_loss_100[idx],
-            "val_acc": val_acc_100[idx],
-            "val_macro_f1": val_f1_100[idx],
-            "learning_rate": lr_schedule_100[idx],
-            "time_sec": 46.2,
+        current_lr = scheduler.get_last_lr()[0]
+        metrics = {
+            "epoch": ep,
+            "train_loss": round(float(tr_loss), 4),
+            "val_loss": round(float(v_loss), 4),
+            "val_acc": round(float(v_acc), 2),
+            "val_macro_f1": round(float(v_f1), 2),
+            "learning_rate": round(float(current_lr), 6),
         }
-        logger.log_epoch(m)
-        if ep in [10, 25, 50, 75, 90, 100]:
-            chk_manager.step(int(ep), model, optimizer, m)
+
+        logger.log_epoch(metrics)
+        is_best = chk_manager.step(ep, model, optimizer, metrics)
+        history.append(metrics)
+
+        flag = "⭐ [BEST MODEL SAVED]" if is_best else ""
+        print(
+            f"▶ Epoch [{ep:3d}/{epochs}] | Train Loss: {tr_loss:.4f} | Val Loss: {v_loss:.4f} | Val Acc: {v_acc:.1f}% | Macro F1: {v_f1:.1f}% {flag}"
+        )
 
     print("=" * 75)
-    print(
-        f"🏆 KẾT QUẢ CUỐI CÙNG 100 EPOCHS: Macro F1 bứt phá từ 88.54% lên {val_f1_100[-1]}% (+3.94% so với Head-Only)!"
-    )
-    print("=" * 75)
+    print("🏆 HOÀN THÀNH HUẤN LUYỆN XUẤT SẮC!")
 
-    # 4. Vẽ Dashboard 4 Panel 100 Epochs (300 DPI)
-    fig, axes = plt.subplots(2, 2, figsize=(18, 12))
+    # 4. Xuất đồ thị Dashboard kết quả
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
     sns.set_theme(style="whitegrid")
 
-    # Panel 1: Sơ đồ kiến trúc So sánh
-    axes[0, 0].set_xlim(0, 10)
-    axes[0, 0].set_ylim(0, 10)
-    axes[0, 0].axis("off")
-    axes[0, 0].set_title(
-        "1. Sơ Đồ Kiến Trúc: Head-Only vs Full Fine-Tuning (100 Epochs)",
-        fontsize=11,
-        fontweight="bold",
+    df_h = pd.DataFrame(history)
+    axes[0].plot(
+        df_h["epoch"], df_h["train_loss"], label="Train Loss", color="#3498db", lw=2.2
     )
+    axes[0].plot(
+        df_h["epoch"], df_h["val_loss"], label="Val Loss", color="#e74c3c", lw=2.2
+    )
+    axes[0].set_title("Động Lực Hội Tụ Loss", fontsize=12, fontweight="bold")
+    axes[0].set_xlabel("Epochs")
+    axes[0].set_ylabel("Loss")
+    axes[0].legend()
 
-    rect_head = patches.FancyBboxPatch(
-        (0.5, 5.5),
-        9.0,
-        3.8,
-        boxstyle="round,pad=0.25",
-        facecolor="#fef9e7",
-        edgecolor="#f39c12",
-        lw=2,
-    )
-    axes[0, 0].add_patch(rect_head)
-    axes[0, 0].text(
-        5.0,
-        7.4,
-        "CHIẾN LƯỢC 1: HEAD-ONLY (BASELINE CŨ)\n\n• Đóng băng 4 Residual Stages (Khóa cứng 23M tham số ImageNet)\n• Chỉ mở khóa lớp Fully Connected cuối cùng (model.fc)\n• Hạn chế: Không học được hoa văn vi mạch nội soi tiêu hóa\n• Macro F1: 88.54%",
-        ha="center",
-        va="center",
-        fontsize=9.5,
-        fontweight="bold",
-        color="#7d6608",
-    )
-
-    rect_full = patches.FancyBboxPatch(
-        (0.5, 0.8),
-        9.0,
-        4.0,
-        boxstyle="round,pad=0.25",
-        facecolor="#e8f8f5",
-        edgecolor="#27ae60",
-        lw=2,
-    )
-    axes[0, 0].add_patch(rect_full)
-    axes[0, 0].text(
-        5.0,
-        2.8,
-        "CHIẾN LƯỢC 2: FULL FINE-TUNING 100 EPOCHS (ĐỀ XUẤT)\n\n• Mở khóa 100% cả 4 Residual Stages (23.51M tham số)\n• 100 Epochs Cosine Decay giúp trọng số hội tụ cực sâu vào Global Minima\n• Bộ lọc tích chập học trọn vẹn cấu trúc vi mạch niêm mạc HyperKvasir\n• Macro F1 ĐẠT ĐỈNH: 92.48% (+3.94% bứt phá)",
-        ha="center",
-        va="center",
-        fontsize=9.5,
-        fontweight="bold",
-        color="#145a32",
-    )
-
-    # Panel 2: Động lực Loss 100 Epochs
-    axes[0, 1].plot(
-        epochs_100, train_loss_100, color="#3498db", label="Train Loss", lw=2.2
-    )
-    axes[0, 1].plot(
-        epochs_100, val_loss_100, color="#e74c3c", label="Validation Loss", lw=2.2
-    )
-    axes[0, 1].set_title(
-        "2. Động Lực Hội Tụ Loss Trong 100 Epochs (Full Fine-Tune)",
-        fontsize=11.5,
-        fontweight="bold",
-    )
-    axes[0, 1].set_xlabel("Epochs")
-    axes[0, 1].set_ylabel("Loss Value")
-    axes[0, 1].legend()
-
-    # Panel 3: So sánh Hiệu năng 3 Mức: Head-Only vs 50 Epochs vs 100 Epochs
-    comp_cats = [
-        "Overall Accuracy (%)",
-        "Macro F1-Score (%)",
-        "Macro Recall (%)",
-        "OvR AUC-ROC (%)",
-    ]
-    vals_head = [90.25, 88.54, 89.92, 97.42]
-    vals_50ep = [92.45, 91.82, 91.95, 98.65]
-    vals_100ep = [93.10, 92.48, 92.65, 98.85]
-
-    x_c = np.arange(len(comp_cats))
-    w_c = 0.26
-    axes[1, 0].bar(
-        x_c - w_c,
-        vals_head,
-        w_c,
-        label="Head-Only (88.5% F1)",
-        color="#f39c12",
-        edgecolor="black",
-    )
-    axes[1, 0].bar(
-        x_c,
-        vals_50ep,
-        w_c,
-        label="Full 50 Epochs (91.8% F1)",
-        color="#3498db",
-        edgecolor="black",
-    )
-    axes[1, 0].bar(
-        x_c + w_c,
-        vals_100ep,
-        w_c,
-        label="Full 100 Epochs (92.5% F1)",
+    axes[1].plot(
+        df_h["epoch"],
+        df_h["val_acc"],
+        label="Validation Accuracy (%)",
         color="#2ecc71",
-        edgecolor="black",
+        lw=2.2,
     )
-    axes[1, 0].set_xticks(x_c)
-    axes[1, 0].set_xticklabels(comp_cats, fontsize=9.5, fontweight="bold")
-    axes[1, 0].set_ylim(80, 103)
-    axes[1, 0].set_title(
-        "3. Đối Chuẩn: Head-Only vs 50 Epochs vs 100 Epochs",
-        fontsize=11.5,
-        fontweight="bold",
+    axes[1].plot(
+        df_h["epoch"],
+        df_h["val_macro_f1"],
+        label="Validation Macro F1 (%)",
+        color="#f39c12",
+        lw=2.5,
     )
-    axes[1, 0].legend(loc="lower right")
-
-    for i in range(len(comp_cats)):
-        diff = vals_100ep[i] - vals_head[i]
-        axes[1, 0].annotate(
-            f"+{diff:.2f}%",
-            (x_c[i] + w_c, vals_100ep[i] + 0.6),
-            ha="center",
-            va="bottom",
-            fontsize=9.5,
-            fontweight="bold",
-            color="darkgreen",
-        )
-
-    # Panel 4: Khuyến nghị Kết luận 100 Epochs
-    axes[1, 1].text(
-        0.5,
-        0.5,
-        "🏆 KẾT LUẬN CHIẾN LƯỢC HUẤN LUYỆN 100 EPOCHS\n\n"
-        "✔ Huấn luyện 100 Epochs mang lại hiệu quả tối ưu vượt bậc:\n"
-        "  - Macro F1 tăng mạnh từ 88.54% lên 92.48% (+3.94%)\n"
-        "  - Overall Accuracy bứt phá từ 90.25% lên 93.10%\n"
-        "  - Multi-class OvR AUC đạt đỉnh 98.85%\n\n"
-        "✔ Đường cong học tập trong 100 Epochs mượt mà, không Overfitting\n"
-        "  nhờ cơ chế điều chuẩn kép Label Smoothing và Cosine Annealing.\n\n"
-        "✔ Thời gian chạy thực tế trên Colab Free GPU Tesla T4:\n"
-        "  Chỉ mất ~68 phút cho toàn bộ 100 Epochs (nhờ AMP FP16 + SSD NVMe)!\n\n"
-        "👉 THIẾT LẬP KỶ LỤC SOTA RESNET-50 TRÊN HYPERKVASIR!",
-        fontsize=11.2,
-        va="center",
-        ha="center",
-        fontweight="bold",
-        color="#145a32",
-        bbox=dict(
-            boxstyle="round,pad=0.8", facecolor="#e8f8f5", edgecolor="#27ae60", lw=2
-        ),
-    )
-    axes[1, 1].axis("off")
+    axes[1].set_title("Tăng Trưởng Hiệu Năng Lâm Sàng", fontsize=12, fontweight="bold")
+    axes[1].set_xlabel("Epochs")
+    axes[1].set_ylabel("Tỷ lệ (%)")
+    axes[1].legend()
 
     plt.tight_layout()
     out_fig = fig_path / "49_resnet50_full_finetune_dynamics.png"
     plt.savefig(out_fig, dpi=300, bbox_inches="tight")
     plt.close()
-
-    print(f"✅ Đã lưu Dashboard 100 Epochs Full Fine-Tuning tại: {out_fig}")
-
-    # 5. Xuất tài liệu nghiên cứu kỹ thuật
-    md_file = doc_path / "56_resnet50_full_finetune_and_domain_adaptation.md"
-    with open(md_file, "w", encoding="utf-8") as f:
-        f.write(
-            "# 🔥 Báo cáo Kỹ thuật: Huấn Luyện ResNet-50 Mở Khóa Toàn Bộ Các Tầng (Full Fine-Tuning 100 Epochs)\n\n"
-        )
-        f.write(
-            "> **File cấu hình:** `configs/resnet50_full_finetune_config.json` | **Hình minh họa:** `docs/figures/49_resnet50_full_finetune_dynamics.png`\n\n---\n\n"
-        )
-        f.write("## 1. Cơ Sở Lý Luận Nâng Quy Mô Huấn Luyện Lên 100 Epochs\n\n")
-        f.write(
-            "Việc mở rộng chu kỳ huấn luyện lên 100 Epochs kết hợp với lịch trình học Cosine Annealing (suy giảm chậm từ 1e-4 về 1e-6) cho phép các tầng tích chập sâu có đủ số chu kỳ để tái cấu trúc không gian đặc trưng y sinh học. Kỹ thuật này giúp mô hình vượt qua các điểm cực tiểu cục bộ (Local Minima) và hội tụ bền vững vào đáy lòng chảo tối ưu toàn cục.\n\n---\n\n"
-        )
-        f.write("## 2. Bảng Đối Chuẩn So Sánh 3 Cấp Độ Huấn Luyện\n\n")
-        f.write(
-            "| Chỉ số Đánh giá | Head-Only Baseline | Full Fine-Tune 50 Epochs | Full Fine-Tune 100 Epochs (Tối ưu) | Chênh lệch Cải tiến |\n"
-        )
-        f.write("|:---|:---:|:---:|:---:|:---:|\n")
-        f.write(
-            f"| **Macro F1-Score** | `{full_config['performance_outcome']['head_only_baseline_f1']}%` | `{full_config['performance_outcome']['full_finetune_50ep_f1']}%` | `**{full_config['performance_outcome']['full_finetune_100ep_f1']}%**` | `**{full_config['performance_outcome']['f1_improvement_over_baseline']}**` |\n"
-        )
-        f.write(
-            f"| **Overall Accuracy** | `90.25%` | `92.45%` | `**{full_config['performance_outcome']['overall_accuracy']}%**` | `+2.85%` |\n"
-        )
-        f.write(
-            f"| **OvR AUC-ROC** | `97.42%` | `98.65%` | `**{full_config['performance_outcome']['ovr_auc_roc']}%**` | `+1.43%` |\n"
-        )
-
-    print(f"✅ Đã lưu tài liệu nghiên cứu tại: {md_file}")
-    print("=" * 75)
+    print(f"✅ Đã lưu Dashboard kết quả tại: {out_fig}")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", type=str, default="train")
+    parser.add_argument("--epochs", type=int, default=100)
+    args = parser.parse_args()
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(current_dir, "../../"))
     config_dir_path = os.path.join(project_root, "configs")
     figures_dir_path = os.path.join(project_root, "docs", "figures")
     research_dir_path = os.path.join(project_root, "docs", "research")
 
-    run_full_finetuning_resnet50(config_dir_path, figures_dir_path, research_dir_path)
+    run_full_finetuning_resnet50(
+        config_dir_path,
+        figures_dir_path,
+        research_dir_path,
+        mode=args.mode,
+        epochs=args.epochs,
+    )
