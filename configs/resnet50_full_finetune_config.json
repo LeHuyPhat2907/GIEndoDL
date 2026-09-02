@@ -1,0 +1,29 @@
+{
+    "model_name": "ResNet-50 (Full End-to-End Fine-Tuned 100 Epochs)",
+    "strategy": "Unfreeze All Layers (100 Epochs Deep Domain Adaptation)",
+    "num_classes": 23,
+    "epochs": 100,
+    "batch_size": 32,
+    "optimizer": {
+        "name": "AdamW",
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0001
+    },
+    "scheduler": {
+        "name": "CosineAnnealingLR",
+        "T_max": 100,
+        "eta_min": 1e-06
+    },
+    "regularization": {
+        "label_smoothing": 0.1,
+        "head_dropout": 0.3
+    },
+    "performance_outcome": {
+        "head_only_baseline_f1": 88.54,
+        "full_finetune_50ep_f1": 91.82,
+        "full_finetune_100ep_f1": 92.48,
+        "f1_improvement_over_baseline": "+3.94%",
+        "overall_accuracy": 93.1,
+        "ovr_auc_roc": 98.85
+    }
+}
