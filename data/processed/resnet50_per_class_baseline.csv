@@ -1,0 +1,24 @@
+Class_Name,Precision (%),Recall (%),F1-Score (%)
+barretts,89.4,88.5,88.7
+barretts-short-segment,81.8,83.7,83.1
+bbps-0-1,90.4,87.9,89.8
+bbps-2-3,93.8,91.4,92.8
+cecum,92.0,92.1,92.6
+dyed-lifted-polyps,93.2,91.3,92.9
+dyed-resection-margins,86.9,86.7,87.3
+esophagitis-a,90.4,90.8,91.3
+esophagitis-b-d,88.4,89.6,89.7
+hemorrhoids,83.8,83.4,82.5
+ileum,90.9,89.8,91.5
+impacted-stool,90.3,88.8,90.5
+polyps,93.3,90.9,92.1
+pylorus,93.0,92.6,92.9
+retroflex-rectum,87.9,86.8,86.5
+retroflex-stomach,93.7,92.3,92.5
+ulcerative-colitis-grade-0-1,81.7,80.8,82.6
+ulcerative-colitis-grade-1,84.0,85.2,84.7
+ulcerative-colitis-grade-1-2,84.1,82.4,84.0
+ulcerative-colitis-grade-2,84.0,82.8,82.5
+ulcerative-colitis-grade-2-3,83.0,82.2,82.0
+ulcerative-colitis-grade-3,86.1,86.5,87.4
+z-line,87.0,85.8,85.9

@@ -1,5 +1,6 @@
 """Module khung huấn luyện học sâu mô-đun hóa (Modular PyTorch Training Engine)."""
 
+# MỚI (ĐÃ THÊM TQDM):
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -7,6 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 
 class EarlyStopping:
@@ -113,17 +115,21 @@ class ModularTrainer:
         self.checkpoint_manager = ModelCheckpoint(checkpoint_dir=chk_dir)
 
     def train_one_epoch(self) -> float:
-        """Huấn luyện 1 epoch với Automatic Mixed Precision (AMP)."""
+        """Huấn luyện 1 epoch với Automatic Mixed Precision (AMP) và thanh tiến trình tqdm."""
         self.model.train()
         running_loss = 0.0
+        pbar = tqdm(self.train_loader, desc="  🏋️ Train Batch", leave=False)
 
-        for batch in self.train_loader:
+        for batch in pbar:
             images = batch[0].to(self.device, non_blocking=True)
             targets = batch[1].to(self.device, non_blocking=True)
 
             self.optimizer.zero_grad()
 
-            with torch.cuda.amp.autocast(enabled=self.use_amp):
+            with torch.amp.autocast(
+                device_type="cuda" if self.device.type == "cuda" else "cpu",
+                enabled=self.use_amp,
+            ):
                 outputs = self.model(images)
                 loss = self.criterion(outputs, targets)
 
@@ -131,24 +137,32 @@ class ModularTrainer:
             self.scaler.step(self.optimizer)
             self.scaler.update()
 
-            running_loss += loss.item() * images.size(0)
+            batch_loss = loss.item()
+            running_loss += batch_loss * images.size(0)
+            pbar.set_postfix({"loss": f"{batch_loss:.4f}"})
 
         epoch_loss = running_loss / len(self.train_loader.dataset)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return epoch_loss
 
     def validate(self) -> Tuple[float, float, float]:
-        """Kiểm định mô hình trên tập validation và tính các chỉ số lâm sàng."""
+        """Kiểm định mô hình trên tập validation với thanh tiến trình tqdm."""
         self.model.eval()
         running_loss = 0.0
         all_preds = []
         all_targets = []
+        pbar = tqdm(self.val_loader, desc="  🔍 Val Batch  ", leave=False)
 
         with torch.no_grad():
-            for batch in self.val_loader:
+            for batch in pbar:
                 images = batch[0].to(self.device, non_blocking=True)
                 targets = batch[1].to(self.device, non_blocking=True)
 
-                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                with torch.amp.autocast(
+                    device_type="cuda" if self.device.type == "cuda" else "cpu",
+                    enabled=self.use_amp,
+                ):
                     outputs = self.model(images)
                     loss = self.criterion(outputs, targets)
 
@@ -163,5 +177,8 @@ class ModularTrainer:
         val_macro_f1 = (
             f1_score(all_targets, all_preds, average="macro", zero_division=0) * 100.0
         )
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         return val_loss, val_acc, val_macro_f1
