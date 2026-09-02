@@ -1,0 +1,33 @@
+{
+    "strategy": "Augmentation_Based_Oversampling",
+    "rationale": "SMOTE truy\u1ec1n th\u1ed1ng t\u1ea1o b\u00f3ng ma v\u00e0 nhi\u1ec5u \u0111i\u1ec3m \u1ea3nh; Augmentation-based oversampling b\u1ea3o to\u00e0n 100% h\u00ecnh th\u00e1i vi m\u1ea1ch h\u1ecdc.",
+    "target_threshold_per_class": 120,
+    "original_train_samples": 7463,
+    "oversampled_train_samples": 8230,
+    "total_synthetic_samples": 767,
+    "synthetic_counts_per_class": {
+        "bbps-2-3": 0,
+        "polyps": 0,
+        "cecum": 0,
+        "dyed-lifted-polyps": 0,
+        "pylorus": 0,
+        "dyed-resection-margins": 0,
+        "z-line": 0,
+        "retroflex-stomach": 0,
+        "bbps-0-1": 0,
+        "ulcerative-colitis-grade-2": 0,
+        "esophagitis-a": 0,
+        "retroflex-rectum": 0,
+        "esophagitis-b-d": 0,
+        "ulcerative-colitis-grade-1": 0,
+        "ulcerative-colitis-grade-3": 27,
+        "impacted-stool": 28,
+        "barretts-short-segment": 83,
+        "barretts": 91,
+        "ulcerative-colitis-grade-0-1": 96,
+        "ulcerative-colitis-grade-2-3": 100,
+        "ulcerative-colitis-grade-1-2": 112,
+        "ileum": 114,
+        "hemorrhoids": 116
+    }
+}
