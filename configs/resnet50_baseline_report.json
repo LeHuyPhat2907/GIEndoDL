@@ -1,0 +1,23 @@
+{
+    "model_architecture": "ResNet-50 (He et al., CVPR 2016)",
+    "backbone_type": "Residual Convolutional Neural Network (CNN)",
+    "pretrained_source": "ImageNet-1k",
+    "num_parameters_million": 23.51,
+    "computational_gflops": 4.12,
+    "hardware_efficiency": {
+        "inference_latency_ms_per_image": 2.8,
+        "throughput_fps_tesla_t4": 178.5,
+        "vram_allocated_fp16_mb": 2650.0,
+        "training_time_50_epochs_minutes": 38.5
+    },
+    "clinical_metrics": {
+        "overall_accuracy": 90.25,
+        "macro_precision": 89.84,
+        "macro_recall": 89.92,
+        "macro_f1_score": 88.54,
+        "weighted_f1_score": 90.18,
+        "ovr_auc_roc_macro": 97.42
+    },
+    "primary_strengths": "T\u1ed1c \u0111\u1ed9 h\u1ed9i t\u1ee5 nhanh, th\u00f4ng l\u01b0\u1ee3ng FPS r\u1ea5t cao (178 FPS), chi\u1ebfm d\u1ee5ng b\u1ed9 nh\u1edb th\u1ea5p (2.6 GB VRAM).",
+    "primary_limitations": "Thi\u1ebfu c\u01a1 ch\u1ebf ch\u00fa \u00fd kh\u00f4ng gian (Spatial Attention) n\u00ean g\u1eb7p kh\u00f3 kh\u0103n \u1edf c\u00e1c v\u00f9ng ranh gi\u1edbi vi\u00eam lo\u00e9t chuy\u1ec3n ti\u1ebfp v\u00e0 polyp ph\u1eb3ng nh\u1ecf."
+}
