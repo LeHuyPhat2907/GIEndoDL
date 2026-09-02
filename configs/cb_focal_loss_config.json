@@ -1,0 +1,33 @@
+{
+    "loss_name": "ClassBalancedFocalLoss",
+    "description": "H\u1ee3p nh\u1ea5t Class-Balanced Term (Cui et al. 2019) v\u00e0 Focal Term (Lin et al. 2017)",
+    "optimal_beta": 0.999,
+    "optimal_gamma": 2.0,
+    "beta_rationale": "Beta=0.999 mang l\u1ea1i t\u1ef7 s\u1ed1 ph\u1ea1t l\u00fd t\u01b0\u1edfng 128.5x gi\u1eefa l\u1edbp hi\u1ebfm nh\u1ea5t v\u00e0 l\u1edbp \u0111a s\u1ed1 m\u00e0 kh\u00f4ng g\u00e2y b\u00e3o h\u00f2a gradient.",
+    "gamma_rationale": "Gamma=2.0 tri\u1ec7t ti\u00eau 99.75% \u1ea3nh h\u01b0\u1edfng t\u1eeb c\u00e1c m\u1eabu d\u1ec5 gi\u1ea3i ph\u1eabu th\u00f4ng th\u01b0\u1eddng.",
+    "class_weights": {
+        "barretts": 1.051074,
+        "barretts-short-segment": 0.8271,
+        "bbps-0-1": 0.082625,
+        "bbps-2-3": 0.05439,
+        "cecum": 0.059338,
+        "dyed-lifted-polyps": 0.059629,
+        "dyed-resection-margins": 0.060165,
+        "esophagitis-a": 0.122271,
+        "esophagitis-b-d": 0.180557,
+        "hemorrhoids": 7.525836,
+        "ileum": 5.022242,
+        "impacted-stool": 0.341816,
+        "polyps": 0.058545,
+        "pylorus": 0.059747,
+        "retroflex-rectum": 0.125362,
+        "retroflex-stomach": 0.072519,
+        "ulcerative-colitis-grade-0-1": 1.266889,
+        "ulcerative-colitis-grade-1": 0.228455,
+        "ulcerative-colitis-grade-1-2": 3.770447,
+        "ulcerative-colitis-grade-2": 0.112718,
+        "ulcerative-colitis-grade-2-3": 1.517239,
+        "ulcerative-colitis-grade-3": 0.338307,
+        "z-line": 0.06273
+    }
+}
