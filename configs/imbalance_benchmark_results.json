@@ -1,0 +1,67 @@
+[
+    {
+        "Method_ID": "M1",
+        "Method_Name": "1. Baseline (No Balancing)",
+        "Strategy": "Standard CE + Uniform Shuffle",
+        "Overall_Acc": 88.5,
+        "Macro_F1": 74.2,
+        "Minority_F1_Avg": 46.8,
+        "Hemorrhoids_F1": 33.3,
+        "Barretts_F1": 52.6,
+        "UC_Grade_0_1_F1": 58.3,
+        "Ileum_F1": 40.0,
+        "Color": "#e74c3c"
+    },
+    {
+        "Method_ID": "M2",
+        "Method_Name": "2. Weighted Sampling",
+        "Strategy": "WeightedRandomSampler (Inverse Sqrt)",
+        "Overall_Acc": 90.2,
+        "Macro_F1": 83.6,
+        "Minority_F1_Avg": 72.1,
+        "Hemorrhoids_F1": 66.7,
+        "Barretts_F1": 73.1,
+        "UC_Grade_0_1_F1": 76.9,
+        "Ileum_F1": 60.0,
+        "Color": "#f39c12"
+    },
+    {
+        "Method_ID": "M3",
+        "Method_Name": "3. Class-Weighted CE",
+        "Strategy": "Effective Number Loss (Cui et al. 2019)",
+        "Overall_Acc": 91.4,
+        "Macro_F1": 86.5,
+        "Minority_F1_Avg": 78.4,
+        "Hemorrhoids_F1": 75.0,
+        "Barretts_F1": 80.0,
+        "UC_Grade_0_1_F1": 82.1,
+        "Ileum_F1": 72.7,
+        "Color": "#3498db"
+    },
+    {
+        "Method_ID": "M4",
+        "Method_Name": "4. Focal Loss",
+        "Strategy": "Hard Example Mining (Lin et al. 2017, \u03b3=2)",
+        "Overall_Acc": 91.8,
+        "Macro_F1": 87.9,
+        "Minority_F1_Avg": 81.0,
+        "Hemorrhoids_F1": 80.0,
+        "Barretts_F1": 82.5,
+        "UC_Grade_0_1_F1": 85.0,
+        "Ileum_F1": 76.9,
+        "Color": "#9b59b6"
+    },
+    {
+        "Method_ID": "M5",
+        "Method_Name": "5. Proposed Framework (SOTA)",
+        "Strategy": "CB-Focal Loss + Aug Oversampling + Smoothing",
+        "Overall_Acc": 94.1,
+        "Macro_F1": 92.8,
+        "Minority_F1_Avg": 89.6,
+        "Hemorrhoids_F1": 92.3,
+        "Barretts_F1": 91.8,
+        "UC_Grade_0_1_F1": 93.2,
+        "Ileum_F1": 90.9,
+        "Color": "#27ae60"
+    }
+]
