@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 from torch.utils.data import DataLoader
 
@@ -19,6 +20,11 @@ PROC_DIR = ROOT_DIR / "data" / "processed"
 RAW_DIR = ROOT_DIR / "data" / "raw" / "labeled-images"
 
 
+# Kiểm tra xem có đang ở môi trường có dữ liệu hay không
+DATA_EXISTS = (PROC_DIR / "train_split.csv").exists()
+
+
+@pytest.mark.skipif(not DATA_EXISTS, reason="Tập dữ liệu không lưu trên GitHub CI")
 def test_split_files_integrity():
     """Kiểm tra sự tồn tại và tính đầy đủ của 3 file split CSV."""
     train_csv = PROC_DIR / "train_split.csv"
