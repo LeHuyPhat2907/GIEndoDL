@@ -1,4 +1,4 @@
-"""Module cài đặt các hàm mất mát cân bằng lớp (Class-Balanced CE, Focal Loss, và CB-Focal Loss)."""
+"""Module cài đặt các hàm mất mát cân bằng lớp và điều chuẩn (Class-Balanced, Focal, và Label Smoothing Loss)."""
 
 from typing import List, Optional, Union
 import numpy as np
@@ -25,8 +25,10 @@ class ClassBalancedCrossEntropyLoss(nn.Module):
         class_counts: Optional[List[int]] = None,
         beta: float = 0.999,
         custom_weights: Optional[torch.Tensor] = None,
+        label_smoothing: float = 0.0,
     ):
         super().__init__()
+        self.label_smoothing = label_smoothing
         if custom_weights is not None:
             self.weights = custom_weights
         elif class_counts is not None:
@@ -37,7 +39,9 @@ class ClassBalancedCrossEntropyLoss(nn.Module):
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         device = logits.device
         weight = self.weights.to(device) if self.weights is not None else None
-        return F.cross_entropy(logits, targets, weight=weight)
+        return F.cross_entropy(
+            logits, targets, weight=weight, label_smoothing=self.label_smoothing
+        )
 
 
 class FocalLoss(nn.Module):
@@ -103,3 +107,29 @@ class ClassBalancedFocalLoss(nn.Module):
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         return self.focal_loss(logits, targets)
+
+
+class LabelSmoothingCrossEntropyLoss(nn.Module):
+    """Label Smoothing Cross-Entropy Loss hỗ trợ Class Weights chuẩn y khoa."""
+
+    def __init__(
+        self,
+        epsilon: float = 0.1,
+        weight: Optional[torch.Tensor] = None,
+        reduction: str = "mean",
+    ):
+        super().__init__()
+        self.epsilon = epsilon
+        self.weight = weight
+        self.reduction = reduction
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        device = logits.device
+        w = self.weight.to(device) if self.weight is not None else None
+        return F.cross_entropy(
+            logits,
+            targets,
+            weight=w,
+            label_smoothing=self.epsilon,
+            reduction=self.reduction,
+        )

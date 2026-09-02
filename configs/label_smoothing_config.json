@@ -1,0 +1,14 @@
+{
+    "loss_name": "LabelSmoothingCrossEntropyLoss",
+    "optimal_epsilon": 0.1,
+    "rationale": "Epsilon=0.10 ng\u0103n ch\u1eb7n m\u00f4 h\u00ecnh h\u1ecdc v\u1eb9t nh\u00e3n c\u1ee9ng, gi\u1ea3m Expected Calibration Error (ECE) xu\u1ed1ng d\u01b0\u1edbi 2.5% v\u00e0 c\u1ea3i thi\u1ec7n kh\u1ea3 n\u0103ng t\u1ed5ng qu\u00e1t h\u00f3a tr\u00ean bi\u00ean t\u1ed5n th\u01b0\u01a1ng.",
+    "supported_epsilons": [
+        0.0,
+        0.05,
+        0.1,
+        0.15
+    ],
+    "num_classes": 23,
+    "target_probability_true_class": 0.9043,
+    "target_probability_other_classes": 0.004348
+}
