@@ -1,0 +1,13 @@
+{
+    "architecture": "ResNet-50 Baseline",
+    "pretrained": "ImageNet1K_V2",
+    "num_classes": 23,
+    "pilot_epochs": 5,
+    "batch_size": 16,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "CosineAnnealingLR",
+    "loss_function": "CrossEntropyLoss / ClassBalancedFocalLoss ready",
+    "checkpoint_dir": "D:\\PhatProject\\GIEndoDL\\models\\checkpoints\\resnet50_pilot"
+}
