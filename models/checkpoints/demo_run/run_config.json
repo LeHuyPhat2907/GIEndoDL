@@ -1,0 +1,27 @@
+{
+    "policy_name": "Macro_F1_Driven_Dual_Checkpoint_System",
+    "primary_metric": "val_macro_f1",
+    "rationale": "S\u1eed d\u1ee5ng val_macro_f1 \u0111\u1ec3 c\u1ee9u c\u00e1c l\u1edbp thi\u1ec3u s\u1ed1, ng\u0103n ch\u1eb7n m\u00f4 h\u00ecnh h\u1ecdc v\u1eb9t nh\u00e3n \u0111a s\u1ed1 \u0111\u1ec3 t\u1ed1i \u0111a h\u00f3a Accuracy.",
+    "artifacts_managed": [
+        {
+            "filename": "best_model.pth",
+            "condition": "K\u1ef7 l\u1ee5c val_macro_f1 m\u1edbi",
+            "purpose": "\u0110\u00e1nh gi\u00e1 nghi\u1ec7m thu t\u1eadp Test"
+        },
+        {
+            "filename": "last_model.pth",
+            "condition": "L\u01b0u sau m\u1ed7i Epoch",
+            "purpose": "Kh\u00f4i ph\u1ee5c hu\u1ea5n luy\u1ec7n t\u1ee9c th\u00ec khi Colab ng\u1eaft phi\u00ean"
+        },
+        {
+            "filename": "run_config.json",
+            "condition": "\u0110\u00f3ng g\u00f3i \u0111\u1ea7u phi\u00ean",
+            "purpose": "L\u01b0u v\u1ebft 100% si\u00eau tham s\u1ed1 khoa h\u1ecdc"
+        },
+        {
+            "filename": "training_history.csv",
+            "condition": "Ghi nh\u1eadn m\u1ed7i Epoch",
+            "purpose": "V\u1ebd \u0111\u01b0\u1eddng cong bi\u1ec3u \u0111\u1ed3 cho lu\u1eadn v\u0103n"
+        }
+    ]
+}
