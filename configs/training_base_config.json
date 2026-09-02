@@ -1,0 +1,24 @@
+{
+    "framework_name": "GIEndoDL_Modular_Training_Engine",
+    "supported_architectures": [
+        "ResNet50",
+        "EfficientNet_B3",
+        "Swin_T",
+        "ViT_Base",
+        "CNN_CBAM"
+    ],
+    "num_classes": 23,
+    "default_epochs": 50,
+    "batch_size": 32,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0005,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "CosineAnnealingLR",
+    "early_stopping": {
+        "metric": "val_macro_f1",
+        "mode": "max",
+        "patience": 7,
+        "min_delta": 0.0001
+    },
+    "mixed_precision_amp": true
+}
