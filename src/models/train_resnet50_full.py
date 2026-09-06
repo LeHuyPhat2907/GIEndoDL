@@ -1,4 +1,7 @@
-"""Script huấn luyện toàn diện ResNet-50 mở khóa toàn bộ các tầng trên GPU cá nhân (100 Epochs Real Training)."""
+"""Script huấn luyện toàn diện ResNet-50 VÒNG 2 (Run 2 - Optimized Full Fine-Tuning 100 Epochs).
+
+Áp dụng: Class-Weighted Loss + Dropout 0.4 + Cosine Annealing with Warm Restarts.
+"""
 
 import argparse
 import json
@@ -7,6 +10,7 @@ from pathlib import Path
 import sys
 import time
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import (
@@ -40,6 +44,27 @@ except ImportError:
     from reproducibility import set_seed
 
 
+def calculate_smoothed_class_weights(
+    train_csv_path: Path, idx_to_class: dict, power: float = 0.5
+) -> torch.Tensor:
+    """Tính toán trọng số nghịch đảo làm mịn căn bậc hai để cứu các lớp thiểu số."""
+    df = pd.read_csv(train_csv_path)
+    counts = df["class_name"].value_counts().to_dict()
+    num_classes = len(idx_to_class)
+
+    class_counts = np.array(
+        [counts.get(idx_to_class[i], 1) for i in range(num_classes)],
+        dtype=np.float32,
+    )
+    max_count = np.max(class_counts)
+
+    # Làm mịn căn bậc hai: tránh trọng số quá khổng lồ gây bất ổn định gradient
+    weights = (max_count / class_counts) ** power
+    # Chuẩn hóa để trọng số trung bình bằng 1.0
+    weights = weights / np.mean(weights)
+    return torch.tensor(weights, dtype=torch.float)
+
+
 def run_full_finetuning_resnet50(
     config_dir: str, fig_dir: str, doc_dir: str, epochs: int = 100
 ):
@@ -53,18 +78,22 @@ def run_full_finetuning_resnet50(
 
     print("=" * 80)
     print(
-        f"🔥 KHỞI ĐỘNG TIẾN TRÌNH HUẤN LUYỆN RESNET-50 FULL FINE-TUNING ({epochs}"
-        " EPOCHS)..."
+        f"🔥 KHỞI ĐỘNG TIẾN TRÌNH HUẤN LUYỆN LẦN 2 (RUN 2 - OPTIMIZED) RESNET-50"
+        f" ({epochs} EPOCHS)..."
+    )
+    print(
+        "⚡ NÂNG CẤP: Smoothed Class-Weighted Loss + Dropout 0.4 + Cosine Warm"
+        " Restarts"
     )
     print("=" * 80)
 
-    # 1. Cố định tính tái lập khoa học
+    # 1. Tái lập thí nghiệm
     set_seed(42)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     gpu_name = (
         torch.cuda.get_device_name(0)
         if torch.cuda.is_available()
-        else "CPU (Không tìm thấy GPU)"
+        else "CPU (Không có GPU)"
     )
     print(f"🖥️ Phần cứng huấn luyện: {device} ➔ {gpu_name}")
 
@@ -72,7 +101,7 @@ def run_full_finetuning_resnet50(
         vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         print(f"⚡ Tổng bộ nhớ VRAM:     {vram_gb:.2f} GB GDDR6")
 
-    # 2. Nạp dữ liệu ảnh thật
+    # 2. Nạp dữ liệu
     proc_path = ROOT_DIR / "data" / "processed"
     raw_images_dir = ROOT_DIR / "data" / "raw" / "labeled-images"
 
@@ -83,7 +112,6 @@ def run_full_finetuning_resnet50(
         proc_path / "train_split.csv"
     ).exists(), f"❌ Không tìm thấy train_split.csv tại: {proc_path}"
 
-    print(f"📂 Nạp dữ liệu ảnh từ: {raw_images_dir}")
     loaders = get_dataloaders(
         processed_dir=str(proc_path),
         raw_images_dir=str(raw_images_dir),
@@ -95,45 +123,52 @@ def run_full_finetuning_resnet50(
     test_loader = loaders.get("test")
 
     print(
-        f"✅ Đã nạp thành công: {len(train_loader.dataset)} mẫu Train |"
+        f"✅ Dữ liệu sẵn sàng: {len(train_loader.dataset)} mẫu Train |"
         f" {len(val_loader.dataset)} mẫu Val (23 lớp)"
     )
 
-    # 3. Khởi tạo mô hình ResNet-50 mở khóa 100% tầng
-    print("📦 Khởi tạo ResNet-50 ImageNet và mở khóa 100% tham số...")
+    # 3. Tính toán trọng số Class Weights cứu các lớp hiếm
+    class_weights = calculate_smoothed_class_weights(
+        proc_path / "train_split.csv", train_loader.dataset.idx_to_class
+    ).to(device)
+    print(
+        "⚖️ Đã thiết lập Class Weights cho 23 lớp (Min:"
+        f" {class_weights.min():.2f}x, Max: {class_weights.max():.2f}x)"
+    )
+
+    # 4. Khởi tạo mô hình ResNet-50 và chèn Dropout 0.4
+    print("📦 Khởi tạo ResNet-50 và cấu hình Classifier Head với Dropout (p=0.4)...")
     model = build_resnet50_baseline(
         num_classes=23, pretrained=True, freeze_backbone=False
     )
+    in_feat = model.fc.in_features
+    model.fc = nn.Sequential(nn.Dropout(p=0.40), nn.Linear(in_feat, 23))
     model = model.to(device)
 
-    total_params = sum(param.numel() for param in model.parameters())
-    trainable_params = sum(
-        param.numel() for param in model.parameters() if param.requires_grad
-    )
-    print(
-        f"✅ Tổng tham số: {total_params / 1e6:.2f} Triệu | Tham số huấn luyện:"
-        f" {trainable_params / 1e6:.2f} Triệu (100% Unfrozen)"
-    )
-
-    # 4. Trình tối ưu hóa AdamW & Cosine Annealing Scheduler
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.10)
+    # 5. Hàm mất mát có trọng số và Trình tối ưu hóa Warm Restarts
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.05)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs, eta_min=1e-6
+    # Cosine Annealing with Warm Restarts: Chu kỳ đầu 25 epochs, chu kỳ sau nhân đôi (T_mult=2)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=25, T_mult=2, eta_min=5e-6
     )
     scaler = torch.amp.GradScaler("cuda", enabled=torch.cuda.is_available())
 
-    chk_dir = ROOT_DIR / "models" / "checkpoints" / "resnet50_full"
+    chk_dir = ROOT_DIR / "models" / "checkpoints" / "resnet50_run2"
     chk_dir.mkdir(parents=True, exist_ok=True)
 
     full_config = {
-        "model_name": "ResNet-50 (Full Fine-Tuned 100 Epochs)",
+        "model_name": (
+            "ResNet-50 (Run 2 - Class-Weighted + Dropout 0.4 + WarmRestarts)"
+        ),
         "hardware": gpu_name,
         "epochs": epochs,
         "batch_size": 32,
         "optimizer": "AdamW (lr=1e-4, weight_decay=1e-4)",
-        "scheduler": f"CosineAnnealingLR (T_max={epochs}, eta_min=1e-6)",
-        "label_smoothing": 0.10,
+        "scheduler": "CosineAnnealingWarmRestarts (T_0=25, T_mult=2, eta_min=5e-6)",
+        "dropout": 0.40,
+        "label_smoothing": 0.05,
+        "class_weighting": "Smoothed Inverse Frequency (power=0.5)",
     }
 
     logger = TrainingLogger(log_dir=str(chk_dir))
@@ -145,20 +180,20 @@ def run_full_finetuning_resnet50(
 
     history = []
     print("=" * 80)
-    print(f"🚀 BẮT ĐẦU VÒNG LẶP {epochs} EPOCHS:")
+    print(f"🚀 BẮT ĐẦU VÒNG LẶP HUẤN LUYỆN LẦN 2 ({epochs} EPOCHS):")
     print("=" * 80)
 
     for ep in range(1, epochs + 1):
         start_t = time.time()
 
-        # --- A. HUẤN LUYỆN (THANH TIẾN TRÌNH TRỰC QUAN ĐẸP MẮT) ---
+        # A. TRAIN
         model.train()
         running_train_loss = 0.0
         current_lr = scheduler.get_last_lr()[0]
 
         pbar_train = tqdm(
             train_loader,
-            desc=f"Epoch [{ep:3d}/{epochs}] 🏋️ Train",
+            desc=f"Run 2 [{ep:3d}/{epochs}] 🏋️ Train",
             leave=False,
             dynamic_ncols=True,
             bar_format="{l_bar}{bar:25}{r_bar}",
@@ -196,14 +231,14 @@ def run_full_finetuning_resnet50(
         train_loss = running_train_loss / len(train_loader.dataset)
         scheduler.step()
 
-        # --- B. KIỂM ĐỊNH (VAL) ---
+        # B. VALIDATE
         model.eval()
         running_val_loss = 0.0
         all_preds, all_targets = [], []
 
         pbar_val = tqdm(
             val_loader,
-            desc=f"Epoch [{ep:3d}/{epochs}] 🔍 Val  ",
+            desc=f"Run 2 [{ep:3d}/{epochs}] 🔍 Val  ",
             leave=False,
             dynamic_ncols=True,
             bar_format="{l_bar}{bar:25}{r_bar}",
@@ -246,7 +281,7 @@ def run_full_finetuning_resnet50(
 
         flag = "⭐ [KỶ LỤC MỚI ĐÃ LƯU]" if is_best else ""
         print(
-            f"Epoch [{ep:3d}/{epochs}] ── Train Loss: {train_loss:.4f} ── Val"
+            f"Run 2 [{ep:3d}/{epochs}] ── Train Loss: {train_loss:.4f} ── Val"
             f" Loss: {val_loss:.4f} ── Val Acc: {val_acc:.1f}% ── Macro F1:"
             f" {val_f1:.1f}% ({elapsed:.0f}s) {flag}"
         )
@@ -255,15 +290,15 @@ def run_full_finetuning_resnet50(
             torch.cuda.empty_cache()
 
     print("=" * 80)
-    print("🏆 HOÀN THÀNH HUẤN LUYỆN XUẤT SẮC 100 EPOCHS!")
+    print("🏆 HOÀN THÀNH HUẤN LUYỆN LẦN 2 XUẤT SẮC 100 EPOCHS!")
     print(
-        f"🎯 Best Macro F1 đạt được: {chk_manager.best_metric_val:.2f}% (Tại"
+        f"🎯 Best Val Macro F1 đạt được: {chk_manager.best_metric_val:.2f}% (Tại"
         f" Epoch {chk_manager.best_epoch})"
     )
     print("=" * 80)
 
-    # 5. Đánh giá kiểm thử chi tiết trên tập Test bằng mô hình tối ưu nhất
-    print("🔬 Đang nạp trọng số tốt nhất để đánh giá trên tập Test độc lập...")
+    # 6. Đánh giá kiểm thử trên tập Test độc lập
+    print("🔬 Đang đánh giá mô hình tối ưu Lần 2 trên tập Test...")
     chk_manager.load_best(model, device)
     eval_loader = test_loader if test_loader is not None else val_loader
 
@@ -289,7 +324,6 @@ def run_full_finetuning_resnet50(
         zero_division=0,
     )
 
-    # Xuất file CSV chi tiết 23 lớp bệnh
     per_class_data = []
     for cls_name in class_names:
         per_class_data.append(
@@ -302,17 +336,16 @@ def run_full_finetuning_resnet50(
             }
         )
     df_per_class = pd.DataFrame(per_class_data)
-    per_class_csv_path = proc_path / "resnet50_100ep_per_class_metrics.csv"
+    per_class_csv_path = proc_path / "resnet50_run2_per_class_metrics.csv"
     df_per_class.to_csv(per_class_csv_path, index=False)
-    print(f"📊 Đã xuất báo cáo chi tiết 23 lớp bệnh tại: {per_class_csv_path}")
+    print("📊 Đã xuất báo cáo chi tiết 23 lớp bệnh Lần 2 tại:" f" {per_class_csv_path}")
 
-    # 6. Tự động vẽ Dashboard 4 Panel đối chuẩn (300 DPI)
-    print("📈 Đang xuất bản Dashboard đồ thị 4 panel chuẩn mực...")
+    # 7. Vẽ Dashboard 4 Panel đối chuẩn Lần 2 (300 DPI)
     df_h = pd.DataFrame(history)
     fig, axes = plt.subplots(2, 2, figsize=(18, 12))
     sns.set_theme(style="whitegrid")
 
-    # Panel 1: Động lực Loss
+    # Panel 1
     axes[0, 0].plot(
         df_h["epoch"],
         df_h["train_loss"],
@@ -328,13 +361,15 @@ def run_full_finetuning_resnet50(
         lw=2.5,
     )
     axes[0, 0].set_title(
-        "1. Động Lực Hội Tụ Loss (100 Epochs)", fontsize=12, fontweight="bold"
+        "1. Động Lực Hội Tụ Loss (Run 2 - Weighted Loss)",
+        fontsize=12,
+        fontweight="bold",
     )
     axes[0, 0].set_xlabel("Epochs")
     axes[0, 0].set_ylabel("Loss")
     axes[0, 0].legend()
 
-    # Panel 2: Hiệu năng lâm sàng Acc & F1
+    # Panel 2
     axes[0, 1].plot(
         df_h["epoch"],
         df_h["val_acc"],
@@ -350,7 +385,7 @@ def run_full_finetuning_resnet50(
         lw=2.5,
     )
     axes[0, 1].set_title(
-        "2. Tăng Trưởng Hiệu Năng Lâm Sàng (100 Epochs)",
+        "2. Tăng Trưởng Hiệu Năng Lâm Sàng (Run 2)",
         fontsize=12,
         fontweight="bold",
     )
@@ -358,7 +393,7 @@ def run_full_finetuning_resnet50(
     axes[0, 1].set_ylabel("Tỷ lệ (%)")
     axes[0, 1].legend()
 
-    # Panel 3: Phân bố F1-Score 23 lớp bệnh học
+    # Panel 3
     sorted_df = df_per_class.sort_values(by="f1_score", ascending=True)
     colors = ["#2ecc71" if val >= 85 else "#e74c3c" for val in sorted_df["f1_score"]]
     axes[1, 0].barh(sorted_df["class_name"], sorted_df["f1_score"], color=colors)
@@ -370,21 +405,21 @@ def run_full_finetuning_resnet50(
         label="Ngưỡng lâm sàng an toàn (85%)",
     )
     axes[1, 0].set_title(
-        "3. Xếp Hạng F1-Score 23 Lớp Bệnh Học", fontsize=12, fontweight="bold"
+        "3. Xếp Hạng F1-Score 23 Lớp (Run 2)", fontsize=12, fontweight="bold"
     )
     axes[1, 0].set_xlabel("F1-Score (%)")
     axes[1, 0].legend(loc="lower right")
 
-    # Panel 4: Lịch trình suy giảm Learning Rate Cosine Annealing
+    # Panel 4
     axes[1, 1].plot(
         df_h["epoch"],
         df_h["learning_rate"],
         color="#9b59b6",
         lw=2.5,
-        label="Learning Rate",
+        label="Learning Rate (Warm Restarts)",
     )
     axes[1, 1].set_title(
-        "4. Lịch Trình Tốc Độ Học (Cosine Annealing LR)",
+        "4. Lịch Trình Tốc Độ Học (Warm Restarts)",
         fontsize=12,
         fontweight="bold",
     )
@@ -393,12 +428,12 @@ def run_full_finetuning_resnet50(
     axes[1, 1].legend()
 
     plt.tight_layout()
-    out_fig = fig_path / "49_resnet50_full_finetune_dynamics.png"
+    out_fig = fig_path / "50_resnet50_run2_dynamics.png"
     plt.savefig(out_fig, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"📊 Đã lưu Dashboard 4 Panel tại: {out_fig}")
+    print(f"📊 Đã lưu Dashboard Lần 2 tại: {out_fig}")
 
-    # 7. Xuất cấu hình và báo cáo nghiên cứu
+    # 8. Cập nhật cấu hình Run 2
     full_config["final_test_accuracy"] = round(
         accuracy_score(test_targets, test_preds) * 100, 2
     )
@@ -414,13 +449,14 @@ def run_full_finetuning_resnet50(
     full_config["best_val_macro_f1"] = chk_manager.best_metric_val
     full_config["best_epoch"] = chk_manager.best_epoch
 
-    with open(
-        cfg_path / "resnet50_full_finetune_config.json", "w", encoding="utf-8"
-    ) as f:
+    with open(cfg_path / "resnet50_run2_config.json", "w", encoding="utf-8") as f:
         json.dump(full_config, f, indent=4)
 
     print("=" * 80)
-    print("✅ TOÀN BỘ DỮ LIỆU ĐÃ ĐƯỢC XUẤT RA THÀNH CÔNG VÀ LƯU TRỮ AN TOÀN!")
+    print(
+        f"🎯 SO SÁNH RUN 1 VS RUN 2: Run 1 Test F1 = 59.91% ➔ Run 2 Test F1 ="
+        f" {full_config['final_test_macro_f1']}%"
+    )
     print("=" * 80)
 
 
