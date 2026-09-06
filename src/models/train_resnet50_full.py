@@ -141,8 +141,7 @@ def run_full_finetuning_resnet50(
     model = build_resnet50_baseline(
         num_classes=23, pretrained=True, freeze_backbone=False
     )
-    in_feat = model.fc.in_features
-    model.fc = nn.Sequential(nn.Dropout(p=0.40), nn.Linear(in_feat, 23))
+    model.fc = nn.Sequential(nn.Dropout(p=0.40), nn.Linear(2048, 23))
     model = model.to(device)
 
     # 5. Hàm mất mát có trọng số và Trình tối ưu hóa Warm Restarts
