@@ -292,8 +292,8 @@ def main():
     parser.add_argument(
         "--fold",
         type=int,
-        default=0,
-        help="Chọn Fold để chạy (0 đến 4), hoặc -1 để chạy tự động toàn bộ 5 Folds",
+        default=-1,
+        help="Chọn Fold để chạy (Mặc định: -1 chạy tự động toàn bộ 5 Folds)",
     )
     args = parser.parse_args()
 
