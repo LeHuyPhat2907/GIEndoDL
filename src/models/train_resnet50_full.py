@@ -302,6 +302,18 @@ def main():
         f"🖥️ Thiết bị: {device} ➔ {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
 
+    # Tự động tạo dữ liệu 5 Folds nếu trên máy chưa có
+    five_folds_dir = ROOT_DIR / "data" / "processed" / "5folds"
+    if not (five_folds_dir / "fold_0" / "train.csv").exists():
+        print(
+            "⚠️ Chưa tìm thấy thư mục 5folds, đang tự động khởi tạo Stratified 5-Fold..."
+        )
+        try:
+            from src.dataset.create_5fold_splits import generate_stratified_5folds
+        except ImportError:
+            from create_5fold_splits import generate_stratified_5folds
+        generate_stratified_5folds(seed=42, n_splits=5)
+
     all_fold_metrics = []
     all_fold_histories = []
 

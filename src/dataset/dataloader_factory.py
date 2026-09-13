@@ -27,9 +27,21 @@ def get_dataloaders(
         pin_memory: Khóa bộ nhớ đệm (Tự động True nếu có GPU CUDA).
     """
     proc_path = Path(processed_dir)
-    train_csv = proc_path / "train_split.csv"
-    val_csv = proc_path / "val_split.csv"
-    test_csv = proc_path / "test_split.csv"
+    train_csv = (
+        proc_path / "train_split.csv"
+        if (proc_path / "train_split.csv").exists()
+        else proc_path / "train.csv"
+    )
+    val_csv = (
+        proc_path / "val_split.csv"
+        if (proc_path / "val_split.csv").exists()
+        else proc_path / "val.csv"
+    )
+    test_csv = (
+        proc_path / "test_split.csv"
+        if (proc_path / "test_split.csv").exists()
+        else (proc_path / "test.csv" if (proc_path / "test.csv").exists() else val_csv)
+    )
 
     if pin_memory is None:
         pin_memory = torch.cuda.is_available()

@@ -6,6 +6,8 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/*.csv
+!data/processed/5folds/
+!data/processed/5folds/**
 *.zip
 *.tar.gz
 *.7z
