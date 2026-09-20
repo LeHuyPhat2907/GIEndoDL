@@ -1,0 +1,17 @@
+{
+    "model_name": "ResNet-50 (Run 2 - Class-Weighted + Dropout 0.4 + WarmRestarts)",
+    "hardware": "NVIDIA CMP 40HX",
+    "epochs": 100,
+    "batch_size": 32,
+    "optimizer": "AdamW (lr=1e-4, weight_decay=1e-4)",
+    "scheduler": "CosineAnnealingWarmRestarts (T_0=25, T_mult=2, eta_min=5e-6)",
+    "dropout": 0.4,
+    "label_smoothing": 0.05,
+    "class_weighting": "Smoothed Inverse Frequency (power=0.5)",
+    "final_test_accuracy": 90.0,
+    "final_test_macro_f1": 63.71,
+    "final_test_macro_precision": 63.37,
+    "final_test_macro_recall": 64.37,
+    "best_val_macro_f1": 63.06,
+    "best_epoch": 35
+}
