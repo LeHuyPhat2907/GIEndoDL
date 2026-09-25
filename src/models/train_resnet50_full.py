@@ -339,12 +339,18 @@ def main():
         )
         summary_df = reporter.aggregate_metrics(all_fold_metrics)
 
-        print("\n📋 BẢNG BÁO CÁO KHOA HỌC CHUẨN MỰC (NỘP GIẢNG VIÊN):")
-        print(
-            summary_df[
-                ["Chỉ số lâm sàng", "Mean ± Std", "Khoảng dao động [Min, Max]"]
-            ].to_markdown(index=False)
-        )
+        try:
+            print(
+                summary_df[
+                    ["Chỉ số lâm sàng", "Mean ± Std", "Khoảng dao động [Min, Max]"]
+                ].to_markdown(index=False)
+            )
+        except (ImportError, ModuleNotFoundError):
+            print(
+                summary_df[
+                    ["Chỉ số lâm sàng", "Mean ± Std", "Khoảng dao động [Min, Max]"]
+                ].to_string(index=False)
+            )
 
         # Xuất biểu đồ hộp Box Plot và biểu đồ đường 5 Folds
         reporter.plot_boxplots(all_fold_metrics, "54_resnet50_5fold_boxplots.png")
