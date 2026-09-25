@@ -1,6 +1,6 @@
-"""Script huấn luyện ResNet-50 RUN 4 (100 Epochs - Stratified 5-Fold Cross Validation chuẩn Y khoa).
+"""Script huấn luyện ResNet-50 RUN 4 (50 Epochs - Stratified 5-Fold Cross Validation chuẩn Y khoa).
 
-Áp dụng: 100 Epochs + Batch Size 64 + Focal Loss (gamma=1.5) + Dropout 0.45 + Weight Decay 5e-4.
+Áp dụng: 50 Epochs + Batch Size 64 + Focal Loss (gamma=1.5) + Dropout 0.45 + Weight Decay 5e-4.
 Tự động tính toán Mean ± Std và xuất biểu đồ Box Plot, 5-Fold Learning Curves.
 """
 
@@ -122,7 +122,7 @@ def train_single_fold(
     )
     optimizer = torch.optim.AdamW(model.parameters(), lr=1.5e-4, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=25, T_mult=2, eta_min=5e-6
+        optimizer, T_0=25, T_mult=1, eta_min=5e-6
     )
     scaler = torch.amp.GradScaler("cuda", enabled=torch.cuda.is_available())
 
@@ -134,7 +134,7 @@ def train_single_fold(
     chk_manager = ComprehensiveCheckpointManager(
         checkpoint_dir=str(chk_dir),
         metric_name="val_macro_f1",
-        run_config={"fold": fold_idx, "model": "ResNet-50 Run 4 100ep"},
+        run_config={"fold": fold_idx, "model": "ResNet-50 Run 4 50ep"},
     )
     logger = TrainingLogger(log_dir=str(chk_dir))
 
@@ -284,7 +284,7 @@ def train_single_fold(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--epochs", type=int, default=100, help="Số epochs huấn luyện (Mặc định: 100)"
+        "--epochs", type=int, default=50, help="Số epochs huấn luyện (Mặc định: 50)"
     )
     parser.add_argument(
         "--batch_size", type=int, default=64, help="Kích thước batch (Mặc định: 64)"
@@ -298,6 +298,8 @@ def main():
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
     print(
         f"🖥️ Thiết bị: {device} ➔ {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
