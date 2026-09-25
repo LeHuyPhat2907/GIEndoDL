@@ -1,0 +1,10 @@
+{
+    "fold": 4,
+    "accuracy": 91.04,
+    "macro_f1": 67.06,
+    "weighted_f1": 90.95,
+    "macro_recall": 66.69,
+    "macro_precision": 69.09,
+    "weighted_precision": 91.07,
+    "best_epoch": 25
+}
