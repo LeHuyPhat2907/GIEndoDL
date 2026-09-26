@@ -216,16 +216,17 @@ def train_single_fold(
             "val_precision": val_prec,
             "val_recall": val_rec,
         }
-        is_best = chk_manager.save_checkpoint(model, optimizer, ep, chk_metrics)
-
-        logger.log_epoch(
-            epoch=ep,
-            train_loss=train_loss,
-            val_loss=val_loss,
-            val_acc=val_acc,
-            val_f1=val_f1,
-            lr=curr_lr,
-        )
+        rec_log = {
+            "epoch": ep,
+            "train_loss": round(float(train_loss), 4),
+            "val_loss": round(float(val_loss), 4),
+            "val_acc": round(float(val_acc), 2),
+            "val_macro_f1": round(float(val_f1), 2),
+            "learning_rate": curr_lr,
+            "time_sec": round(float(ep_duration), 1),
+        }
+        logger.log_epoch(rec_log)
+        is_best = chk_manager.step(ep, model, optimizer, chk_metrics, scaler=scaler)
 
         best_mark = "🌟 [BEST]" if is_best else "      "
         print(
@@ -250,7 +251,7 @@ def train_single_fold(
         )
 
     # Đánh giá lại checkpoint tốt nhất của Fold
-    best_ckpt = chk_manager.load_best_checkpoint(model)
+    best_ckpt = chk_manager.load_best(model, device)
     model.eval()
     all_preds, all_targets = [], []
     with torch.no_grad():
