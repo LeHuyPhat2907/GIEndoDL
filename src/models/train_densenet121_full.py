@@ -92,6 +92,8 @@ def train_single_fold(
     raw_images_dir: Path,
     processed_dir: Path,
     checkpoints_base_dir: Path,
+    num_workers: int = 4,
+    preload_ram: bool = True,
 ):
     """Huấn luyện 1 Fold độc lập cho DenseNet-121 trong hệ thống 5-Fold Cross Validation."""
     print("=" * 80)
@@ -107,7 +109,8 @@ def train_single_fold(
         processed_dir=str(fold_dir),
         raw_images_dir=str(raw_images_dir),
         batch_size=batch_size,
-        num_workers=4 if os.name != "nt" else 2,
+        num_workers=num_workers,
+        preload_ram=preload_ram,
     )
     train_loader = loaders["train"]
     val_loader = loaders["val"]
@@ -307,6 +310,25 @@ def main():
         default=-1,
         help="Chọn Fold để chạy (Mặc định: -1 chạy tự động toàn bộ 5 Folds)",
     )
+    default_workers = 2 if os.name == "nt" else 4
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=default_workers,
+        help="Số luồng CPU nạp ảnh song song (Mặc định: 2 trên Windows, 4 trên Linux)",
+    )
+    parser.add_argument(
+        "--preload_ram",
+        action="store_true",
+        default=True,
+        help="Nạp toàn bộ ảnh vào RAM (256x256 uint8) để xóa sổ 100% độ trễ đọc đĩa (Mặc định: True)",
+    )
+    parser.add_argument(
+        "--no_preload_ram",
+        dest="preload_ram",
+        action="store_false",
+        help="Tắt nạp ảnh vào RAM nếu máy tính thiếu RAM",
+    )
     parser.add_argument(
         "--raw_images_dir",
         type=str,
@@ -363,6 +385,8 @@ def main():
             raw_images_dir=raw_images_dir,
             processed_dir=processed_dir,
             checkpoints_base_dir=output_dir,
+            num_workers=args.num_workers,
+            preload_ram=args.preload_ram,
         )
         all_fold_metrics.append(f_metric)
         all_fold_histories.append(f_hist)

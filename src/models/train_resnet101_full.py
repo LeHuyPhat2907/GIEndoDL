@@ -92,6 +92,7 @@ def train_single_fold(
     processed_dir: Path,
     checkpoints_base_dir: Path,
     num_workers: int = 4,
+    preload_ram: bool = True,
 ):
     """Huấn luyện 1 Fold độc lập cho ResNet-101 trong hệ thống 5-Fold Cross Validation."""
     print("=" * 80)
@@ -108,6 +109,7 @@ def train_single_fold(
         raw_images_dir=str(raw_images_dir),
         batch_size=batch_size,
         num_workers=num_workers,
+        preload_ram=preload_ram,
     )
     train_loader = loaders["train"]
     val_loader = loaders["val"]
@@ -120,17 +122,12 @@ def train_single_fold(
         num_classes=23, pretrained=True, freeze_backbone=False
     )
     model.fc = nn.Sequential(nn.Dropout(p=0.45), nn.Linear(2048, 23))
-
-    # Kích hoạt layout Channels Last (NHWC) để tối ưu 100% Tensor Cores (Turing TU106)
-    if device.type == "cuda":
-        model = model.to(device, memory_format=torch.channels_last)
-    else:
-        model = model.to(device)
+    model = model.to(device)
 
     criterion = MultiClassFocalLoss(
         weight=class_weights, gamma=1.5, label_smoothing=0.05
     )
-    # Tự động điều chỉnh LR theo Batch Size (Batch 128 -> LR 2.5e-4)
+    # Tự động điều chỉnh LR theo Batch Size (Batch 64 -> LR 1.5e-4)
     base_lr = 2.5e-4 if batch_size >= 128 else (2.0e-4 if batch_size >= 96 else 1.5e-4)
     optimizer = torch.optim.AdamW(model.parameters(), lr=base_lr, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
@@ -162,11 +159,7 @@ def train_single_fold(
             bar_format="{l_bar}{bar:20}{r_bar}",
         )
         for batch in pbar:
-            imgs = (
-                batch[0].to(device, memory_format=torch.channels_last, non_blocking=True)
-                if device.type == "cuda"
-                else batch[0].to(device)
-            )
+            imgs = batch[0].to(device, non_blocking=True)
             targets = batch[1].to(device, non_blocking=True)
             optimizer.zero_grad()
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
@@ -190,11 +183,7 @@ def train_single_fold(
 
         with torch.no_grad():
             for batch in val_loader:
-                imgs = (
-                    batch[0].to(device, memory_format=torch.channels_last, non_blocking=True)
-                    if device.type == "cuda"
-                    else batch[0].to(device)
-                )
+                imgs = batch[0].to(device, non_blocking=True)
                 targets = batch[1].to(device, non_blocking=True)
                 with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                     outs = model(imgs)
@@ -352,18 +341,24 @@ def main():
         default=str(ROOT_DIR / "models" / "checkpoints" / "resnet101_5folds"),
         help="Đường dẫn lưu kết quả checkpoints",
     )
+    parser.add_argument(
+        "--preload_ram",
+        action="store_true",
+        default=True,
+        help="Nạp toàn bộ ảnh vào RAM (256x256 uint8) để xóa sổ 100% độ trễ đọc đĩa (Mặc định: True)",
+    )
+    parser.add_argument(
+        "--no_preload_ram",
+        dest="preload_ram",
+        action="store_false",
+        help="Tắt nạp ảnh vào RAM nếu máy tính thiếu RAM",
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
-        # Tắt benchmark để tránh cuDNN chạy thử nghiệm hàng ngàn kernel làm đơ 7 phút ở batch đầu
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
-        try:
-            torch.set_float32_matmul_precision("high")
-        except (AttributeError, RuntimeError):
-            pass
+        # Kích hoạt cuDNN benchmark để Turing GPU tự chọn kernel convolution nhanh nhất
+        torch.backends.cudnn.benchmark = True
     print(
         f"🖥️ Thiết bị: {device} ➔ {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
@@ -398,6 +393,7 @@ def main():
             processed_dir=processed_dir,
             checkpoints_base_dir=output_dir,
             num_workers=args.num_workers,
+            preload_ram=args.preload_ram,
         )
         all_fold_metrics.append(f_metric)
         all_fold_histories.append(f_hist)
