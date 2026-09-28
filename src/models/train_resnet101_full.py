@@ -91,11 +91,12 @@ def train_single_fold(
     raw_images_dir: Path,
     processed_dir: Path,
     checkpoints_base_dir: Path,
+    num_workers: int = 4,
 ):
     """Huấn luyện 1 Fold độc lập cho ResNet-101 trong hệ thống 5-Fold Cross Validation."""
     print("=" * 80)
     print(
-        f"🔥 BẮT ĐẦU HUẤN LUYỆN FOLD {fold_idx} (RESNET-101 - TASK #77 - {epochs} EPOCHS)..."
+        f"🔥 BẮT ĐẦU HUẤN LUYỆN FOLD {fold_idx} (RESNET-101 - TASK #77 - {epochs} EPOCHS - BATCH {batch_size})..."
     )
     print("=" * 80)
 
@@ -106,7 +107,7 @@ def train_single_fold(
         processed_dir=str(fold_dir),
         raw_images_dir=str(raw_images_dir),
         batch_size=batch_size,
-        num_workers=4 if os.name != "nt" else 2,
+        num_workers=num_workers,
     )
     train_loader = loaders["train"]
     val_loader = loaders["val"]
@@ -119,12 +120,19 @@ def train_single_fold(
         num_classes=23, pretrained=True, freeze_backbone=False
     )
     model.fc = nn.Sequential(nn.Dropout(p=0.45), nn.Linear(2048, 23))
-    model = model.to(device)
+
+    # Kích hoạt layout Channels Last (NHWC) để tối ưu 100% Tensor Cores (Turing TU106)
+    if device.type == "cuda":
+        model = model.to(device, memory_format=torch.channels_last)
+    else:
+        model = model.to(device)
 
     criterion = MultiClassFocalLoss(
         weight=class_weights, gamma=1.5, label_smoothing=0.05
     )
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1.5e-4, weight_decay=5e-4)
+    # Tự động điều chỉnh LR theo Batch Size (Batch 128 -> LR 2.5e-4)
+    base_lr = 2.5e-4 if batch_size >= 128 else (2.0e-4 if batch_size >= 96 else 1.5e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=base_lr, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
         optimizer, T_0=25, T_mult=1, eta_min=5e-6
     )
@@ -154,10 +162,12 @@ def train_single_fold(
             bar_format="{l_bar}{bar:20}{r_bar}",
         )
         for batch in pbar:
-            imgs, targets = (
-                batch[0].to(device, non_blocking=True),
-                batch[1].to(device, non_blocking=True),
+            imgs = (
+                batch[0].to(device, memory_format=torch.channels_last, non_blocking=True)
+                if device.type == "cuda"
+                else batch[0].to(device)
             )
+            targets = batch[1].to(device, non_blocking=True)
             optimizer.zero_grad()
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
@@ -180,10 +190,12 @@ def train_single_fold(
 
         with torch.no_grad():
             for batch in val_loader:
-                imgs, targets = (
-                    batch[0].to(device, non_blocking=True),
-                    batch[1].to(device, non_blocking=True),
+                imgs = (
+                    batch[0].to(device, memory_format=torch.channels_last, non_blocking=True)
+                    if device.type == "cuda"
+                    else batch[0].to(device)
                 )
+                targets = batch[1].to(device, non_blocking=True)
                 with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                     outs = model(imgs)
                     v_loss = criterion(outs, targets)
@@ -256,7 +268,12 @@ def train_single_fold(
     all_preds, all_targets = [], []
     with torch.no_grad():
         for batch in val_loader:
-            imgs, targets = batch[0].to(device), batch[1].to(device)
+            imgs = (
+                batch[0].to(device, memory_format=torch.channels_last, non_blocking=True)
+                if device.type == "cuda"
+                else batch[0].to(device)
+            )
+            targets = batch[1].to(device, non_blocking=True)
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
             all_preds.extend(outs.argmax(dim=-1).cpu().numpy())
@@ -299,7 +316,16 @@ def main():
         "--epochs", type=int, default=50, help="Số epochs huấn luyện (Mặc định: 50)"
     )
     parser.add_argument(
-        "--batch_size", type=int, default=64, help="Kích thước batch (Mặc định: 64)"
+        "--batch_size",
+        type=int,
+        default=128,
+        help="Kích thước batch (Mặc định: 128 - tối ưu ~6.5GB/8GB VRAM trên CMP 40HX)",
+    )
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=4,
+        help="Số luồng CPU nạp ảnh song song (Mặc định: 4)",
     )
     parser.add_argument(
         "--fold",
@@ -330,6 +356,12 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+        try:
+            torch.set_float32_matmul_precision("high")
+        except (AttributeError, RuntimeError):
+            pass
     print(
         f"🖥️ Thiết bị: {device} ➔ {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
@@ -363,6 +395,7 @@ def main():
             raw_images_dir=raw_images_dir,
             processed_dir=processed_dir,
             checkpoints_base_dir=output_dir,
+            num_workers=args.num_workers,
         )
         all_fold_metrics.append(f_metric)
         all_fold_histories.append(f_hist)
