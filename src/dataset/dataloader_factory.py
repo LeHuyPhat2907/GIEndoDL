@@ -1,11 +1,22 @@
-"""Module xây dựng DataLoader Factory chuẩn PyTorch với các tùy biến tối ưu hóa I/O."""
-
+import os
 from pathlib import Path
 from typing import Dict, Tuple
+import cv2
 import torch
 from torch.utils.data import DataLoader
 
 from src.dataset.hyperkvasir_dataset import HyperKvasirDataset
+
+# Tắt đa luồng ngầm của OpenCV để ngăn ngừa Deadlock trên Windows khi PyTorch spawn workers
+cv2.setNumThreads(0)
+cv2.ocl.setUseOpenCL(False)
+
+
+def _worker_init_fn(worker_id):
+    """Khởi tạo môi trường luồng an toàn cho từng worker."""
+    import cv2
+    cv2.setNumThreads(0)
+    cv2.ocl.setUseOpenCL(False)
 
 
 def get_dataloaders(
@@ -62,6 +73,7 @@ def get_dataloaders(
     }
 
     if num_workers > 0:
+        loader_kwargs["worker_init_fn"] = _worker_init_fn
         loader_kwargs["persistent_workers"] = True
         loader_kwargs["prefetch_factor"] = 2
 

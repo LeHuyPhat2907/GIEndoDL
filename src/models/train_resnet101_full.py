@@ -321,11 +321,12 @@ def main():
         default=128,
         help="Kích thước batch (Mặc định: 128 - tối ưu ~6.5GB/8GB VRAM trên CMP 40HX)",
     )
+    default_workers = 2 if os.name == "nt" else 4
     parser.add_argument(
         "--num_workers",
         type=int,
-        default=4,
-        help="Số luồng CPU nạp ảnh song song (Mặc định: 4)",
+        default=default_workers,
+        help="Số luồng CPU nạp ảnh song song (Mặc định: 2 trên Windows, 4 trên Linux)",
     )
     parser.add_argument(
         "--fold",
