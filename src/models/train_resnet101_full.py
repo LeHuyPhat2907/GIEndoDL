@@ -376,6 +376,12 @@ def main():
     )
 
     raw_images_dir = Path(args.raw_images_dir)
+    # Tự động nhận diện thư mục dữ liệu trên Kaggle nếu không tìm thấy ở đường dẫn mặc định
+    if not raw_images_dir.exists() and Path("/kaggle/input").exists():
+        candidates = list(Path("/kaggle/input").rglob("labeled-images"))
+        if candidates:
+            raw_images_dir = candidates[0]
+            print(f"🎉 Kaggle detected! Đã tự động kết nối ảnh tại: {raw_images_dir}")
     processed_dir = Path(args.processed_dir)
     output_dir = Path(args.output_dir)
 
