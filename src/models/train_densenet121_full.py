@@ -175,13 +175,13 @@ def train_single_fold(
 
             running_train_loss += loss.item()
             t_gpu = time.time() - t_gpu_start
-            pbar.set_postfix(
-                {
-                    "loss": f"{loss.item():.4f}",
-                    "data": f"{t_data:.2f}s",
-                    "gpu": f"{t_gpu:.2f}s",
-                }
+            pbar.set_postfix_str(
+                f"D:{t_data:.2f}s|G:{t_gpu:.2f}s|L:{loss.item():.3f}"
             )
+            if pbar.n <= 3 or pbar.n % 20 == 0:
+                pbar.write(
+                    f"⏱️ Batch {pbar.n:3d}/{len(train_loader)} ➔ Data Load: {t_data:.3f}s | GPU Compute: {t_gpu:.3f}s"
+                )
             t_batch_start = time.time()
 
         scheduler.step()

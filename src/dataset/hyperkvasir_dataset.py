@@ -126,14 +126,6 @@ class HyperKvasirDataset(Dataset):
                     A.HorizontalFlip(p=0.5),
                     A.VerticalFlip(p=0.5),
                     A.RandomRotate90(p=0.5),
-                    A.Affine(
-                        scale=(0.94, 1.06),
-                        translate_percent=(-0.06, 0.06),
-                        rotate=(-20, 20),
-                        interpolation=cv2.INTER_LINEAR,
-                        mode=cv2.BORDER_REFLECT,
-                        p=0.5,
-                    ),
                     A.ColorJitter(
                         brightness=0.15,
                         contrast=0.15,
