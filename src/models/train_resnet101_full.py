@@ -332,8 +332,8 @@ def main():
     parser.add_argument(
         "--fold",
         type=int,
-        default=-1,
-        help="Chọn Fold để chạy (Mặc định: -1 chạy tự động toàn bộ 5 Folds)",
+        default=0,
+        help="Chọn Fold để chạy (Mặc định: 0 - chỉ chạy Fold 0, hoặc -1 chạy toàn bộ 5 Folds)",
     )
     parser.add_argument(
         "--raw_images_dir",
@@ -409,6 +409,16 @@ def main():
         )
         all_fold_metrics.append(f_metric)
         all_fold_histories.append(f_hist)
+
+    # Báo cáo kết quả khi chỉ chạy 1 Fold duy nhất
+    if len(all_fold_metrics) == 1:
+        f_idx = folds_to_run[0]
+        m = all_fold_metrics[0]
+        print("\n" + "=" * 80)
+        print(f"🏆 ĐÃ HOÀN THÀNH HUẤN LUYỆN FOLD {f_idx} (RESNET-101 - TASK #77)!")
+        print(f"📊 Accuracy = {m.get('accuracy', 0):.2f}% | Macro F1 = {m.get('macro_f1', 0):.2f}% | Macro Recall = {m.get('macro_recall', 0):.2f}%")
+        print(f"💾 Checkpoint tốt nhất và nhật ký đã lưu tại: {output_dir / f'fold_{f_idx}'}")
+        print("=" * 80)
 
     # Nếu chạy đủ 5 Folds, tự động xuất báo cáo khoa học Mean ± Std và Box Plot
     if len(all_fold_metrics) == 5:
