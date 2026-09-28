@@ -156,7 +156,11 @@ def train_single_fold(
             dynamic_ncols=True,
             bar_format="{l_bar}{bar:20}{r_bar}",
         )
+        t_batch_start = time.time()
         for batch in pbar:
+            t_data = time.time() - t_batch_start
+            t_gpu_start = time.time()
+
             imgs, targets = (
                 batch[0].to(device, non_blocking=True),
                 batch[1].to(device, non_blocking=True),
@@ -170,7 +174,15 @@ def train_single_fold(
             scaler.update()
 
             running_train_loss += loss.item()
-            pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+            t_gpu = time.time() - t_gpu_start
+            pbar.set_postfix(
+                {
+                    "loss": f"{loss.item():.4f}",
+                    "data": f"{t_data:.2f}s",
+                    "gpu": f"{t_gpu:.2f}s",
+                }
+            )
+            t_batch_start = time.time()
 
         scheduler.step()
         train_loss = running_train_loss / len(train_loader)
@@ -310,12 +322,12 @@ def main():
         default=-1,
         help="Chọn Fold để chạy (Mặc định: -1 chạy tự động toàn bộ 5 Folds)",
     )
-    default_workers = 2 if os.name == "nt" else 4
+    default_workers = 4
     parser.add_argument(
         "--num_workers",
         type=int,
         default=default_workers,
-        help="Số luồng CPU nạp ảnh song song (Mặc định: 2 trên Windows, 4 trên Linux)",
+        help="Số luồng CPU nạp ảnh song song (Mặc định: 4 để pre-fetch dữ liệu nhanh nhất từ RAM)",
     )
     parser.add_argument(
         "--preload_ram",
