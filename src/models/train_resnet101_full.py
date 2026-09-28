@@ -318,8 +318,8 @@ def main():
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=128,
-        help="Kích thước batch (Mặc định: 128 - tối ưu ~6.5GB/8GB VRAM trên CMP 40HX)",
+        default=64,
+        help="Kích thước batch (Mặc định: 64 - tối ưu độ ổn định và gradient y tế)",
     )
     default_workers = 2 if os.name == "nt" else 4
     parser.add_argument(
@@ -356,7 +356,8 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
+        # Tắt benchmark để tránh cuDNN chạy thử nghiệm hàng ngàn kernel làm đơ 7 phút ở batch đầu
+        torch.backends.cudnn.benchmark = False
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
         try:
