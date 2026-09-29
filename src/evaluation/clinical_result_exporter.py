@@ -11,6 +11,7 @@ Tự động trích xuất và lưu trữ tất cả các dạng kết quả:
 import json
 from pathlib import Path
 import sys
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
