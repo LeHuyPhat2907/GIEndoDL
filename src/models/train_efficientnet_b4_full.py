@@ -1,8 +1,10 @@
-"""Script huấn luyện DenseNet-121 (Task #78 - 50 Epochs - Stratified 5-Fold Cross Validation chuẩn Y khoa).
+"""Script huấn luyện EfficientNet-B4 (Task #79 - 50 Epochs - Stratified 5-Fold Cross Validation chuẩn Y khoa).
 
-So sánh Dense Connections (Feature Reuse) vs Residual Connections.
-Áp dụng: 50 Epochs + Batch Size 64 + Focal Loss (gamma=1.5) + Dropout 0.45 + Weight Decay 5e-4.
-Tương thích hoàn toàn trên Google Colab / Kaggle / Local GPU.
+Đặc điểm Task #79:
+- Kiến trúc: Pretrained EfficientNet-B4 từ thư viện timm (Compound Scaling).
+- Độ phân giải ảnh đầu vào: 380x380 (Sweet spot giữa performance và computation).
+- Tinh chỉnh: 50 Epochs + Batch Size 16 (Gradient Accumulation 2 -> Effective Batch Size 32) + Focal Loss (gamma=1.5).
+- Xuất đầy đủ 100% tất cả các dạng kết quả sau khi train xong (Ma trận nhầm lẫn, biểu đồ 300 DPI, bảng per-class, val_predictions, error_cases, clinical_report).
 """
 
 import argparse
@@ -11,6 +13,7 @@ import os
 from pathlib import Path
 import sys
 import time
+from typing import Dict, List
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -32,7 +35,7 @@ try:
     from src.dataset.dataloader_factory import get_dataloaders
     from src.evaluation.clinical_result_exporter import export_all_clinical_results
     from src.evaluation.cross_validation_reporter import CrossValidationReporter
-    from src.models.densenet121 import build_densenet121_baseline
+    from src.models.efficientnet_b4 import build_efficientnet_b4_baseline
     from src.training.checkpoint_manager import (
         ComprehensiveCheckpointManager,
         TrainingLogger,
@@ -43,7 +46,7 @@ except ImportError:
     from clinical_result_exporter import export_all_clinical_results
     from cross_validation_reporter import CrossValidationReporter
     from dataloader_factory import get_dataloaders
-    from densenet121 import build_densenet121_baseline
+    from efficientnet_b4 import build_efficientnet_b4_baseline
     from reproducibility import set_seed
 
 
@@ -94,13 +97,15 @@ def train_single_fold(
     raw_images_dir: Path,
     processed_dir: Path,
     checkpoints_base_dir: Path,
+    img_size: int = 380,
+    accum_steps: int = 2,
     num_workers: int = 4,
     preload_ram: bool = True,
 ):
-    """Huấn luyện 1 Fold độc lập cho DenseNet-121 trong hệ thống 5-Fold Cross Validation."""
+    """Huấn luyện 1 Fold độc lập cho EfficientNet-B4 với độ phân giải 380x380."""
     print("=" * 80)
     print(
-        f"🔥 BẮT ĐẦU HUẤN LUYỆN FOLD {fold_idx} (DENSENET-121 - TASK #78 - {epochs} EPOCHS)..."
+        f"🔥 BẮT ĐẦU HUẤN LUYỆN FOLD {fold_idx} (EFFICIENTNET-B4 - TASK #79 - {img_size}x{img_size} - {epochs} EPOCHS)..."
     )
     print("=" * 80)
 
@@ -112,6 +117,7 @@ def train_single_fold(
         raw_images_dir=str(raw_images_dir),
         batch_size=batch_size,
         num_workers=num_workers,
+        img_size=(img_size, img_size),
         preload_ram=preload_ram,
     )
     train_loader = loaders["train"]
@@ -121,8 +127,8 @@ def train_single_fold(
         fold_dir / "train.csv", train_loader.dataset.idx_to_class, power=0.6
     ).to(device)
 
-    model = build_densenet121_baseline(
-        num_classes=23, pretrained=True, freeze_backbone=False
+    model = build_efficientnet_b4_baseline(
+        num_classes=23, pretrained=True, drop_rate=0.4, freeze_backbone=False
     )
     model = model.to(device)
 
@@ -141,7 +147,13 @@ def train_single_fold(
     chk_manager = ComprehensiveCheckpointManager(
         checkpoint_dir=str(chk_dir),
         metric_name="val_macro_f1",
-        run_config={"fold": fold_idx, "model": f"DenseNet-121 {epochs}ep"},
+        run_config={
+            "fold": fold_idx,
+            "model": f"EfficientNet-B4 ({img_size}x{img_size}) {epochs}ep",
+            "batch_size": batch_size,
+            "accum_steps": accum_steps,
+            "effective_batch_size": batch_size * accum_steps,
+        },
     )
     logger = TrainingLogger(log_dir=str(chk_dir))
 
@@ -150,6 +162,7 @@ def train_single_fold(
         start_t = time.time()
         model.train()
         running_train_loss = 0.0
+        optimizer.zero_grad(set_to_none=True)
 
         pbar = tqdm(
             train_loader,
@@ -159,7 +172,7 @@ def train_single_fold(
             bar_format="{l_bar}{bar:20}{r_bar}",
         )
         t_batch_start = time.time()
-        for batch in pbar:
+        for batch_i, batch in enumerate(pbar):
             t_data = time.time() - t_batch_start
             t_gpu_start = time.time()
 
@@ -167,17 +180,23 @@ def train_single_fold(
                 batch[0].to(device, non_blocking=True),
                 batch[1].to(device, non_blocking=True),
             )
-            optimizer.zero_grad(set_to_none=True)
+
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
                 loss = criterion(outs, targets)
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+                loss_scaled = loss / accum_steps
+
+            scaler.scale(loss_scaled).backward()
+
+            if (batch_i + 1) % accum_steps == 0 or (batch_i + 1) == len(train_loader):
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
 
             loss_val = loss.item()
             running_train_loss += loss_val
             t_gpu = time.time() - t_gpu_start
+
             pbar.set_postfix_str(
                 f"D:{t_data:.2f}s|G:{t_gpu:.2f}s|L:{loss_val:.3f}"
             )
@@ -268,9 +287,15 @@ def train_single_fold(
             }
         )
 
-    # Đánh giá lại checkpoint tốt nhất của Fold và xuất toàn bộ 100% kết quả
+    # ---------------------------------------------------------------------------------
+    # ĐÁNH GIÁ LẠI CHECKPOINT TỐT NHẤT VÀ XUẤT TOÀN BỘ 100% CÁC DẠNG KẾT QUẢ
+    # ---------------------------------------------------------------------------------
+    print("\n" + "=" * 80)
+    print(f"📥 Đang nạp Checkpoint tốt nhất của Fold {fold_idx} để thực hiện đánh giá toàn diện...")
+    print("=" * 80)
     best_ckpt = chk_manager.load_best(model, device)
     model.eval()
+
     all_preds, all_targets, all_probs, all_filenames = [], [], [], []
     with torch.no_grad():
         for batch in val_loader:
@@ -282,6 +307,7 @@ def train_single_fold(
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
                 probs = torch.softmax(outs, dim=-1)
+
             all_preds.extend(outs.argmax(dim=-1).cpu().numpy())
             all_targets.extend(targets.cpu().numpy())
             all_probs.extend(probs.cpu().numpy())
@@ -293,6 +319,7 @@ def train_single_fold(
 
     res50_base_dir = ROOT_DIR / "models" / "checkpoints" / "resnet50_5folds"
 
+    # Gọi Clinical Result Exporter để xuất toàn bộ 100% kết quả
     fold_metrics = export_all_clinical_results(
         y_true=all_targets,
         y_pred=all_preds,
@@ -301,7 +328,7 @@ def train_single_fold(
         class_names=class_names,
         history_df=history_df,
         output_dir=chk_dir,
-        model_name="DenseNet-121",
+        model_name=f"EfficientNet-B4 ({img_size}x{img_size})",
         fold_idx=fold_idx,
         best_epoch=best_ckpt.get("epoch", -1),
         res50_comparison_dir=res50_base_dir if res50_base_dir.exists() else None,
@@ -311,12 +338,27 @@ def train_single_fold(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Huấn luyện DenseNet-121 (Task #78)")
+    parser = argparse.ArgumentParser(description="Huấn luyện EfficientNet-B4 (Task #79)")
     parser.add_argument(
         "--epochs", type=int, default=50, help="Số epochs huấn luyện (Mặc định: 50)"
     )
     parser.add_argument(
-        "--batch_size", type=int, default=64, help="Kích thước batch (Mặc định: 64)"
+        "--batch_size",
+        type=int,
+        default=16,
+        help="Kích thước mini-batch (Mặc định: 16 tối ưu cho 380x380 trên 8GB VRAM)",
+    )
+    parser.add_argument(
+        "--accum_steps",
+        type=int,
+        default=2,
+        help="Số bước tích lũy gradient (Mặc định: 2 -> Effective Batch Size = 32)",
+    )
+    parser.add_argument(
+        "--img_size",
+        type=int,
+        default=380,
+        help="Kích thước ảnh vuông đầu vào (Mặc định: 380 chuẩn EfficientNet-B4)",
     )
     parser.add_argument(
         "--fold",
@@ -335,7 +377,7 @@ def main():
         "--preload_ram",
         action="store_true",
         default=True,
-        help="Nạp toàn bộ ảnh vào RAM (256x256 uint8) để xóa sổ 100% độ trễ đọc đĩa (Mặc định: True)",
+        help="Nạp toàn bộ ảnh vào RAM để xóa sổ 100% độ trễ đọc đĩa (Mặc định: True)",
     )
     parser.add_argument(
         "--no_preload_ram",
@@ -358,7 +400,7 @@ def main():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default=str(ROOT_DIR / "models" / "checkpoints" / "densenet121_5folds"),
+        default=str(ROOT_DIR / "models" / "checkpoints" / "efficientnet_b4_5folds"),
         help="Đường dẫn lưu kết quả checkpoints",
     )
     args = parser.parse_args()
@@ -405,6 +447,8 @@ def main():
             raw_images_dir=raw_images_dir,
             processed_dir=processed_dir,
             checkpoints_base_dir=output_dir,
+            img_size=args.img_size,
+            accum_steps=args.accum_steps,
             num_workers=args.num_workers,
             preload_ram=args.preload_ram,
         )
@@ -416,20 +460,22 @@ def main():
         f_idx = folds_to_run[0]
         m = all_fold_metrics[0]
         print("\n" + "=" * 80)
-        print(f"🏆 ĐÃ HOÀN THÀNH HUẤN LUYỆN FOLD {f_idx} (DENSENET-121 - TASK #78)!")
+        print(f"🏆 ĐÃ HOÀN THÀNH HUẤN LUYỆN FOLD {f_idx} (EFFICIENTNET-B4 - TASK #79)!")
         print(f"📊 Accuracy = {m.get('accuracy', 0):.2f}% | Macro F1 = {m.get('macro_f1', 0):.2f}% | Macro Recall = {m.get('macro_recall', 0):.2f}%")
-        print(f"💾 Checkpoint tốt nhất và nhật ký đã lưu tại: {output_dir / f'fold_{f_idx}'}")
+        print(f"💾 Checkpoint và toàn bộ 9 bộ kết quả đã lưu tại: {output_dir / f'fold_{f_idx}'}")
         print("=" * 80)
 
-        # Tự động đối chiếu kiến trúc theo yêu cầu Task #78: Dense Connections vs Residual Connections
-        res50_metric_file = ROOT_DIR / "models" / "checkpoints" / "resnet50_5folds" / f"fold_{f_idx}" / "fold_metrics.json"
-        if res50_metric_file.exists():
-            with open(res50_metric_file, "r", encoding="utf-8") as rf:
-                res50_m = json.load(rf)
+        # Tự động đối chiếu với ResNet-50 và DenseNet-121 nếu có
+        res50_file = ROOT_DIR / "models" / "checkpoints" / "resnet50_5folds" / f"fold_{f_idx}" / "fold_metrics.json"
+        dense_file = ROOT_DIR / "models" / "checkpoints" / "densenet121_5folds" / f"fold_{f_idx}" / "fold_metrics.json"
+
+        if res50_file.exists():
+            with open(res50_file, "r", encoding="utf-8") as rf:
+                r50 = json.load(rf)
             print("\n" + "=" * 80)
-            print("🔬 ĐỐI CHIẾU KIẾN TRÚC Y KHOA: Dense Connections (Feature Reuse) vs Residual Connections")
+            print("🔬 ĐỐI CHIẾU HIỆU NĂNG: ResNet-50 vs EfficientNet-B4")
             print("=" * 80)
-            print(f"{'Chỉ số lâm sàng':<25} | {'ResNet-50 (Residual)':<22} | {'DenseNet-121 (Dense)':<22} | {'Chênh lệch':<12}")
+            print(f"{'Chỉ số':<25} | {'ResNet-50 (224x224)':<22} | {'EfficientNet-B4 (380x380)':<25} | {'Chênh lệch':<12}")
             print("-" * 80)
             for k, label in [
                 ("accuracy", "Accuracy (%)"),
@@ -438,50 +484,48 @@ def main():
                 ("macro_precision", "Macro Precision (%)"),
                 ("macro_recall", "Macro Recall (%)"),
             ]:
-                r_val = res50_m.get(k, 0.0)
-                d_val = m.get(k, 0.0)
-                diff = d_val - r_val
+                r_val = r50.get(k, 0.0)
+                e_val = m.get(k, 0.0)
+                diff = e_val - r_val
                 diff_str = f"+{diff:.2f}%" if diff > 0 else f"{diff:.2f}%"
-                print(f"{label:<25} | {r_val:>20.2f}% | {d_val:>20.2f}% | {diff_str:>12}")
+                print(f"{label:<25} | {r_val:>20.2f}% | {e_val:>23.2f}% | {diff_str:>12}")
             print("-" * 80)
-            print(f"{'Số lượng tham số (Params)':<25} | {'~23.5 Triệu (23,555,095)':>22} | {'~6.98 Triệu (6,980,439)':>22} | {'-70.3% (Nhẹ)':>12}")
+            print(f"{'Số lượng tham số (Params)':<25} | {'~23.5 Triệu':>22} | {'~19.3 Triệu':>25} | {'-17.9% (Tối ưu)':>12}")
             print("=" * 80)
 
-    # Nếu chạy đủ 5 Folds, tự động xuất báo cáo khoa học Mean ± Std và Box Plot
+    # Nếu chạy đủ 5 Folds, xuất báo cáo khoa học Mean ± Std và Box Plot
     if len(all_fold_metrics) == 5:
         print("\n" + "=" * 80)
-        print("🏆 ĐÃ HOÀN THÀNH TOÀN BỘ 5-FOLD CROSS VALIDATION (DENSENET-121)!")
+        print("🏆 ĐÃ HOÀN THÀNH TOÀN BỘ 5-FOLD CROSS VALIDATION (EFFICIENTNET-B4)!")
         print("📊 Đang tổng hợp thống kê Mean ± Std và xuất bản Box Plot...")
         print("=" * 80)
 
         reporter = CrossValidationReporter(
-            model_name="DenseNet-121 Baseline",
+            model_name="EfficientNet-B4 (380x380)",
             cv_result_dir=str(output_dir),
         )
         summary_df = reporter.aggregate_metrics(all_fold_metrics)
-
         try:
             print(
                 summary_df[
                     ["Chỉ số lâm sàng", "Mean ± Std", "Khoảng dao động [Min, Max]"]
                 ].to_markdown(index=False)
             )
-        except (ImportError, ModuleNotFoundError):
+        except Exception:
             print(
                 summary_df[
                     ["Chỉ số lâm sàng", "Mean ± Std", "Khoảng dao động [Min, Max]"]
                 ].to_string(index=False)
             )
 
-        # Xuất biểu đồ hộp Box Plot và biểu đồ đường 5 Folds
-        reporter.plot_boxplots(all_fold_metrics, "58_densenet121_5fold_boxplots.png")
+        reporter.plot_boxplots(all_fold_metrics, "60_efficientnet_b4_5fold_boxplots.png")
         reporter.plot_5fold_learning_curves(
-            all_fold_histories, "59_densenet121_5fold_learning_curves.png"
+            all_fold_histories, "61_efficientnet_b4_5fold_learning_curves.png"
         )
         summary_df.to_csv(
-            output_dir / "densenet121_5fold_summary_report.csv", index=False
+            output_dir / "efficientnet_b4_5fold_summary_report.csv", index=False
         )
-        print(f"\n💾 Đã lưu bảng báo cáo tổng kết tại: {output_dir}")
+        print(f"\n💾 Đã lưu bảng báo cáo tổng kết 5-Folds tại: {output_dir}")
 
 
 if __name__ == "__main__":

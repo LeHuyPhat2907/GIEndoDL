@@ -85,12 +85,21 @@ class HyperKvasirDataset(Dataset):
         from tqdm.auto import tqdm
 
         n_samples = len(self.relative_paths)
-        ram_gb = (n_samples * 256 * 256 * 3) / (1024**3)
+        if self.split == "train":
+            # Nạp lớn hơn kích thước crop 10% để RandomCrop hoạt động tốt
+            preload_h = max(256, int(self.img_size[1] * 1.1))
+            preload_w = max(256, int(self.img_size[0] * 1.1))
+        else:
+            # Val/Test nạp trực tiếp đúng kích thước mục tiêu
+            preload_h = self.img_size[1]
+            preload_w = self.img_size[0]
+
+        ram_gb = (n_samples * preload_h * preload_w * 3) / (1024**3)
         print(
             f"⚡ Đang nạp {n_samples} ảnh ({self.split}) vào RAM "
-            f"(256x256 RGB ~ {ram_gb:.2f} GB) bằng đa luồng C++..."
+            f"({preload_w}x{preload_h} RGB ~ {ram_gb:.2f} GB) bằng đa luồng C++..."
         )
-        self.cached_images = torch.empty((n_samples, 256, 256, 3), dtype=torch.uint8)
+        self.cached_images = torch.empty((n_samples, preload_h, preload_w, 3), dtype=torch.uint8)
 
         def _load_single(idx: int):
             img_full_path = self.raw_images_dir / self.relative_paths[idx]
@@ -98,7 +107,7 @@ class HyperKvasirDataset(Dataset):
             if img_bgr is not None:
                 img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
                 img_resized = cv2.resize(
-                    img_rgb, (256, 256), interpolation=cv2.INTER_LINEAR
+                    img_rgb, (preload_w, preload_h), interpolation=cv2.INTER_LINEAR
                 )
                 self.cached_images[idx] = torch.from_numpy(img_resized)
 
@@ -168,9 +177,18 @@ class HyperKvasirDataset(Dataset):
             img_bgr = cv2.imread(str(img_full_path))
             if img_bgr is None:
                 raise FileNotFoundError(f"Không thể đọc file ảnh tại: {img_full_path}")
-            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            target_h = (
+                max(256, int(self.img_size[1] * 1.1))
+                if self.split == "train"
+                else self.img_size[1]
+            )
+            target_w = (
+                max(256, int(self.img_size[0] * 1.1))
+                if self.split == "train"
+                else self.img_size[0]
+            )
             img_rgb = cv2.resize(
-                img_rgb, (256, 256), interpolation=cv2.INTER_LINEAR
+                img_rgb, (target_w, target_h), interpolation=cv2.INTER_LINEAR
             )
 
         # Áp dụng Albumentations

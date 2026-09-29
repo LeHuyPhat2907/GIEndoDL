@@ -29,6 +29,7 @@ if str(ROOT_DIR) not in sys.path:
 
 try:
     from src.dataset.dataloader_factory import get_dataloaders
+    from src.evaluation.clinical_result_exporter import export_all_clinical_results
     from src.evaluation.cross_validation_reporter import CrossValidationReporter
     from src.models.resnet101 import build_resnet101_baseline
     from src.training.checkpoint_manager import (
@@ -38,6 +39,7 @@ try:
     from src.utils.reproducibility import set_seed
 except ImportError:
     from checkpoint_manager import ComprehensiveCheckpointManager, TrainingLogger
+    from clinical_result_exporter import export_all_clinical_results
     from cross_validation_reporter import CrossValidationReporter
     from dataloader_factory import get_dataloaders
     from resnet101 import build_resnet101_baseline
@@ -264,10 +266,10 @@ def train_single_fold(
             }
         )
 
-    # Đánh giá lại checkpoint tốt nhất của Fold
+    # Đánh giá lại checkpoint tốt nhất của Fold và xuất toàn bộ 100% kết quả
     best_ckpt = chk_manager.load_best(model, device)
     model.eval()
-    all_preds, all_targets = [], []
+    all_preds, all_targets, all_probs, all_filenames = [], [], [], []
     with torch.no_grad():
         for batch in val_loader:
             imgs = (
@@ -276,40 +278,36 @@ def train_single_fold(
                 else batch[0].to(device)
             )
             targets = batch[1].to(device, non_blocking=True)
+            filenames = batch[2]
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
+                probs = torch.softmax(outs, dim=-1)
             all_preds.extend(outs.argmax(dim=-1).cpu().numpy())
             all_targets.extend(targets.cpu().numpy())
+            all_probs.extend(probs.cpu().numpy())
+            all_filenames.extend(filenames)
 
-    fold_metrics = {
-        "fold": fold_idx,
-        "best_epoch": best_ckpt.get("epoch", -1),
-        "accuracy": float(accuracy_score(all_targets, all_preds) * 100.0),
-        "macro_f1": float(
-            f1_score(all_targets, all_preds, average="macro", zero_division=0) * 100.0
-        ),
-        "macro_precision": float(
-            precision_score(
-                all_targets, all_preds, average="macro", zero_division=0
-            )
-            * 100.0
-        ),
-        "macro_recall": float(
-            recall_score(all_targets, all_preds, average="macro", zero_division=0)
-            * 100.0
-        ),
-    }
+    class_names = [val_loader.dataset.idx_to_class[i] for i in range(len(val_loader.dataset.idx_to_class))]
+    history_df = pd.DataFrame(history)
+    history_df.to_csv(chk_dir / "history.csv", index=False)
 
-    with open(chk_dir / "fold_metrics.json", "w", encoding="utf-8") as f:
-        json.dump(fold_metrics, f, indent=4)
-    pd.DataFrame(history).to_csv(chk_dir / "history.csv", index=False)
+    res50_base_dir = ROOT_DIR / "models" / "checkpoints" / "resnet50_5folds"
 
-    print(
-        f"✅ FOLD {fold_idx} HOÀN TẤT: Best Epoch = {fold_metrics['best_epoch']} | "
-        f"Val Acc = {fold_metrics['accuracy']:.2f}% | Val Macro F1 = {fold_metrics['macro_f1']:.2f}%"
+    fold_metrics = export_all_clinical_results(
+        y_true=all_targets,
+        y_pred=all_preds,
+        y_probs=all_probs,
+        filenames=all_filenames,
+        class_names=class_names,
+        history_df=history_df,
+        output_dir=chk_dir,
+        model_name="ResNet-101",
+        fold_idx=fold_idx,
+        best_epoch=best_ckpt.get("epoch", -1),
+        res50_comparison_dir=res50_base_dir if res50_base_dir.exists() else None,
     )
 
-    return fold_metrics, pd.DataFrame(history)
+    return fold_metrics, history_df
 
 
 def main():
