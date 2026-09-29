@@ -112,6 +112,10 @@ class HyperKvasirDataset(Dataset):
                     leave=False,
                 )
             )
+        try:
+            self.cached_images.share_memory_()
+        except Exception:
+            pass
 
     def _get_default_transform(self) -> A.Compose:
         """Tạo pipeline biến đổi theo từng chế độ split."""
@@ -157,8 +161,8 @@ class HyperKvasirDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, str]:
         """Lấy một mẫu dữ liệu: Trả về (image_tensor, label_idx, filename)."""
         if self.cached_images is not None:
-            # Truy xuất trực tiếp từ RAM (Zero-copy numpy view)
-            img_rgb = self.cached_images[idx].numpy()
+            # Truy xuất trực tiếp từ RAM (bảo đảm an toàn dữ liệu không bị albumentations sửa đổi in-place)
+            img_rgb = self.cached_images[idx].numpy().copy()
         else:
             img_full_path = self.raw_images_dir / self.relative_paths[idx]
             img_bgr = cv2.imread(str(img_full_path))

@@ -165,7 +165,7 @@ def train_single_fold(
 
             imgs = batch[0].to(device, non_blocking=True)
             targets = batch[1].to(device, non_blocking=True)
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             with torch.amp.autocast("cuda", enabled=torch.cuda.is_available()):
                 outs = model(imgs)
                 loss = criterion(outs, targets)
@@ -173,10 +173,11 @@ def train_single_fold(
             scaler.step(optimizer)
             scaler.update()
 
-            running_train_loss += loss.item()
+            loss_val = loss.item()
+            running_train_loss += loss_val
             t_gpu = time.time() - t_gpu_start
             pbar.set_postfix_str(
-                f"D:{t_data:.2f}s|G:{t_gpu:.2f}s|L:{loss.item():.3f}"
+                f"D:{t_data:.2f}s|G:{t_gpu:.2f}s|L:{loss_val:.3f}"
             )
             if pbar.n <= 3 or pbar.n % 20 == 0:
                 pbar.write(
