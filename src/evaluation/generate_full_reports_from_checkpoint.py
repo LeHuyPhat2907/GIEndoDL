@@ -30,6 +30,7 @@ from src.dataset.dataloader_factory import get_dataloaders
 from src.evaluation.clinical_result_exporter import export_all_clinical_results
 from src.models.densenet121 import build_densenet121_baseline
 from src.models.efficientnet_b4 import build_efficientnet_b4_baseline
+from src.models.efficientnet_b5 import build_efficientnet_b5_baseline
 from src.models.resnet50 import build_resnet50_baseline
 from src.models.resnet101 import build_resnet101_baseline
 
@@ -46,7 +47,7 @@ def main():
         "--model_type",
         type=str,
         required=True,
-        choices=["resnet50", "resnet101", "densenet121", "efficientnet_b4"],
+        choices=["resnet50", "resnet101", "densenet121", "efficientnet_b4", "efficientnet_b5"],
         help="Loại kiến trúc mô hình",
     )
     parser.add_argument(
@@ -59,7 +60,7 @@ def main():
         "--img_size",
         type=int,
         default=224,
-        help="Kích thước ảnh vuông đầu vào (Mặc định: 224, riêng EfficientNet-B4 là 380)",
+        help="Kích thước ảnh vuông đầu vào (Mặc định: 224, B4 là 380, B5 là 456)",
     )
     parser.add_argument(
         "--raw_images_dir",
@@ -95,6 +96,8 @@ def main():
         model = build_densenet121_baseline(num_classes=23, pretrained=False)
     elif args.model_type == "efficientnet_b4":
         model = build_efficientnet_b4_baseline(num_classes=23, pretrained=False)
+    elif args.model_type == "efficientnet_b5":
+        model = build_efficientnet_b5_baseline(num_classes=23, pretrained=False)
     else:
         raise ValueError(f"Không hỗ trợ mô hình: {args.model_type}")
 
