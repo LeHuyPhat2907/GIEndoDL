@@ -65,6 +65,15 @@ class HyperKvasirDataset(Dataset):
         )
         self.labels = [self.class_to_idx[c] for c in self.class_names]
 
+        # Kiểm tra tính tồn tại của ảnh, tự động dò tìm trong /kaggle/input nếu cần
+        if len(self.relative_paths) > 0:
+            sample_p = self.raw_images_dir / self.relative_paths[0]
+            if not sample_p.exists():
+                alt_dir = self._auto_locate_raw_images()
+                if alt_dir is not None:
+                    print(f"🎉 Kaggle detected! Đã tự động kết nối thư mục ảnh tại: {alt_dir}")
+                    self.raw_images_dir = alt_dir
+
         # Khởi tạo Tensor Shared Memory trong RAM nếu kích hoạt preload_ram
         self.cached_images = None
         if self.preload_ram:
@@ -75,6 +84,29 @@ class HyperKvasirDataset(Dataset):
             self.transform = transform
         else:
             self.transform = self._get_default_transform()
+
+    def _auto_locate_raw_images(self) -> Optional[Path]:
+        """Tự động tìm kiếm thư mục ảnh gốc trong /kaggle/input hoặc các thư mục lân cận."""
+        if not self.relative_paths:
+            return None
+        test_rel = self.relative_paths[0]
+        sub_folder = test_rel.split("/")[0] if "/" in test_rel else test_rel.split("\\")[0]
+
+        kaggle_input = Path("/kaggle/input")
+        if kaggle_input.exists():
+            # 1. Tìm bất kỳ thư mục nào chứa nhánh 'lower-gi-tract' hoặc 'upper-gi-tract'
+            matches = list(kaggle_input.rglob(sub_folder))
+            for m in matches:
+                cand = m.parent
+                if (cand / test_rel).exists():
+                    return cand
+
+            # 2. Tìm theo tên thư mục 'labeled-images'
+            for cand_name in ["labeled-images", "labeled_images", "labeled images"]:
+                for m in kaggle_input.rglob(cand_name):
+                    if m.is_dir() and (m / test_rel).exists():
+                        return m
+        return None
 
     def _preload_dataset(self):
         """Nạp trước toàn bộ ảnh vào RAM dạng Tensor uint8 (256x256 RGB) bằng đa luồng C++.

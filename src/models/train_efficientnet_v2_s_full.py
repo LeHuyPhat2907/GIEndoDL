@@ -505,12 +505,30 @@ def main():
     )
 
     raw_images_dir = Path(args.raw_images_dir)
-    # Tự động nhận diện thư mục dữ liệu trên Kaggle nếu không tìm thấy ở đường dẫn mặc định
-    if not raw_images_dir.exists() and Path("/kaggle/input").exists():
-        candidates = list(Path("/kaggle/input").rglob("labeled-images"))
-        if candidates:
-            raw_images_dir = candidates[0]
+    # Tự động nhận diện thư mục dữ liệu trên Kaggle
+    if Path("/kaggle/input").exists():
+        lower_gi_dirs = list(Path("/kaggle/input").rglob("lower-gi-tract"))
+        if lower_gi_dirs:
+            raw_images_dir = lower_gi_dirs[0].parent
             print(f"🎉 Kaggle detected! Đã tự động kết nối ảnh tại: {raw_images_dir}")
+        else:
+            candidates = list(Path("/kaggle/input").rglob("*labeled*image*"))
+            if candidates:
+                raw_images_dir = candidates[0]
+                print(f"🎉 Kaggle detected! Đã tự động kết nối ảnh tại: {raw_images_dir}")
+
+    # Xác thực đường dẫn ảnh để tránh spam warning OpenCV
+    if not (raw_images_dir / "lower-gi-tract").exists() and not (raw_images_dir / "upper-gi-tract").exists():
+        print("\n" + "=" * 85)
+        print("❌ LỖI: Không tìm thấy thư mục chứa ảnh HyperKvasir!")
+        print(f"   Đường dẫn hiện tại: {raw_images_dir}")
+        print("   👉 NGUYÊN NHÂN TRÊN KAGGLE: Bạn chưa gắn (Add Input) Dataset HyperKvasir vào Notebook!")
+        print("   👉 CÁCH KHẮC PHỤC TRÊN KAGGLE:")
+        print("      1. Ở cột bên phải màn hình Kaggle Notebook, bấm nút '+ Add Input' (hoặc 'Add Data').")
+        print("      2. Tìm kiếm 'hyperkvasir' và bấm 'Add' để gắn dataset vào Notebook.")
+        print("      3. Sau khi thấy dataset xuất hiện ở mục Input, chạy lại lệnh train.")
+        print("=" * 85 + "\n")
+        sys.exit(1)
 
     processed_dir = Path(args.processed_dir)
     # Nếu trên Kaggle chưa có thư mục 5folds, kiểm tra trong input hoặc tạo mới trong working
