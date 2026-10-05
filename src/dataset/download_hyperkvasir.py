@@ -25,6 +25,9 @@ class DownloadProgressBar(tqdm):
 
 
 def download_and_extract_hyperkvasir(dest_dir: Path = DATA_RAW_DIR):
+    # Tự động chuẩn hóa thư mục đích trên Kaggle
+    if Path("/kaggle/working/GIEndoDL").exists():
+        dest_dir = Path("/kaggle/working/GIEndoDL/data/raw")
     dest_dir.mkdir(parents=True, exist_ok=True)
     target_labeled_dir = dest_dir / "labeled-images"
 
@@ -42,13 +45,29 @@ def download_and_extract_hyperkvasir(dest_dir: Path = DATA_RAW_DIR):
     print(f"💾 Nơi lưu tạm: {zip_path}")
     print("=" * 80)
 
+    import ssl
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+
+    req = urllib.request.Request(
+        DATASET_URL,
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    )
+
     try:
-        with DownloadProgressBar(
-            unit="B", unit_scale=True, miniters=1, desc="📥 Đang tải HyperKvasir"
-        ) as t:
-            urllib.request.urlretrieve(
-                DATASET_URL, filename=str(zip_path), reporthook=t.update_to
-            )
+        with urllib.request.urlopen(req, context=ssl_context) as response, open(zip_path, "wb") as out_file:
+            total_size = int(response.info().get("Content-Length", 0))
+            chunk_size = 1024 * 1024  # 1MB chunks
+            with tqdm(
+                total=total_size, unit="B", unit_scale=True, desc="📥 Đang tải HyperKvasir"
+            ) as pbar:
+                while True:
+                    chunk = response.read(chunk_size)
+                    if not chunk:
+                        break
+                    out_file.write(chunk)
+                    pbar.update(len(chunk))
 
         print("\n📦 Đang giải nén bộ dữ liệu ảnh (labeled-images)...")
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
