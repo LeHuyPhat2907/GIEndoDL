@@ -80,12 +80,13 @@ def calculate_smoothed_class_weights(
 ) -> torch.Tensor:
     """Tính trọng số nghịch đảo tần suất có làm mịn."""
     df = pd.read_csv(train_csv)
-    counts = df["label"].value_counts()
+    target_col = "class_name" if "class_name" in df.columns else ("label" if "label" in df.columns else df.columns[-1])
+    counts = df[target_col].value_counts().to_dict()
     num_classes = len(idx_to_class)
     weights = np.zeros(num_classes, dtype=np.float32)
 
     for idx, cname in idx_to_class.items():
-        cnt = counts.get(cname, 1)
+        cnt = counts.get(cname, counts.get(idx, 1))
         weights[idx] = 1.0 / (cnt**power)
 
     weights = weights / weights.sum() * num_classes
