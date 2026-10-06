@@ -148,11 +148,11 @@ def run_cutmix_mixup_demo(raw_dir: str, metadata_path: str, fig_dir: str, doc_di
 
         f.write("## 1. Cơ chế Toán học & Ý nghĩa Lâm sàng\n\n")
         f.write(
-            "1. **MixUp ($\lambda \in [0, 1]$):** Trộn tuyến tính không gian ảnh và vector nhãn Soft-Label. "
+            r"1. **MixUp ($\lambda \in [0, 1]$):** Trộn tuyến tính không gian ảnh và vector nhãn Soft-Label. "
             "Kỹ thuật này ép mạng nơ-ron cư xử tuyến tính giữa các vùng chuyển tiếp, ngăn ngừa mô hình đưa ra dự đoán quá tự tin (Overconfidence).\n"
         )
         f.write(
-            "2. **CutMix ($\mathbf{M} \in \{0, 1\}$):** Thay thế một vùng chữ nhật của ảnh $A$ bằng mô từ ảnh $B$. "
+            r"2. **CutMix ($\mathbf{M} \in \{0, 1\}$):** Thay thế một vùng chữ nhật của ảnh $A$ bằng mô từ ảnh $B$. "
             "Buộc các tầng tích chập phải kích hoạt trên toàn bộ vùng niêm mạc thay vì chỉ phụ thuộc vào một đốm tổn thương đơn lẻ.\n\n---\n\n"
         )
 
