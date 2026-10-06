@@ -509,10 +509,16 @@ def main():
         default=str(ROOT_DIR / "data" / "processed" / "5folds"),
         help="Đường dẫn tới thư mục 5folds",
     )
+    # Tự động chọn output_dir phù hợp trên Kaggle vs Local
+    default_out = (
+        Path("/kaggle/working/models/checkpoints/mobilenet_v3_5folds")
+        if Path("/kaggle/working").exists()
+        else (ROOT_DIR / "models" / "checkpoints" / "mobilenet_v3_5folds")
+    )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default=str(ROOT_DIR / "models" / "checkpoints" / "mobilenet_v3_5folds"),
+        default=str(default_out),
         help="Đường dẫn lưu kết quả checkpoints",
     )
     args = parser.parse_args()
