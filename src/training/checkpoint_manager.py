@@ -12,31 +12,40 @@ import torch.nn as nn
 class TrainingLogger:
     """Ghi nhận lịch sử huấn luyện vào file CSV và JSON phục vụ phân tích khoa học."""
 
-    def __init__(self, log_dir: str):
+    def __init__(self, log_dir: str, fieldnames: Optional[List[str]] = None):
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.csv_path = self.log_dir / "training_history.csv"
         self.json_path = self.log_dir / "training_summary.json"
         self.history: List[Dict[str, Any]] = []
 
-        self.fieldnames = [
-            "epoch",
-            "train_loss",
-            "val_loss",
-            "val_acc",
-            "val_macro_f1",
-            "learning_rate",
-            "time_sec",
-        ]
-        with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-            writer.writeheader()
+        self.fieldnames = fieldnames
+        self._header_written = False
+        if self.fieldnames is not None:
+            with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(
+                    f, fieldnames=self.fieldnames, extrasaction="ignore"
+                )
+                writer.writeheader()
+            self._header_written = True
 
     def log_epoch(self, epoch_data: Dict[str, Any]):
         """Ghi dữ liệu của 1 Epoch vào CSV và danh sách bộ nhớ."""
         self.history.append(epoch_data)
+
+        if not self._header_written:
+            self.fieldnames = list(epoch_data.keys())
+            with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(
+                    f, fieldnames=self.fieldnames, extrasaction="ignore"
+                )
+                writer.writeheader()
+            self._header_written = True
+
         with open(self.csv_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+            writer = csv.DictWriter(
+                f, fieldnames=self.fieldnames, extrasaction="ignore"
+            )
             writer.writerow(epoch_data)
 
         # Cập nhật file JSON tóm tắt
