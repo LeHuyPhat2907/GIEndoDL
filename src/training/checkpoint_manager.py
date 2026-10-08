@@ -108,6 +108,24 @@ class ComprehensiveCheckpointManager:
 
         return is_best
 
+    def save(
+        self,
+        model: nn.Module,
+        optimizer: torch.optim.Optimizer,
+        epoch: int,
+        metrics: Dict[str, float],
+        scaler: Optional[Any] = None,
+        **kwargs,
+    ) -> bool:
+        """Alias tương thích cho hàm step()."""
+        return self.step(
+            epoch=epoch,
+            model=model,
+            optimizer=optimizer,
+            metrics=metrics,
+            scaler=scaler,
+        )
+
     def load_best(self, model: nn.Module, device: torch.device) -> Dict[str, Any]:
         """Nạp trọng số tối ưu nhất để đánh giá trên tập Test."""
         best_path = self.chk_dir / "best_model.pth"

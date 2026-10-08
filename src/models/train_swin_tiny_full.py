@@ -435,17 +435,19 @@ def train_single_fold(
             }
         )
 
-        is_best = chk_manager.save(
+        chk_metrics = {
+            "val_loss": val_loss,
+            "val_accuracy": val_acc,
+            "val_macro_f1": val_f1,
+            "val_macro_precision": val_prec,
+            "val_macro_recall": val_rec,
+        }
+        is_best = chk_manager.step(
+            epoch=ep,
             model=model,
             optimizer=optimizer,
-            epoch=ep,
-            metrics={
-                "val_loss": val_loss,
-                "val_accuracy": val_acc,
-                "val_macro_f1": val_f1,
-                "val_macro_precision": val_prec,
-                "val_macro_recall": val_rec,
-            },
+            metrics=chk_metrics,
+            scaler=scaler,
         )
 
         best_flag = " ⭐ [BEST F1]" if is_best else ""
