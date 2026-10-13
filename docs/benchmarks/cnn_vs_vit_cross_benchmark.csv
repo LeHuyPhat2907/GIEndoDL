@@ -1,0 +1,15 @@
+﻿Task ID,Model,Architecture,Attention Mechanism,Resolution,Params (M),FLOPs (G),Accuracy (%),F1-macro (%),Weighted F1 (%),AUC-ROC (%),Training Time (50ep),GPU Latency (ms),GPU FPS,CPU Latency (ms),CPU FPS
+#76,ResNet-50 (Baseline),Standard Residual,,224x224,23.51,4.12,88.7,65.51,88.88,97.42,4.3 h (~311s/ep),6.75,148.2,54.05,18.5
+#77,ResNet-101,Deep Residual,,224x224,44.55,7.85,89.45,68.04,89.24,97.85,7.6 h (~549s/ep),11.3,88.5,89.29,11.2
+#78,DenseNet-121,Dense Connectivity,,224x224,7.98,2.88,89.83,68.04,89.54,98.12,3.5 h (~254s/ep),8.9,112.4,67.57,14.8
+#79,EfficientNet-B4,Compound Scaling,SE (Internal),380x380,19.34,4.4,88.61,62.7,88.91,97.21,7.9 h (~570s/ep),23.75,42.1,217.39,4.6
+#80,EfficientNet-B5,Compound Scaling,SE (Internal),456x456,30.4,9.9,88.61,66.11,89.01,97.68,16.8 h (~1207s/ep),41.15,24.3,476.19,2.1
+#81,EfficientNetV2-S,Fused-MBConv / Progressive,SE (Internal),384x384,21.46,8.4,90.44,67.97,90.16,98.45,1.49 h (~107s/ep),13.07,76.5,112.36,8.9
+#82,MobileNetV3-Large,Lightweight Edge,SE (Internal),224x224,4.23,0.22,88.37,62.55,88.1,97.1,0.25 h (~18s/ep),6.39,156.6,21.42,46.7
+#83,SE-ResNet-50,Channel Attention Residual,Squeeze-and-Excitation,224x224,26.14,4.14,88.42,64.65,88.32,97.35,0.65 h (~46s/ep),7.12,140.4,58.82,17.0
+#86,ViT-Base/16,Standard Vision Transformer,Global Multi-Head Self-Attention,224x224,85.8,17.58,87.34,60.41,87.19,98.89,1.23 h (~88.8s/ep),9.85,101.5,586.65,1.7
+#87,ViT-Base/32,Coarse-Patch Vision Transformer,Global Multi-Head Self-Attention (Coarse),224x224,87.45,4.41,85.51,60.02,85.16,99.14,0.42 h (~30.6s/ep),3.42,292.4,206.29,4.8
+#88,DeiT-Base Distilled,Distilled Vision Transformer,Distillation Token + Self-Attention,224x224,85.84,17.65,87.06,63.05,86.88,98.43,1.12 h (~80.8s/ep),10.45,95.7,703.86,1.4
+#89,Swin-Base,Hierarchical Window Transformer,Shifted Window Attention (W-MSA & SW-MSA),224x224,86.77,15.44,89.73,69.78,90.18,99.48,1.92 h (~138.3s/ep),14.85,67.3,1176.32,0.9
+#90,Swin-Tiny,Lightweight Hierarchical Transformer,Shifted Window Attention (Lightweight),224x224,27.54,4.49,89.97,65.19,89.88,99.05,0.78 h (~56.2s/ep),5.62,177.9,440.39,2.3
+#91,CaiT-S24,Class-Attention Two-Stage Transformer,Patch Self-Attention + Class-Attention,224x224,46.54,9.35,82.98,59.74,82.86,99.4,12.94 h (~820s/ep),18.2,54.9,685.29,1.5

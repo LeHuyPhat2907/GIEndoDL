@@ -1,0 +1,7 @@
+﻿Task ID,Model,Architecture,Attention Mechanism,Resolution,Params (M),FLOPs (G),Accuracy (%),F1-macro (%),Weighted F1 (%),AUC-ROC (%),Training Time (50ep),GPU Latency (ms),GPU FPS,CPU Latency (ms),CPU FPS
+#86,ViT-Base/16,Standard Vision Transformer,Global Multi-Head Self-Attention,224x224,85.8,17.58,87.34,60.41,87.19,98.89,1.23 h (~88.8s/ep),9.85,101.5,586.65,1.7
+#87,ViT-Base/32,Coarse-Patch Vision Transformer,Global Multi-Head Self-Attention (Coarse),224x224,87.45,4.41,85.51,60.02,85.16,99.14,0.42 h (~30.6s/ep),3.42,292.4,206.29,4.8
+#88,DeiT-Base Distilled,Distilled Vision Transformer,Distillation Token + Self-Attention,224x224,85.84,17.65,87.06,63.05,86.88,98.43,1.12 h (~80.8s/ep),10.45,95.7,703.86,1.4
+#89,Swin-Base,Hierarchical Window Transformer,Shifted Window Attention (W-MSA & SW-MSA),224x224,86.77,15.44,89.73,69.78,90.18,99.48,1.92 h (~138.3s/ep),14.85,67.3,1176.32,0.9
+#90,Swin-Tiny,Lightweight Hierarchical Transformer,Shifted Window Attention (Lightweight),224x224,27.54,4.49,89.97,65.19,89.88,99.05,0.78 h (~56.2s/ep),5.62,177.9,440.39,2.3
+#91,CaiT-S24,Class-Attention Two-Stage Transformer,Patch Self-Attention + Class-Attention,224x224,46.54,9.35,82.98,59.74,82.86,99.4,12.94 h (~820s/ep),18.2,54.9,685.29,1.5
