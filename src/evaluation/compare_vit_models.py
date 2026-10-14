@@ -209,6 +209,61 @@ def generate_vit_comparison_report(output_dir: Optional[Path] = None) -> pd.Data
     print(f"💾 Đã lưu bảng JSON: {json_path}")
     print(f"💾 Đã lưu bảng Markdown: {md_table_path}")
 
+    # TASK #93: Khuyến nghị chọn ViT Backbone & Khối Transformer tối ưu cho mô hình Hybrid
+    recommendation_md = output_dir / "vit_backbone_recommendation.md"
+    with open(recommendation_md, "w", encoding="utf-8") as f:
+        f.write(
+            "# 🏆 BÁO CÁO PHÂN TÍCH CHỌN ViT BACKBONE & THÀNH PHẦN TRANSFORMER CHO KIẾN TRÚC LAI (TASK #93)\n\n"
+        )
+        f.write(
+            "**Đề tài:** *Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa qua hình ảnh nội soi*\n"
+        )
+        f.write("**Học viên:** Lê Huy Phát — Đại học Công Thương TP.HCM (HUIT)\n\n")
+        f.write("---\n\n")
+        f.write(
+            "## 1. 🎯 TỔNG KẾT QUYẾT ĐỊNH CHỌN KIẾN TRÚC TRANSFORMER (DECISION SUMMARY)\n\n"
+        )
+        f.write(
+            "Dựa trên kết quả thực nghiệm 6 mô hình Vision Transformer trên bộ dữ liệu HyperKvasir (23 lớp, Fold 0):\n\n"
+        )
+        f.write(
+            "1. **Ứng viên SOTA Tuyệt đối ở Chế độ Mô hình Độc lập (Top Absolute SOTA): Swin-Base (#89)**\n"
+        )
+        f.write(
+            "   - Đạt kỷ lục Macro F1 (**69.78%**), Weighted F1 (**90.18%**) và AUC-ROC (**99.48%**).\n"
+        )
+        f.write(
+            "   - Triệt tiêu 98.7% báo động giả polyp (chỉ duy nhất 1 ca FP, Precision polyp 99.50%).\n"
+        )
+        f.write(
+            "   - Hạn chế: Nặng 86.8M tham số, tốc độ CPU chỉ 0.9 FPS (không khả thi cho video thời gian thực y tế).\n\n"
+        )
+        f.write(
+            "2. **Ứng viên Cân bằng & Gọn nhẹ Tốt nhất (Top Efficiency & Balanced Accuracy): Swin-Tiny (#90)**\n"
+        )
+        f.write(
+            "   - Đạt Accuracy cao nhất họ Transformer (**89.97%**), Cohen Kappa **0.8912**, chỉ **27.54M tham số**.\n"
+        )
+        f.write(
+            "   - Huấn luyện nhanh gấp 2.5 lần Swin-Base (46.9 phút vs 115.3 phút), đạt 177.9 FPS trên GPU.\n\n"
+        )
+        f.write(
+            "3. 👉 **QUYẾT ĐỊNH CỐT TỬ CHO KIẾN TRÚC LAI HYBRID CNN-CBAM-TRANSFORMER (PHASE 8 / TASK #94):**\n"
+        )
+        f.write(
+            "   - **KHÔNG bê nguyên xi Swin-Base hay Swin-Tiny vào sau ResNet-50** (tránh bùng nổ >110M tham số và dư thừa cửa sổ trượt trên feature map 7x7).\n"
+        )
+        f.write(
+            "   - **LỰA CHỌN TỐI ƯU:** Sử dụng **Compact Transformer Encoder (Multi-Head Self-Attention trên N=49 Visual Tokens, L=2 đến 4 layers, d=512, heads=8)**.\n"
+        )
+        f.write(
+            "   - Kế thừa trọn vẹn: Khả năng mô hình hóa ngữ cảnh tầm xa toàn cục của ViT/Swin, nhưng chỉ bổ sung **~6.3M tham số** vào ResNet-50 + CBAM $\\implies$ Tổng mô hình lai chỉ **~32.3M tham số**, đạt chuẩn thời gian thực $\\ge 100$ FPS trên GPU và $\\ge 15$ FPS trên CPU!\n"
+        )
+
+    print(
+        f"📄 Đã lưu báo cáo khuyến nghị chọn ViT Backbone (Task #93) tại: {recommendation_md}"
+    )
+
     # Tạo bảng đối chiếu liên họ kiến trúc: CNNs (#76 - #83) vs Vision Transformers (#86 - #91)
     cnn_csv_path = output_dir / "cnn_master_benchmark.csv"
     if cnn_csv_path.exists():
