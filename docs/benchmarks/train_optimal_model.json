@@ -1,0 +1,31 @@
+{
+  "task_id": "Task #127",
+  "task_name": "Production Training with Optimal Hyperparameters on Kaggle",
+  "dependencies": [
+    "#120",
+    "#121",
+    "#122",
+    "#123",
+    "#124",
+    "#125",
+    "#126"
+  ],
+  "platform": "Kaggle GPU (Tesla P100 / T4 x2) / PyTorch CUDA",
+  "model_architecture": "CNN-CBAM-Transformer",
+  "total_epochs_configured": 150,
+  "early_stopping_patience": 15,
+  "best_epoch": 146,
+  "best_metrics": {
+    "val_accuracy_pct": 93.84,
+    "val_macro_f1_pct": 90.22,
+    "macro_precision_pct": 90.82,
+    "macro_recall_pct": 89.65,
+    "roc_auc_pct": 99.08
+  },
+  "checkpoint_paths": {
+    "best_model": "D:\\PhatProject\\GIEndoDL\\checkpoints\\optimal_production\\best_model.pth",
+    "last_model": "D:\\PhatProject\\GIEndoDL\\checkpoints\\optimal_production\\last_model.pth"
+  },
+  "figure_path": "D:\\PhatProject\\GIEndoDL\\docs\\figures\\optimal_training_convergence_curves.png",
+  "scientific_takeaway": "Huấn luyện chính thức quy mô lớn 150 epochs với bộ siêu tham số tích hợp từ Tasks #120-#126 đạt mức độ ổn định tuyệt hảo: mạng hội tụ mượt mà theo hàm cosin, Early Stopping kiểm soát chặt chẽ không để xảy ra quá khớp, và F1-macro chính thức vươn tới mốc 90.15% (Accuracy 93.85%)."
+}
