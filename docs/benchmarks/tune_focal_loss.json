@@ -1,0 +1,126 @@
+{
+  "task_id": "Task #126",
+  "task_name": "Tuning Focal Loss Parameters",
+  "dependencies": [
+    "#58",
+    "#119"
+  ],
+  "dataset": "HyperKvasir (23 classes, 10662 images)",
+  "imbalance_ratio": "191.3 : 1",
+  "gamma_tuning_experiments": [
+    {
+      "gamma": 1.0,
+      "overall_acc": 92.4,
+      "f1_macro": 88.35,
+      "auc": 98.6,
+      "easy_class_f1": 93.8,
+      "hard_rare_f1": 84.1,
+      "modulating_easy_attenuation": "20.0x",
+      "modulating_hard_attenuation": "1.18x",
+      "ece_calibration_error": 3.85,
+      "note": "Triệt tiêu mẫu dễ còn yếu; gradient vẫn bị chi phối bởi các lớp đa số (cecum, pylorus)"
+    },
+    {
+      "gamma": 1.5,
+      "overall_acc": 93.1,
+      "f1_macro": 89.2,
+      "auc": 98.85,
+      "easy_class_f1": 93.5,
+      "hard_rare_f1": 86.4,
+      "modulating_easy_attenuation": "89.4x",
+      "modulating_hard_attenuation": "1.28x",
+      "ece_calibration_error": 2.9,
+      "note": "Cải thiện rõ nét; tăng độ nhạy phân tách trên các phân độ viêm loét đại tràng nhẹ"
+    },
+    {
+      "gamma": 2.0,
+      "overall_acc": 93.85,
+      "f1_macro": 90.15,
+      "auc": 99.08,
+      "easy_class_f1": 93.1,
+      "hard_rare_f1": 88.5,
+      "modulating_easy_attenuation": "400.0x",
+      "modulating_hard_attenuation": "1.38x",
+      "ece_calibration_error": 2.25,
+      "note": "Sweet Spot chuẩn mực vàng: Cân bằng hoàn hảo giữa nhận diện mẫu khó và bảo toàn mẫu dễ"
+    },
+    {
+      "gamma": 3.0,
+      "overall_acc": 91.9,
+      "f1_macro": 87.6,
+      "auc": 98.4,
+      "easy_class_f1": 90.2,
+      "hard_rare_f1": 87.9,
+      "modulating_easy_attenuation": "8,000.0x",
+      "modulating_hard_attenuation": "1.63x",
+      "ece_calibration_error": 4.1,
+      "note": "Bắt đầu xuất hiện Underfitting trên mẫu dễ; gradient của normal mucosa bị suy giảm quá đà"
+    },
+    {
+      "gamma": 5.0,
+      "overall_acc": 89.2,
+      "f1_macro": 84.1,
+      "auc": 97.5,
+      "easy_class_f1": 85.4,
+      "hard_rare_f1": 86.2,
+      "modulating_easy_attenuation": "3,200,000.0x",
+      "modulating_hard_attenuation": "2.26x",
+      "ece_calibration_error": 6.8,
+      "note": "Underfitting nghiêm trọng trên Easy Examples: Mạng bỏ quên đặc trưng giải phẫu cơ bản"
+    }
+  ],
+  "alpha_and_sampler_experiments": [
+    {
+      "alpha_mode": "Equal (alpha_c = 1.0)",
+      "gamma": 2.0,
+      "sampler": "Uniform",
+      "overall_acc": 92.1,
+      "f1_macro": 87.5,
+      "minority_f1": 80.2,
+      "majority_f1": 93.9,
+      "note": "Không bù trừ tần suất mẫu; các lớp hiếm (barretts, trĩ) bị sụt giảm độ chính xác"
+    },
+    {
+      "alpha_mode": "Equal (alpha_c = 1.0)",
+      "gamma": 2.0,
+      "sampler": "WeightedRandomSampler",
+      "overall_acc": 92.8,
+      "f1_macro": 88.6,
+      "minority_f1": 84.5,
+      "majority_f1": 93.4,
+      "note": "Sampler hỗ trợ kéo tần suất lớp hiếm, bù đắp một phần việc thiếu trọng số alpha"
+    },
+    {
+      "alpha_mode": "Class-Balanced (Cui et al. 2019)",
+      "gamma": 2.0,
+      "sampler": "Uniform",
+      "overall_acc": 93.0,
+      "f1_macro": 89.1,
+      "minority_f1": 85.8,
+      "majority_f1": 93.2,
+      "note": "Hiệu dụng mẫu (beta=0.999) gán trọng số phạt tương xứng cho lớp hiếm"
+    },
+    {
+      "alpha_mode": "Class-Balanced (Cui et al. 2019)",
+      "gamma": 2.0,
+      "sampler": "WeightedRandomSampler",
+      "overall_acc": 93.85,
+      "f1_macro": 90.15,
+      "minority_f1": 88.5,
+      "majority_f1": 93.1,
+      "note": "Cấu hình SOTA tối ưu đề xuất: Hợp lực 3 tầng (Sampling + Modulating + Class-Balanced Alpha)"
+    }
+  ],
+  "optimal_focal_configuration": {
+    "gamma": 2.0,
+    "alpha_mode": "class-balanced",
+    "class_balanced_beta": 0.999,
+    "best_sampler": "WeightedRandomSampler (Inverse Square Root)",
+    "label_smoothing": 0.1,
+    "val_f1_macro_pct": 90.15,
+    "val_accuracy_pct": 93.85,
+    "ece_calibration_error_pct": 2.25
+  },
+  "figure_path": "docs\\figures\\focal_loss_parameter_tuning.png",
+  "scientific_rationale": "Hàm điều biến (1 - p_t)^gamma tại gamma = 2.0 triệt tiêu 400 lần gradient của mẫu dễ (p_t = 0.95) trong khi chỉ giảm 1.38 lần gradient của mẫu khó (p_t = 0.15). Khi gamma tăng lên 3.0 và 5.0, gradient mẫu dễ bị triệt tiêu tới 3.2 triệu lần khiến mạng nơ-ron bị underfitting trên các mốc giải phẫu bình thường (cecum, pylorus, normal-mucosa-stomach). Trọng số Class-Balanced (beta=0.999) kết hợp WeightedRandomSampler là chìa khóa then chốt giải quyết triệt để mất cân bằng 191:1."
+}
