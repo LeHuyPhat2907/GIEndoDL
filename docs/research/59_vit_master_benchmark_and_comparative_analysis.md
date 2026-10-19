@@ -97,6 +97,110 @@ Giai đoạn 7 của đề tài tập trung nghiên cứu, triển khai và đá
 
 ---
 
+### 4.5. Phân tích Chuyên sâu (Core Research Note): ViT vs Swin về Năng lực Bắt giữ Đặc trưng Cục bộ (Local) và Toàn cục (Global)
+
+Đây là **phát hiện học thuật quan trọng bậc nhất** của Giai đoạn 7, giải mã nguyên nhân cốt lõi dẫn đến sự chênh lệch hiệu năng lâm sàng khổng lồ giữa hai trường phái Vision Transformer trên hình ảnh nội soi tiêu hóa:
+
+```
+                            SO SÁNH CƠ CHẾ TIẾP NHẬN KHÔNG GIAN
+            Vision Transformer (ViT / DeiT)                     Swin Transformer (Hierarchical)
+┌─────────────────────────────────────────────────────┐   ┌─────────────────────────────────────────────────────┐
+│ 1 TẦNG PHẲNG DUY NHẤT: 14x14 TOKENS (P=16)          │   │ STAGE 1: 56x56 TOKENS (Cửa sổ cục bộ 7x7)           │
+│ Attention toàn cục O(196²) ngay từ Layer 1          │   │ ──► Tập trung trích xuất vi mạch, hố tuyến niêm mạc │
+│                                                     │   │ STAGE 2: 28x28 TOKENS (W-MSA + SW-MSA)              │
+│ ⚠️ THIẾU TÍNH PHÂN CẤP CỤC BỘ:                      │   │ ──► Mở rộng ngữ cảnh liên vùng mô học               │
+│ - Không gom cụm chi tiết vi mạch niêm mạc           │   │ STAGE 3: 14x14 TOKENS (Đặc trưng bệnh học sâu)      │
+│ - Tán xạ ma trận chú ý trên toàn ảnh                │   │ ──► Tích hợp thông tin giải phẫu đa tầng            │
+│ - Dễ nhầm nếp gấp môn vị dạ dày thành polyp         │   │ STAGE 4: 7x7 TOKENS (Ngữ cảnh cơ quan vĩ mô)        │
+│   (ViT-16: 40 FP, ViT-32: 83 FP, CaiT: 159 FP)      │   │ ──► Phân biệt hoàn hảo lòng hang vị dạ dày vs polyp │
+│                                                     │   │     (Swin-Base: DUY NHẤT 1 CA FP, Precision 99.5%) │
+└─────────────────────────────────────────────────────┘   └─────────────────────────────────────────────────────┘
+```
+
+#### 🔬 1. So sánh về Mặt Toán học & Động lực học Trường tiếp nhận (Receptive Field Dynamics):
+* **ViT (Đơn tỷ lệ & Toàn cục Ngay lập tức):**
+  * Chia ảnh thành $N = 196$ tokens ($14 \times 14$). Biểu diễn toán học của Self-Attention:
+    $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+  * Ma trận chú ý $\mathbf{A} \in \mathbb{R}^{196 \times 196}$ có trường nhìn vô hạn (infinite receptive field) ngay từ tầng đầu tiên. Tuy nhiên, do không có thiên kiến quy nạp (inductive bias) về tính cục bộ 2D, mô hình phải tự học mối quan hệ giữa các pixel lân cận từ đầu thông qua 1D Position Embedding.
+  * Trên tập dữ liệu y tế quy mô vừa (~10,000 ảnh), việc thiếu tính phân cấp khiến ViT không thể tự động tổng hợp các đặc trưng từ mức vi thể (micro-texture) lên mức hình thái cơ quan (macro-anatomy).
+* **Swin Transformer (Phân cấp Đa tầng & Chú ý Cửa sổ Cục bộ Trượt):**
+  * Khởi đầu bằng patch partition $4 \times 4$ tạo bản đồ đặc trưng có độ phân giải siêu nét $56 \times 56$ ($3,136$ tokens).
+  * Trong mỗi cửa sổ $M \times M = 7 \times 7$ (chỉ gồm $49$ tokens), cơ chế chú ý cục bộ được định nghĩa với **Relative Position Bias $B$**:
+    $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right)V$$
+  * Cơ chế này ép buộc mạng dành $100\%$ tài nguyên tính toán ở Stage 1 và 2 để "soi kính hiển vi" vào các cấu trúc vi mạch (capillary vessels) và hố tuyến (pit patterns).
+  * Qua các tầng **Patch Merging** ($56 \to 28 \to 14 \to 7$) và **Shifted Windows (SW-MSA)** dịch chuyển $(\lfloor M/2 \rfloor, \lfloor M/2 \rfloor) = (3, 3)$, thông tin được truyền dẫn mượt mà giữa các cửa sổ lân cận. Đến Stage 4, mô hình đã nắm giữ trọn vẹn ngữ cảnh cơ quan giải phẫu vĩ mô.
+
+#### 🩺 2. Minh chứng Y sinh học: Giải mã Cuộc khủng hoảng Báo động giả Polyp:
+* **Bản chất giải phẫu học:**
+  * Cơ vòng môn vị dạ dày (`pylorus`) khi co thắt sẽ tạo ra các nếp gấp cơ hình vòng tròn nhô lồi vào trong lòng hang vị.
+  * Khối u polyp đại trực tràng (`polyps`) cũng có cấu trúc hình vòm hoặc bán cầu nhô lồi vào lòng ruột.
+* **Tại sao ViT, DeiT và CaiT rơi vào bẫy báo động giả?**
+  * Do bản đồ đặc trưng phẳng đơn tỷ lệ ($14 \times 14$), ViT chỉ nhìn thấy một khối lồi hình học mà thiếu đi khả năng phóng to cục bộ để phân tích mạng lưới mạch máu vi mô, đồng thời thiếu khả năng thu nhỏ để nhìn toàn thể lòng hang vị dạ dày.
+  * Hệ quả: ViT-Base/16 sinh ra **40 ca FP**, ViT-Base/32 sinh ra **83 ca FP**, DeiT-Base sinh ra **79 ca FP**, và CaiT-S24 sinh ra tới **159 ca FP** (trong đó có tới **93 ca môn vị bị chẩn đoán nhầm thành polyp**!).
+* **Tại sao Swin Transformer chiến thắng tuyệt đối?**
+  * Swin vận hành theo cơ chế **Tam giác hóa Cục bộ - Toàn cục (Local-Global Triangulation)**:
+    1. *Ở cấp cục bộ (Stage 1-2):* Cửa sổ $7 \times 7$ nhận diện biểu mô niêm mạc môn vị phẳng nhẵn, mạch máu dưới niêm bình thường, không hề có mạng lưới mạch máu tăng sinh ngoằn ngoèo của polyp.
+    2. *Ở cấp toàn cục (Stage 3-4):* Bản đồ phân cấp nhận diện cấu trúc hang vị dạ dày xung quanh lỗ môn vị.
+    3. *Kết luận chẩn đoán:* Phân biệt chính xác $100\%$ giữa môn vị bình thường và polyp tiền ung thư $\implies$ Chỉ có **duy nhất 1 ca FP** trên toàn bộ 2,133 ảnh kiểm định (Precision polyp đạt **$99.50\%$**, F1 polyp đạt **$98.28\%$**).
+
+---
+
+### 4.6. Bảng Đối chuẩn Chi tiết 23 Lớp Bệnh học (Per-Class Performance Benchmark)
+
+*Bảng tổng hợp điểm F1-Score (%) trên toàn bộ 23 lớp bệnh học nội soi giữa 6 mô hình Vision Transformer (Fold 0, $N_{val} = 2,133$ ảnh):*
+
+| STT | Tên Lớp Bệnh học (Class Name) | Nhóm Giải phẫu | Số mẫu | ViT-16 (%) | ViT-32 (%) | DeiT-Base (%) | Swin-Base (%) | Swin-Tiny (%) | CaiT-S24 (%) | Model Xuất sắc nhất | Best F1 (%) |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | `barretts` | Upper GI | 8 | 40.00 | 44.44 | **61.54** | 28.57 | 15.38 | 33.33 | **DeiT-Base** | **61.54%** |
+| 2 | `barretts-short-segment` | Upper GI | 11 | 33.33 | 25.00 | 25.00 | 27.27 | 33.33 | **36.36** | **CaiT-S24** | **36.36%** |
+| 3 | `bbps-0-1` | Lower GI | 129 | 95.75 | 95.78 | 94.66 | **97.28** | 96.88 | 93.39 | **Swin-Base** | **97.28%** |
+| 4 | `bbps-2-3` | Lower GI | 229 | 95.28 | 94.88 | 94.84 | 96.18 | **96.23** | 92.42 | **Swin-Tiny** | **96.23%** |
+| 5 | `cecum` | Lower GI | 201 | 96.48 | 95.79 | 96.95 | **98.78** | 98.01 | 96.79 | **Swin-Base** | **98.78%** |
+| 6 | `dyed-lifted-polyps` | Lesion/Resection | 198 | 93.09 | 93.47 | 93.07 | 94.68 | **95.24** | 91.24 | **Swin-Tiny** | **95.24%** |
+| 7 | `dyed-resection-margins` | Lesion/Resection | 197 | 93.37 | 93.94 | 93.83 | 94.79 | **95.48** | 93.20 | **Swin-Tiny** | **95.48%** |
+| 8 | `esophagitis-a` | Upper GI | 81 | 52.12 | 53.64 | 56.76 | **64.92** | 61.82 | 47.95 | **Swin-Base** | **64.92%** |
+| 9 | `esophagitis-b-d` | Upper GI | 52 | 69.72 | 61.90 | 69.64 | **75.00** | 70.80 | 50.94 | **Swin-Base** | **75.00%** |
+| 10 | `hemorrhoids` | Lower GI | 1 | 0.00 | 0.00 | 0.00 | **100.00** | 66.67 | 0.00 | **Swin-Base** | **100.00%** |
+| 11 | `ileum` | Lower GI | 2 | 0.00 | **66.67** | 0.00 | 66.67 | 0.00 | 0.00 | **ViT-32 / Swin** | **66.67%** |
+| 12 | `impacted-stool` | Lower GI | 26 | 77.42 | 75.86 | 77.42 | 78.79 | **80.00** | 72.41 | **Swin-Tiny** | **80.00%** |
+| 13 | `polyps` | Lesion/Resection | 206 | 89.44 | 82.26 | 83.95 | **98.28** | 94.37 | 71.49 | **Swin-Base** | **98.28%** |
+| 14 | `pylorus` | Upper GI | 199 | 98.98 | 98.47 | 98.98 | 99.75 | **100.00** | 69.51 | **Swin-Tiny** | **100.00%** |
+| 15 | `retroflex-rectum` | Lower GI | 78 | 96.25 | 96.20 | 95.54 | 96.89 | **97.44** | 92.41 | **Swin-Tiny** | **97.44%** |
+| 16 | `retroflex-stomach` | Upper GI | 154 | **99.67** | 99.35 | 99.35 | 99.35 | 99.67 | 99.03 | **ViT-16 / Swin** | **99.67%** |
+| 17 | `ulcerative-colitis-0-1` | IBD (Viêm ruột) | 7 | **36.36** | 0.00 | 25.00 | 20.00 | 30.77 | 0.00 | **ViT-16** | **36.36%** |
+| 18 | `ulcerative-colitis-1` | IBD (Viêm ruột) | 40 | 22.50 | 28.57 | 42.86 | **47.89** | 41.98 | 32.79 | **Swin-Base** | **47.89%** |
+| 19 | `ulcerative-colitis-1-2` | IBD (Viêm ruột) | 2 | 0.00 | 0.00 | **40.00** | 0.00 | 0.00 | 0.00 | **DeiT-Base** | **40.00%** |
+| 20 | `ulcerative-colitis-2` | IBD (Viêm ruột) | 89 | 59.74 | 55.42 | **70.06** | 62.25 | 64.63 | 55.03 | **DeiT-Base** | **70.06%** |
+| 21 | `ulcerative-colitis-2-3` | IBD (Viêm ruột) | 7 | 0.00 | 0.00 | 0.00 | 5.41 | **14.29** | 0.00 | **Swin-Tiny** | **14.29%** |
+| 22 | `ulcerative-colitis-3` | IBD (Viêm ruột) | 26 | 55.56 | 50.00 | 53.06 | **67.65** | 57.69 | 57.69 | **Swin-Base** | **67.65%** |
+| 23 | `z-line` | Upper GI | 192 | 84.30 | 85.04 | 85.22 | 84.62 | **88.65** | 78.71 | **Swin-Tiny** | **88.65%** |
+
+---
+
+### 4.7. So sánh 4 Cơ chế Attention & Chi phí Tính toán Phần cứng
+
+#### Bảng 1: Đối sánh 4 Trường phái Tự chú ý (Self-Attention Paradigms)
+| Tiêu chí | Global MHSA (ViT) | Distillation Token (DeiT) | Shifted Windows (Swin) | Two-Stage Class-Attn (CaiT) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Mô hình đại diện** | ViT-Base/16, ViT-Base/32 | DeiT-Base Distilled | Swin-Base, Swin-Tiny | CaiT-S24 |
+| **Độ phức tạp tính toán** | $\mathcal{O}(N^2 \cdot C)$ (Bậc hai) | $\mathcal{O}((N+2)^2 \cdot C)$ | $\mathcal{O}(M^2 \cdot HW \cdot C)$ (Tuyến tính) | $\mathcal{O}(N^2 \cdot C) + \mathcal{O}(N \cdot C)$ |
+| **Cấu trúc biểu diễn** | Phẳng đơn tỷ lệ ($14 \times 14$) | Phẳng đơn tỷ lệ ($14 \times 14$) | Phân cấp 4 tầng hình tháp | Phẳng 24 tầng Patch + 2 tầng Class |
+| **Inductive Bias** | Gần như bằng 0 | Trung bình (qua Teacher CNN) | Mạnh (qua cấu trúc phân cấp & Bias) | Rất yếu |
+| **Khả năng bắt vi mạch** | Kém (patch $16 \times 16$ quá rộng) | Khá (kế thừa từ CNN) | Xuất sắc (Stage 1 cửa sổ $7 \times 7$) | Rất kém |
+| **Báo động giả Polyp** | Nặng (40 - 83 ca FP) | Nặng (79 ca FP) | Triệt tiêu ($1$ ca FP duy nhất) | Thảm họa ($159$ ca FP) |
+
+#### Bảng 2: Chi phí Phần cứng, Bộ nhớ và Khả năng Triển khai Lâm sàng
+| Mô hình | Params (M) | FLOPs (G) | Thời gian Train | Latency GPU (FPS) | Latency CPU (FPS) | Khả năng Triển khai Lâm sàng |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **ViT-Base/32** | 87.45 | **4.41** ⚡| **0.42 h** (25 min) ⚡| **3.42 ms (292.4)** 🏆| **206.3 ms (4.8)** ⚡| Kém (Precision polyp chỉ 70.4%, bỏ sót vi thể) |
+| **Swin-Tiny** | **27.54** 🏆| 4.49 | 0.78 h (46.9 min) | 5.62 ms (177.9) | 440.4 ms (2.3) | **TỐI ƯU CÂN BẰNG (89.97% Acc, nhẹ 27.5M)** |
+| **DeiT-Base** | 85.84 | 17.65 | 1.12 h (67 min) | 10.45 ms (95.7) | 703.9 ms (1.4) | Kém (Yêu cầu Teacher forward, 86M params) |
+| **ViT-Base/16** | 85.80 | 17.58 | 1.23 h (74 min) | 9.85 ms (101.5) | 586.7 ms (1.7) | Không khả thi (Nặng 86M, Macro F1 thấp 60.4%) |
+| **Swin-Base** | 86.77 | 15.44 | 1.92 h (115 min) | 14.85 ms (67.3) | 1176.3 ms (0.9) | **SOTA LÂM SÀNG CAO NHẤT (69.78% Macro F1)** |
+| **CaiT-S24** | 46.54 | 9.35 | **12.94 h** (776 min) ⚠️| 18.20 ms (54.9) | 685.3 ms (1.5) | Thất bại hoàn toàn (Overfitting, train 13 tiếng) |
+
+---
+
 ## 5. PHÂN TÍCH SO SÁNH ĐỐI ĐẦU: CNNs vs VISION TRANSFORMERS
 
 ```

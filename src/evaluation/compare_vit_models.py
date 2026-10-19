@@ -1,8 +1,10 @@
-"""Module tổng hợp, đối chiếu và phân tích toàn diện tất cả các mô hình Vision Transformer (Task #92).
+"""Module tổng hợp, đối chiếu và phân tích toàn diện tất cả các mô hình Vision Transformer (Task #92 & Task #93).
 
 Nhiệm vụ:
 - Task #92: Tạo bảng so sánh SOTA chuẩn y khoa: Model, Params, FLOPs, Accuracy, F1-macro, AUC, Training Time, Inference Time.
-- Đối chiếu chuyên sâu 6 mô hình Vision Transformer (#86 - #91) với 8 mô hình CNN (#76 - #83).
+- Task #92 (Sub-tasks): So sánh Attention Mechanism, Computational Cost, Per-class Performance.
+- Task #92 (Note): Phân tích chuyên sâu ViT vs Swin về capturing local vs global features.
+- Task #93: Phân tích trade-off Accuracy vs Efficiency để chọn ViT Backbone độc lập tốt nhất và thành phần Transformer tối ưu cho kiến trúc Hybrid CNN-CBAM-Transformer.
 - Xuất bản bảng Master Table dạng CSV, JSON và Markdown cho bài báo khoa học.
 """
 
@@ -12,7 +14,7 @@ import sys
 from typing import Optional
 import pandas as pd
 
-if sys.stdout.encoding.lower() != "utf-8":
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
@@ -141,9 +143,296 @@ VIT_MASTER_DATA = [
     },
 ]
 
+# Danh mục đường dẫn kết quả thực nghiệm 6 mô hình trên máy trạm
+RESULT_PATHS = [
+    (
+        "ViT-16",
+        Path(r"D:\KhoaLuanCuNhan\vit_base_16_results\fold_0\per_class_metrics.csv"),
+    ),
+    (
+        "ViT-32",
+        Path(r"D:\KhoaLuanCuNhan\vit_base_32_results\fold_0\per_class_metrics.csv"),
+    ),
+    (
+        "DeiT-Base",
+        Path(r"D:\KhoaLuanCuNhan\deit_base_results\fold_0\per_class_metrics.csv"),
+    ),
+    (
+        "Swin-Base",
+        Path(r"D:\KhoaLuanCuNhan\swin_base_results\fold_0\per_class_metrics.csv"),
+    ),
+    (
+        "Swin-Tiny",
+        Path(r"D:\KhoaLuanCuNhan\swin_tiny_results\fold_0\per_class_metrics.csv"),
+    ),
+    (
+        "CaiT-S24",
+        Path(
+            r"D:\KhoaLuanCuNhan\cait_s24_5folds\cait_s24_5folds\fold_0\per_class_metrics.csv"
+        ),
+    ),
+]
+
+
+def df_to_markdown_table(df: pd.DataFrame) -> str:
+    """Chuyển DataFrame thành bảng Markdown chuẩn GitHub Flavored Markdown có phân cách pipe (|)."""
+    headers = list(df.columns)
+    lines = [
+        "| " + " | ".join(str(h) for h in headers) + " |",
+        "| "
+        + " | ".join(
+            [
+                ":---:"
+                if "ID" in str(h) or "Rank" in str(h)
+                else ":---"
+                if "Name" in str(h) or "Model" in str(h) or "Group" in str(h)
+                else ":---:"
+                for h in headers
+            ]
+        )
+        + " |",
+    ]
+    for _, row in df.iterrows():
+        row_str = (
+            "| "
+            + " | ".join(str(val) if not pd.isna(val) else "" for val in row.values)
+            + " |"
+        )
+        lines.append(row_str)
+    return "\n".join(lines)
+
+
+def map_clinical_system(class_name: str) -> str:
+    """Phân nhóm 23 lớp vào 4 hệ cơ quan / hội chứng lâm sàng chuẩn y sinh."""
+    upper_gi = {
+        "barretts",
+        "barretts-short-segment",
+        "esophagitis-a",
+        "esophagitis-b-d",
+        "pylorus",
+        "retroflex-stomach",
+        "z-line",
+    }
+    lower_gi = {
+        "bbps-0-1",
+        "bbps-2-3",
+        "cecum",
+        "hemorrhoids",
+        "ileum",
+        "impacted-stool",
+        "retroflex-rectum",
+    }
+    lesions = {"polyps", "dyed-lifted-polyps", "dyed-resection-margins"}
+    ibd = {
+        "ulcerative-colitis-grade-0-1",
+        "ulcerative-colitis-grade-1",
+        "ulcerative-colitis-grade-1-2",
+        "ulcerative-colitis-grade-2",
+        "ulcerative-colitis-grade-2-3",
+        "ulcerative-colitis-grade-3",
+    }
+
+    if class_name in upper_gi:
+        return "1. Tiêu hóa Trên (Upper GI)"
+    elif class_name in lower_gi:
+        return "2. Đại trực tràng (Lower GI)"
+    elif class_name in lesions:
+        return "3. Polyp & Diện cắt can thiệp"
+    elif class_name in ibd:
+        return "4. Viêm loét đại tràng (IBD)"
+    return "Khác"
+
+
+def generate_per_class_comparison(output_dir: Path) -> pd.DataFrame:
+    """Tạo bảng đối chuẩn chi tiết từng lớp (Per-Class Performance Benchmark - Task #92 Sub-task)."""
+    dfs = {}
+    for name, p in RESULT_PATHS:
+        if p.exists():
+            dfs[name] = pd.read_csv(p)
+        else:
+            print(f"⚠️ Cảnh báo: Không tìm thấy file {p}")
+            return pd.DataFrame()
+
+    base_df = dfs["ViT-16"][
+        ["Class_ID", "Class_Name", "Organ_Group", "Support (Số mẫu)"]
+    ].copy()
+    base_df["Clinical_System"] = base_df["Class_Name"].apply(map_clinical_system)
+
+    for name, _ in RESULT_PATHS:
+        base_df[f"{name}_F1 (%)"] = dfs[name]["F1-Score (%)"]
+
+    f1_cols = [f"{name}_F1 (%)" for name, _ in RESULT_PATHS]
+    base_df["Best_Model"] = (
+        base_df[f1_cols].idxmax(axis=1).apply(lambda x: x.replace("_F1 (%)", ""))
+    )
+    base_df["Best_F1 (%)"] = base_df[f1_cols].max(axis=1)
+
+    csv_path = output_dir / "vit_per_class_benchmark.csv"
+    md_path = output_dir / "vit_per_class_benchmark.md"
+
+    base_df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+    # Tính toán trung bình theo 4 Hệ cơ quan lâm sàng
+    sys_summary = []
+    for sys_name, sys_data in sorted(base_df.groupby("Clinical_System")):
+        row = {"Hệ Cơ quan Lâm sàng": sys_name, "Số Lớp": len(sys_data)}
+        for name, _ in RESULT_PATHS:
+            row[f"{name} F1 TB (%)"] = round(sys_data[f"{name}_F1 (%)"].mean(), 2)
+        sys_summary.append(row)
+    sys_df = pd.DataFrame(sys_summary)
+
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write(
+            "# 📊 BẢNG ĐỐI CHIẾU HIỆU NĂNG TỪNG LỚP (PER-CLASS PERFORMANCE BENCHMARK - TASK #92)\n\n"
+        )
+        f.write(
+            "*Bảng so sánh chi tiết điểm F1-Score (%) trên toàn bộ 23 lớp bệnh học nội soi giữa 6 mô hình Vision Transformer trên tập HyperKvasir Fold 0.*\n\n"
+        )
+        f.write(df_to_markdown_table(base_df) + "\n\n")
+
+        f.write(
+            "### 🩺 Phân tích F1-Score Trung bình theo 4 Nhóm Bệnh học & Giải phẫu Lâm sàng:\n\n"
+        )
+        f.write(df_to_markdown_table(sys_df) + "\n\n")
+
+        f.write("### 📌 Đột phá lâm sàng nổi bật:\n")
+        f.write(
+            "1. **Swin-Base (#89):** Áp đảo tại các tổn thương tiền ung thư then chốt: `polyps` (F1 98.28%, chỉ 1 ca FP duy nhất), `esophagitis-a` (64.92%), `esophagitis-b-d` (75.00%), `hemorrhoids` (100.00%) và `cecum` (98.78%).\n"
+        )
+        f.write(
+            "2. **DeiT-Base (#88):** Nhờ chưng cất tri thức từ CNN teacher, mô hình vươn lên dẫn đầu ở nhóm viêm loét đại tràng mạn tính và niêm mạc Barrett: `barretts` (61.54%), `ulcerative-colitis-grade-1-2` (40.00%), `ulcerative-colitis-grade-2` (70.06%).\n"
+        )
+        f.write(
+            "3. **Swin-Tiny (#90):** Đạt sự hoàn hảo tuyệt đối ở mốc giải phẫu môn vị `pylorus` (F1 100.00%, Precision 100%, Recall 100%) và dẫn đầu ở `z-line` (88.65%), `bbps-2-3` (96.23%), `dyed-resection-margins` (95.48%).\n"
+        )
+        f.write(
+            "4. **CaiT-S24 (#91):** Gặp sự cố nghiêm trọng khi 93 ca môn vị bị gom nhầm thành polyp, khiến Precision của polyp tụt xuống chỉ còn 55.71%.\n"
+        )
+
+    print(f"💾 Đã lưu bảng Per-class CSV: {csv_path}")
+    print(f"💾 Đã lưu bảng Per-class Markdown: {md_path}")
+    return base_df
+
+
+def generate_attention_and_cost_comparisons(output_dir: Path):
+    """Tạo bảng so sánh cơ chế Attention và chi phí tính toán (Task #92 Sub-tasks)."""
+    # 1. Attention Mechanism Comparison
+    attn_records = [
+        {
+            "Cơ chế Chú ý": "Global Multi-Head Self-Attention",
+            "Mô hình Đại diện": "ViT-Base/16, ViT-Base/32",
+            "Công thức Toán học": "Softmax(QK^T / sqrt(d)) * V",
+            "Độ phức tạp": "O(N^2 * C) quadratic",
+            "Trường tiếp nhận": "Toàn cục ngay từ Layer 1",
+            "Inductive Bias": "Rất yếu (chỉ qua patchify)",
+            "Đánh giá trên Nội soi tiêu hóa": "Thiếu phân cấp cục bộ, dễ nhầm môn vị/nếp gấp niêm mạc thành polyp (40-83 ca FP).",
+        },
+        {
+            "Cơ chế Chú ý": "Distillation Token + Self-Attention",
+            "Mô hình Đại diện": "DeiT-Base Distilled",
+            "Công thức Toán học": "Attention trên [CLS, DIST, x_1..x_N]",
+            "Độ phức tạp": "O((N+2)^2 * C) quadratic",
+            "Trường tiếp nhận": "Toàn cục + Tiêm tri thức giáo viên CNN",
+            "Inductive Bias": "Trung bình (truyền qua loss chưng cất)",
+            "Đánh giá trên Nội soi tiêu hóa": "Tăng vọt F1 ở các lớp viêm ruột (+20% F1), nhưng bản đồ phẳng 14x14 vẫn dính 79 ca FP polyp.",
+        },
+        {
+            "Cơ chế Chú ý": "Shifted Window Attention (W-MSA / SW-MSA)",
+            "Mô hình Đại diện": "Swin-Base, Swin-Tiny",
+            "Công thức Toán học": "Softmax(QK^T / sqrt(d) + B) * V trong cửa sổ 7x7",
+            "Độ phức tạp": "O(M^2 * H * W * C) linear",
+            "Trường tiếp nhận": "Cục bộ tầng nông -> Mở rộng toàn cục tầng sâu",
+            "Inductive Bias": "Mạnh (nhờ phân cấp 4 stages & relative position bias)",
+            "Đánh giá trên Nội soi tiêu hóa": "SOTA TOÀN DIỆN (Macro F1 69.78%), triệt tiêu 98.7% báo động giả polyp (chỉ 1 ca FP duy nhất).",
+        },
+        {
+            "Cơ chế Chú ý": "Two-Stage Class-Attention (CaiT)",
+            "Mô hình Đại diện": "CaiT-S24",
+            "Công thức Toán học": "Patch-Patch Attn (24L) -> Class-Attn (2L)",
+            "Độ phức tạp": "O(N^2 * C) + O(N * C)",
+            "Trường tiếp nhận": "Tách rời biểu diễn patch và gom nhãn CLS",
+            "Inductive Bias": "Rất yếu",
+            "Đánh giá trên Nội soi tiêu hóa": "THẤT BẠI LÂM SÀNG: Quá khớp sau epoch 8, CLS token gom nhầm 93 ca môn vị sang polyp, 159 ca FP.",
+        },
+    ]
+    df_attn = pd.DataFrame(attn_records)
+    attn_md_path = output_dir / "vit_attention_mechanism_comparison.md"
+    with open(attn_md_path, "w", encoding="utf-8") as f:
+        f.write(
+            "# 🔬 SO SÁNH 4 CƠ CHẾ ATTENTION CỦA CÁC DÒNG VISION TRANSFORMER (TASK #92)\n\n"
+        )
+        f.write(df_to_markdown_table(df_attn) + "\n\n")
+    print(f"💾 Đã lưu bảng so sánh Attention: {attn_md_path}")
+
+    # 2. Computational Cost Comparison
+    cost_records = [
+        {
+            "Mô hình": "ViT-Base/32",
+            "Params (M)": 87.45,
+            "FLOPs (G)": 4.41,
+            "Train Time": "0.42 h (25 min)",
+            "GPU FPS": 292.4,
+            "CPU FPS": 4.8,
+            "Chi phí phần cứng": "Thấp nhất nhánh Base, siêu nhanh nhưng token 32x32 quá thô gây suy thoái độ chính xác.",
+        },
+        {
+            "Mô hình": "Swin-Tiny",
+            "Params (M)": 27.54,
+            "FLOPs (G)": 4.49,
+            "Train Time": "0.78 h (46.9 min)",
+            "GPU FPS": 177.9,
+            "CPU FPS": 2.3,
+            "Chi phí phần cứng": "HIỆU QUẢ NHẤT (Top Balanced SOTA): 27.5M params, 89.97% Accuracy, huấn luyện nhanh gấp 2.5 lần Swin-Base.",
+        },
+        {
+            "Mô hình": "DeiT-Base",
+            "Params (M)": 85.84,
+            "FLOPs (G)": 17.65,
+            "Train Time": "1.12 h (67 min)",
+            "GPU FPS": 95.7,
+            "CPU FPS": 1.4,
+            "Chi phí phần cứng": "Nặng nề, yêu cầu tiền tính toán forward pass từ Teacher CNN trong suốt quá trình train.",
+        },
+        {
+            "Mô hình": "ViT-Base/16",
+            "Params (M)": 85.80,
+            "FLOPs (G)": 17.58,
+            "Train Time": "1.23 h (74 min)",
+            "GPU FPS": 101.5,
+            "CPU FPS": 1.7,
+            "Chi phí phần cứng": "Nặng (17.58 GFLOPs), tốc độ CPU 1.7 FPS không thể triển khai thời gian thực.",
+        },
+        {
+            "Mô hình": "Swin-Base",
+            "Params (M)": 86.77,
+            "FLOPs (G)": 15.44,
+            "Train Time": "1.92 h (115 min)",
+            "GPU FPS": 67.3,
+            "CPU FPS": 0.9,
+            "Chi phí phần cứng": "SOTA Lâm sàng cao nhất (69.78% Macro F1), nhưng CPU 0.9 FPS và 86.8M params cản trở nhúng Edge.",
+        },
+        {
+            "Mô hình": "CaiT-S24",
+            "Params (M)": 46.54,
+            "FLOPs (G)": 9.35,
+            "Train Time": "12.94 h (776 min)",
+            "GPU FPS": 54.9,
+            "CPU FPS": 1.5,
+            "Chi phí phần cứng": "ĐẮT ĐỎ PHI LÝ: Train mất gần 13 tiếng mà kết quả suy thoái nghiêm trọng (82.98% Acc).",
+        },
+    ]
+    df_cost = pd.DataFrame(cost_records)
+    cost_md_path = output_dir / "vit_computational_cost_comparison.md"
+    with open(cost_md_path, "w", encoding="utf-8") as f:
+        f.write(
+            "# ⚡ SO SÁNH CHI PHÍ TÍNH TOÁN & HIỆU QUẢ PHẦN CỨNG (COMPUTATIONAL COST - TASK #92)\n\n"
+        )
+        f.write(df_to_markdown_table(df_cost) + "\n\n")
+    print(f"💾 Đã lưu bảng chi phí tính toán: {cost_md_path}")
+
 
 def generate_vit_comparison_report(output_dir: Optional[Path] = None) -> pd.DataFrame:
-    """Tổng hợp và đối chiếu toàn bộ 6 mô hình Vision Transformer trong đề tài (Task #92)."""
+    """Tổng hợp và đối chiếu toàn bộ 6 mô hình Vision Transformer trong đề tài (Task #92 & Task #93)."""
     if output_dir is None:
         output_dir = ROOT_DIR / "docs" / "benchmarks"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -200,14 +489,15 @@ def generate_vit_comparison_report(output_dir: Optional[Path] = None) -> pd.Data
         f.write(
             "*Bảng đối chuẩn chính (Main Paper Table) đánh giá toàn diện các biến thể Vision Transformer trên tập HyperKvasir (23 lớp, Fold 0).*\n\n"
         )
-        try:
-            f.write(df.to_markdown(index=False) + "\n\n")
-        except Exception:
-            f.write(df.to_string(index=False) + "\n\n")
+        f.write(df_to_markdown_table(df) + "\n\n")
 
     print(f"💾 Đã lưu bảng CSV: {csv_path}")
     print(f"💾 Đã lưu bảng JSON: {json_path}")
     print(f"💾 Đã lưu bảng Markdown: {md_table_path}")
+
+    # Tạo bảng đối chuẩn từng lớp (Per-Class) và bảng Attention / Cost
+    generate_per_class_comparison(output_dir)
+    generate_attention_and_cost_comparisons(output_dir)
 
     # TASK #93: Khuyến nghị chọn ViT Backbone & Khối Transformer tối ưu cho mô hình Hybrid
     recommendation_md = output_dir / "vit_backbone_recommendation.md"
@@ -280,10 +570,7 @@ def generate_vit_comparison_report(output_dir: Optional[Path] = None) -> pd.Data
             f.write(
                 "*Bảng tổng hợp SOTA toàn diện 14 mô hình học sâu trên tập dữ liệu nội soi HyperKvasir (23 lớp, Fold 0).*\n\n"
             )
-            try:
-                f.write(combined_df.to_markdown(index=False) + "\n\n")
-            except Exception:
-                f.write(combined_df.to_string(index=False) + "\n\n")
+            f.write(df_to_markdown_table(combined_df) + "\n\n")
         print(f"💾 Đã lưu bảng so sánh liên kiến trúc: {combined_csv}")
         print(f"💾 Đã lưu bảng Markdown so sánh liên kiến trúc: {combined_md}")
 
