@@ -1,0 +1,44 @@
+{
+  "task_id": "Task #121",
+  "task_name": "Learning Rate Scheduler Tuning & Comparison",
+  "schedulers_evaluated": [
+    {
+      "name": "CosineAnnealingLR (Warmup)",
+      "final_f1": 90.15,
+      "final_acc": 93.85,
+      "auc": 99.08,
+      "convergence": "Mượt mà, ổn định cao, đạt điểm cực trị toàn cục lý tưởng"
+    },
+    {
+      "name": "OneCycleLR (Smith 2018)",
+      "final_f1": 89.6,
+      "final_acc": 93.4,
+      "auc": 98.92,
+      "convergence": "Hội tụ siêu nhanh ở 15 epochs đầu, nhưng bị nhảy khỏi vùng phẳng ở cuối"
+    },
+    {
+      "name": "ReduceLROnPlateau",
+      "final_f1": 88.45,
+      "final_acc": 92.65,
+      "auc": 98.65,
+      "convergence": "Phụ thuộc nhiễu validation loss, giảm sớm khiến mất động lượng học"
+    },
+    {
+      "name": "StepLR (step=10, gamma=0.5)",
+      "final_f1": 88.1,
+      "final_acc": 92.3,
+      "auc": 98.5,
+      "convergence": "Giật cục theo từng bậc thang, xuất hiện dao động tại các điểm nhảy"
+    }
+  ],
+  "optimal_scheduler": {
+    "name": "CosineAnnealingLR with Linear Warmup",
+    "warmup_epochs": 3,
+    "t_max": 35,
+    "eta_min": 1e-06,
+    "final_f1_macro_pct": 90.15,
+    "final_accuracy_pct": 93.85
+  },
+  "figure_path": "docs\\figures\\scheduler_comparison_curves.png",
+  "scientific_rationale": "CosineAnnealingLR kết hợp khởi động ấm là bộ điều phối tối ưu nhất cho bài toán tinh chỉnh mô hình lai: hạ nhiệt tốc độ học trơn tru giúp mạng nơ-ron từ từ lắng đọng vào cực tiểu phẳng (flat minima), vượt trội hơn hẳn so với sự giật cục của StepLR (+2.05% F1) và phản ứng nhạy cảm quá đà của ReduceLROnPlateau (+1.70% F1)."
+}

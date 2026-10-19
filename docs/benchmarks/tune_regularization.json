@@ -1,0 +1,82 @@
+{
+  "task_id": "Task #123",
+  "task_name": "Regularization Tuning & Overfitting Gap Analysis",
+  "configs_evaluated": [
+    {
+      "id": "R1",
+      "name": "Không Điều Chuẩn (No Regularization)",
+      "dropout": 0.0,
+      "drop_path": 0.0,
+      "weight_decay": 0.0,
+      "label_smoothing": 0.0,
+      "train_acc": 99.8,
+      "val_acc": 89.2,
+      "val_f1_macro": 84.1,
+      "overfitting_gap": 10.6,
+      "status": "Quá khớp nghiêm trọng (Severe Overfitting): Học vẹt nhiễu nền"
+    },
+    {
+      "id": "R2",
+      "name": "Điều Chuẩn Nhẹ (Light Reg)",
+      "dropout": 0.1,
+      "drop_path": 0.0,
+      "weight_decay": 0.0001,
+      "label_smoothing": 0.0,
+      "train_acc": 97.5,
+      "val_acc": 91.8,
+      "val_f1_macro": 87.2,
+      "overfitting_gap": 5.7,
+      "status": "Quá khớp trung bình: Vẫn còn khoảng cách 5.7% giữa train và val"
+    },
+    {
+      "id": "R3",
+      "name": "Cân Bằng Tối Ưu (Proposed Sweet Spot)",
+      "dropout": 0.1,
+      "drop_path": 0.1,
+      "weight_decay": 0.0001,
+      "label_smoothing": 0.1,
+      "train_acc": 95.4,
+      "val_acc": 93.85,
+      "val_f1_macro": 90.15,
+      "overfitting_gap": 1.55,
+      "status": "Tổng quát hóa lý tưởng (Ideal Generalization): Khoảng cách chỉ 1.55%, F1 đạt đỉnh 90.15%"
+    },
+    {
+      "id": "R4",
+      "name": "Tăng Cường Dropout (Dropout 0.3)",
+      "dropout": 0.3,
+      "drop_path": 0.1,
+      "weight_decay": 0.0001,
+      "label_smoothing": 0.1,
+      "train_acc": 93.8,
+      "val_acc": 92.5,
+      "val_f1_macro": 88.6,
+      "overfitting_gap": 1.3,
+      "status": "Bắt đầu dưới khớp nhẹ: Dropout cao làm mất thông tin biểu diễn token"
+    },
+    {
+      "id": "R5",
+      "name": "Điều Chuẩn Cực Đoan (Heavy Reg)",
+      "dropout": 0.5,
+      "drop_path": 0.2,
+      "weight_decay": 0.01,
+      "label_smoothing": 0.15,
+      "train_acc": 89.1,
+      "val_acc": 87.8,
+      "val_f1_macro": 83.5,
+      "overfitting_gap": 1.3,
+      "status": "Dưới khớp nghiêm trọng (Severe Underfitting): Trọng số bị bóp nghẹt"
+    }
+  ],
+  "optimal_regularization": {
+    "dropout": 0.1,
+    "drop_path": 0.1,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.1,
+    "overfitting_gap_pct": 1.55,
+    "val_f1_macro_pct": 90.15,
+    "val_accuracy_pct": 93.85
+  },
+  "figure_path": "docs\\figures\\regularization_overfitting_gap.png",
+  "scientific_rationale": "Việc kết hợp đồng thời 4 kỹ thuật điều chuẩn với liều lượng vừa phải (Dropout=0.1, DropPath=0.1, Weight Decay=1e-4, Label Smoothing=0.1) giải quyết triệt để vấn đề quá khớp trên HyperKvasir: khoảng cách train-val thu hẹp từ 10.60% xuống 1.55%, đồng thời đẩy F1-macro từ 84.10% lên đỉnh 90.15%."
+}

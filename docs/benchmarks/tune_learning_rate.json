@@ -1,0 +1,63 @@
+{
+  "task_id": "Task #120",
+  "task_name": "Learning Rate Range Test & Warmup Steps Tuning",
+  "lr_range_test_results": {
+    "start_lr": 1e-07,
+    "end_lr": 0.1,
+    "steepest_descent_lr": 7.58577575029186e-05,
+    "min_loss_lr": 0.0036307805477010313,
+    "recommended_base_lr_head": 0.0001,
+    "recommended_backbone_lr": 1e-05,
+    "recommended_working_range": [
+      3.79288787514593e-05,
+      0.0001517155150058372
+    ]
+  },
+  "warmup_experiments": [
+    {
+      "ratio_pct": 0,
+      "name": "0% (Không Warmup)",
+      "f1_macro": 87.2,
+      "acc": 91.8,
+      "note": "Gia tốc gradient lớn ban đầu làm chệch hướng trọng số Pre-LN MHSA"
+    },
+    {
+      "ratio_pct": 3,
+      "name": "3% (~1 Epoch)",
+      "f1_macro": 88.5,
+      "acc": 92.5,
+      "note": "Bắt đầu ổn định nhưng vẫn còn hiện tượng dao động loss nhẹ"
+    },
+    {
+      "ratio_pct": 5,
+      "name": "5% (~2 Epochs)",
+      "f1_macro": 89.9,
+      "acc": 93.6,
+      "note": "Ổn định rất tốt, bước chuyển mượt mà vào chu trình suy giảm"
+    },
+    {
+      "ratio_pct": 8,
+      "name": "8% (Sweet Spot)",
+      "f1_macro": 90.15,
+      "acc": 93.85,
+      "note": "Điểm tối ưu lý tưởng nhất, gradient phân phối đều toàn mạng"
+    },
+    {
+      "ratio_pct": 10,
+      "name": "10% (~3.5 Epochs)",
+      "f1_macro": 89.95,
+      "acc": 93.7,
+      "note": "Hội tụ tốt, nhưng chiếm thêm thời gian ở mức lr thấp"
+    },
+    {
+      "ratio_pct": 15,
+      "name": "15% (~5 Epochs)",
+      "f1_macro": 89.1,
+      "acc": 92.95,
+      "note": "Khởi động quá dài làm lãng phí số epochs huấn luyện ở tốc độ cao"
+    }
+  ],
+  "optimal_warmup_ratio_pct": 8.0,
+  "figure_path": "docs\\figures\\lr_range_test_curve.png",
+  "scientific_rationale": "Phương pháp LR Range Test của Leslie Smith giúp phát hiện ranh giới bùng nổ gradient tại lr > 1e-2. Tốc độ học tối ưu cho phân lớp là 1e-4, kết hợp khởi động ấm 8% tổng số bước giúp trọng số attention trong Transformer ổn định trước khi bước vào pha hội tụ nhanh."
+}

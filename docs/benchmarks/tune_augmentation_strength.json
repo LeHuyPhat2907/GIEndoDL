@@ -1,0 +1,55 @@
+{
+  "task_id": "Task #124",
+  "task_name": "Augmentation Strength Tuning & Validation",
+  "augmentation_profiles": [
+    {
+      "id": "A1",
+      "level": "Light (Cơ Bản)",
+      "transforms": "RandomHorizontalFlip, RandomVerticalFlip, Resize(224)",
+      "train_acc": 96.0,
+      "val_acc": 91.2,
+      "val_f1_macro": 86.4,
+      "overfitting_gap": 4.8,
+      "eval_notes": "Chưa đủ độ đa dạng thị giác; mô hình vẫn nhạy cảm với góc quay camera ống soi"
+    },
+    {
+      "id": "A2",
+      "level": "Moderate (Task #50)",
+      "transforms": "RandomFlip + RandomRotation(15°) + ColorJitter(0.2) + Affine(0.9-1.1)",
+      "train_acc": 95.4,
+      "val_acc": 92.5,
+      "val_f1_macro": 88.2,
+      "overfitting_gap": 2.9,
+      "eval_notes": "Tốt cho các tổn thương hình thái lớn; chưa bao quát được biến dạng thấu kính nội soi"
+    },
+    {
+      "id": "A3",
+      "level": "Strong Medical (Sweet Spot)",
+      "transforms": "RandomResizedCrop(0.75-1.0) + Flips + ColorJitter(0.3) + GaussianBlur(0.2) + OpticalDistortion(0.2)",
+      "train_acc": 95.4,
+      "val_acc": 93.85,
+      "val_f1_macro": 90.15,
+      "overfitting_gap": 1.55,
+      "eval_notes": "Cân bằng hoàn hảo: Mô phỏng dịch chuyển góc soi và ánh sáng quang học thực tế trong phòng mổ"
+    },
+    {
+      "id": "A4",
+      "level": "Extreme (Cực Đoan)",
+      "transforms": "Heavy Crop(0.4) + Heavy Jitter(0.6) + CoarseDropout(Cutout) + ElasticTransform",
+      "train_acc": 91.2,
+      "val_acc": 90.4,
+      "val_f1_macro": 85.3,
+      "overfitting_gap": 0.8,
+      "eval_notes": "Phá hủy đặc trưng bệnh lý: Che khuất khối polyp và làm méo các mao mạch dạng mạng nhện"
+    }
+  ],
+  "optimal_augmentation": {
+    "level": "Strong Medical",
+    "transforms": "RandomResizedCrop(0.75-1.0) + Flips + ColorJitter(0.3) + GaussianBlur(0.2) + OpticalDistortion(0.2)",
+    "val_f1_macro_pct": 90.15,
+    "val_accuracy_pct": 93.85,
+    "overfitting_gap_pct": 1.55
+  },
+  "figure_path": "docs\\figures\\augmentation_strength_tuning.png",
+  "scientific_rationale": "Dữ liệu nội soi tiêu hóa đòi hỏi sự tinh tế đặc thù: các biến đổi hình học quá mạnh (Cutout, Elastic) vô tình xóa mất các polyp nhỏ hoặc làm sai lệch kiểu hình hố rãnh niêm mạc. Cấu hình Strong Medical mô phỏng chính xác độ cong quang sai thấu kính nội soi (Optical Distortion) và biến thiên ánh sáng đèn soi là lựa chọn chuẩn mực mang lại F1-macro 90.15%."
+}

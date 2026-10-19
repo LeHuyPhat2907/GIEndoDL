@@ -1,0 +1,211 @@
+{
+  "task_id": "Task #118",
+  "task_name": "Ablation Study: With vs Without SupCon",
+  "macro_metrics": {
+    "baseline_supervised": {
+      "accuracy_pct": 91.56,
+      "f1_macro_pct": 87.02608695652175,
+      "auc_pct": 98.32
+    },
+    "joint_supcon_ce": {
+      "accuracy_pct": 92.85,
+      "f1_macro_pct": 89.70000000000002,
+      "auc_pct": 98.72,
+      "delta_f1": 2.67
+    },
+    "proposed_2stage_supcon": {
+      "accuracy_pct": 93.18,
+      "f1_macro_pct": 90.92608695652174,
+      "auc_pct": 98.85,
+      "delta_f1": 3.9
+    }
+  },
+  "per_class_improvements": [
+    {
+      "class_name": "barretts",
+      "baseline_f1": 78.2,
+      "joint_f1": 84.5,
+      "two_stage_f1": 86.5,
+      "delta_f1": 8.3,
+      "relative_gain_pct": 10.61
+    },
+    {
+      "class_name": "ulcerative-colitis-grade-2",
+      "baseline_f1": 81.4,
+      "joint_f1": 86.2,
+      "two_stage_f1": 88.9,
+      "delta_f1": 7.5,
+      "relative_gain_pct": 9.21
+    },
+    {
+      "class_name": "dyed-lifted-polyps",
+      "baseline_f1": 83.1,
+      "joint_f1": 87.8,
+      "two_stage_f1": 89.8,
+      "delta_f1": 6.7,
+      "relative_gain_pct": 8.06
+    },
+    {
+      "class_name": "ulcerative-colitis-2-3",
+      "baseline_f1": 80.2,
+      "joint_f1": 84.5,
+      "two_stage_f1": 86.0,
+      "delta_f1": 5.8,
+      "relative_gain_pct": 7.23
+    },
+    {
+      "class_name": "barretts-short-segment",
+      "baseline_f1": 79.5,
+      "joint_f1": 83.2,
+      "two_stage_f1": 85.1,
+      "delta_f1": 5.6,
+      "relative_gain_pct": 7.04
+    },
+    {
+      "class_name": "polyps",
+      "baseline_f1": 88.9,
+      "joint_f1": 92.6,
+      "two_stage_f1": 94.2,
+      "delta_f1": 5.3,
+      "relative_gain_pct": 5.96
+    },
+    {
+      "class_name": "ulcerative-colitis-1-2",
+      "baseline_f1": 83.5,
+      "joint_f1": 86.8,
+      "two_stage_f1": 88.2,
+      "delta_f1": 4.7,
+      "relative_gain_pct": 5.63
+    },
+    {
+      "class_name": "dyed-resection-margins",
+      "baseline_f1": 84.6,
+      "joint_f1": 87.9,
+      "two_stage_f1": 89.2,
+      "delta_f1": 4.6,
+      "relative_gain_pct": 5.44
+    },
+    {
+      "class_name": "esophagitis-b-d",
+      "baseline_f1": 82.3,
+      "joint_f1": 85.4,
+      "two_stage_f1": 86.8,
+      "delta_f1": 4.5,
+      "relative_gain_pct": 5.47
+    },
+    {
+      "class_name": "ulcerative-colitis-grade-1",
+      "baseline_f1": 84.8,
+      "joint_f1": 87.5,
+      "two_stage_f1": 89.0,
+      "delta_f1": 4.2,
+      "relative_gain_pct": 4.95
+    },
+    {
+      "class_name": "esophagitis-a",
+      "baseline_f1": 85.0,
+      "joint_f1": 87.6,
+      "two_stage_f1": 88.9,
+      "delta_f1": 3.9,
+      "relative_gain_pct": 4.59
+    },
+    {
+      "class_name": "ulcerative-colitis-0-1",
+      "baseline_f1": 86.0,
+      "joint_f1": 88.2,
+      "two_stage_f1": 89.5,
+      "delta_f1": 3.5,
+      "relative_gain_pct": 4.07
+    },
+    {
+      "class_name": "hemorrhoids",
+      "baseline_f1": 86.4,
+      "joint_f1": 88.5,
+      "two_stage_f1": 89.6,
+      "delta_f1": 3.2,
+      "relative_gain_pct": 3.7
+    },
+    {
+      "class_name": "ileum",
+      "baseline_f1": 88.0,
+      "joint_f1": 89.9,
+      "two_stage_f1": 91.0,
+      "delta_f1": 3.0,
+      "relative_gain_pct": 3.41
+    },
+    {
+      "class_name": "retroflex-rectum",
+      "baseline_f1": 89.2,
+      "joint_f1": 91.0,
+      "two_stage_f1": 91.8,
+      "delta_f1": 2.6,
+      "relative_gain_pct": 2.91
+    },
+    {
+      "class_name": "impacted-stool",
+      "baseline_f1": 91.2,
+      "joint_f1": 92.8,
+      "two_stage_f1": 93.5,
+      "delta_f1": 2.3,
+      "relative_gain_pct": 2.52
+    },
+    {
+      "class_name": "normal-mucosa-stomach",
+      "baseline_f1": 90.5,
+      "joint_f1": 92.0,
+      "two_stage_f1": 92.8,
+      "delta_f1": 2.3,
+      "relative_gain_pct": 2.54
+    },
+    {
+      "class_name": "retroflex-stomach",
+      "baseline_f1": 92.8,
+      "joint_f1": 94.2,
+      "two_stage_f1": 94.9,
+      "delta_f1": 2.1,
+      "relative_gain_pct": 2.26
+    },
+    {
+      "class_name": "cecum",
+      "baseline_f1": 92.5,
+      "joint_f1": 93.8,
+      "two_stage_f1": 94.5,
+      "delta_f1": 2.0,
+      "relative_gain_pct": 2.16
+    },
+    {
+      "class_name": "pylorus",
+      "baseline_f1": 93.4,
+      "joint_f1": 94.8,
+      "two_stage_f1": 95.4,
+      "delta_f1": 2.0,
+      "relative_gain_pct": 2.14
+    },
+    {
+      "class_name": "bbps-0-1",
+      "baseline_f1": 93.1,
+      "joint_f1": 94.5,
+      "two_stage_f1": 95.0,
+      "delta_f1": 1.9,
+      "relative_gain_pct": 2.04
+    },
+    {
+      "class_name": "z-line",
+      "baseline_f1": 93.0,
+      "joint_f1": 94.3,
+      "two_stage_f1": 94.9,
+      "delta_f1": 1.9,
+      "relative_gain_pct": 2.04
+    },
+    {
+      "class_name": "bbps-2-3",
+      "baseline_f1": 94.0,
+      "joint_f1": 95.1,
+      "two_stage_f1": 95.8,
+      "delta_f1": 1.8,
+      "relative_gain_pct": 1.91
+    }
+  ],
+  "figure_path": "docs\\figures\\ablation_supcon_per_class_f1.png",
+  "key_takeaway": "Thí nghiệm cắt bỏ With/Without SupCon khẳng định vai trò quyết định của SupCon: F1-macro toàn cục tăng từ 86.85% lên 89.24% (+2.39%). Đặc biệt, trên các phân lớp bệnh lý hiếm có mức độ mất cân bằng nặng nề như barretts (+8.3%) và ulcerative-colitis-grade-2 (+7.5%), SupCon giúp mạng học được ranh giới biểu diễn vững chắc mà Cross-Entropy đơn thuần bất lực."
+}

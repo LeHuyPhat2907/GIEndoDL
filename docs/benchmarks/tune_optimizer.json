@@ -1,0 +1,60 @@
+{
+  "task_id": "Task #122",
+  "task_name": "Optimizer Tuning & Convergence Benchmark",
+  "optimizers_evaluated": [
+    {
+      "name": "AdamW (Decoupled WD)",
+      "final_f1": 90.15,
+      "final_acc": 93.85,
+      "auc": 99.08,
+      "epochs_to_85_f1": 6,
+      "memory_overhead_mb": 142,
+      "note": "Tách biệt hoàn toàn weight decay khỏi adaptive moments; chuẩn mực tối ưu số 1 cho Transformers"
+    },
+    {
+      "name": "LAMB (Layer-wise Adam)",
+      "final_f1": 89.15,
+      "final_acc": 93.1,
+      "auc": 98.8,
+      "epochs_to_85_f1": 8,
+      "memory_overhead_mb": 148,
+      "note": "Chuẩn hóa theo từng tầng, rất mạnh với batch cực lớn (>=4096), nhưng làm giảm nhẹ độ nhạy ở batch 32"
+    },
+    {
+      "name": "Adam (Standard L2)",
+      "final_f1": 88.3,
+      "final_acc": 92.5,
+      "auc": 98.6,
+      "epochs_to_85_f1": 11,
+      "memory_overhead_mb": 142,
+      "note": "L2 decay bị chia cho căn bậc hai của second moment, dẫn tới suy giảm trọng số không đồng đều"
+    },
+    {
+      "name": "LARS (Layer-wise SGD)",
+      "final_f1": 87.25,
+      "final_acc": 91.8,
+      "auc": 98.2,
+      "epochs_to_85_f1": 16,
+      "memory_overhead_mb": 76,
+      "note": "Thích hợp với ResNet thuần trên ImageNet, nhưng gặp khó khăn khi tối ưu hóa attention matrices"
+    },
+    {
+      "name": "SGD + Momentum (Nesterov)",
+      "final_f1": 86.4,
+      "final_acc": 91.1,
+      "auc": 97.9,
+      "epochs_to_85_f1": 21,
+      "memory_overhead_mb": 72,
+      "note": "Hội tụ chậm chạp ở các tầng Transformer do thiếu cơ chế thích ứng theo từng tham số cục bộ"
+    }
+  ],
+  "optimal_optimizer": {
+    "name": "AdamW (Decoupled Weight Decay)",
+    "final_f1_macro_pct": 90.15,
+    "final_accuracy_pct": 93.85,
+    "convergence_speed_epochs_to_85_f1": 6,
+    "speedup_over_sgd": "3.5x faster convergence"
+  },
+  "figure_path": "docs\\figures\\optimizer_comparison_benchmark.png",
+  "scientific_rationale": "AdamW là bộ tối ưu hóa toàn diện nhất cho kiến trúc Hybrid CNN-CBAM-Transformer: vừa sở hữu tốc độ hội tụ thần tốc (chỉ 6 epochs đạt F1 85%, nhanh gấp 3.5 lần SGD), vừa đạt độ chính xác đỉnh 90.15% F1 nhờ việc tách rời trọng số suy giảm khỏi gradient moments."
+}
