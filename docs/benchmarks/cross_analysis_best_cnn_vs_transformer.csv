@@ -1,0 +1,14 @@
+﻿Chỉ số Đánh giá (Metrics),EfficientNetV2-S (#81 - Best CNN),ResNet-50 (#76 - Baseline CNN),Swin-Base (#89 - SOTA Transformer),Swin-Tiny (#90 - Efficient Transformer),Khoảng cách & Ý nghĩa Thống kê
+Accuracy Toàn cục (%),90.44% 🏆,88.70%,89.73%,89.97% ⭐,"CNN dẫn đầu +0.71% (p = 0.27, không có ý nghĩa thống kê)"
+Macro F1-Score (%),67.97%,65.51%,69.78% 🏆,65.19%,"Transformer dẫn đầu +1.81% (p = 0.07, tiệm cận ý nghĩa)"
+Weighted F1-Score (%),90.16%,88.88%,90.18% 🏆,89.88%,"Hòa điểm tuyệt đối (90.18% vs 90.16%, chênh lệch +0.02%)"
+Macro Precision (%),70.33%,65.80%,71.31% 🏆,64.70%,Swin-Base dẫn trước +0.98% nhờ triệt tiêu báo động giả
+Macro Recall (%),67.75%,66.50%,71.01% 🏆,66.89%,Swin-Base nhạy bén hơn ở lớp tổn thương hiếm (+3.26%)
+AUC-ROC OvR (%),98.45%,97.42%,99.48% 🏆,99.05% ⭐,Nhánh Transformer chiếm ưu thế tuyệt đối ở phân tách xác suất
+Cohen's Kappa,0.8962 🏆,0.8765,0.8888,0.8912,CNN đạt độ đồng thuận chẩn đoán cao hơn nhẹ (+0.0074)
+Số tham số (Parameters),21.46 M ⚡,23.51 M,86.77 M ⚠️,27.54 M ⚡,CNN nhẹ hơn gấp 4 lần so với Swin-Base (tiết kiệm 75.3% params)
+Độ phức tạp FLOPs,8.40 G,4.12 G ⚡,15.44 G ⚠️,4.49 G ⚡,ResNet-50 & Swin-Tiny tiết kiệm FLOPs nhất (~4.1 - 4.5G)
+Tốc độ GPU (Latency / FPS),13.07 ms (76.5 FPS),6.75 ms (148.2 FPS) 🏆,14.85 ms (67.3 FPS),5.62 ms (177.9 FPS) 🏆,Swin-Tiny và ResNet-50 nhanh gấp 2.5 lần Swin-Base
+Tốc độ CPU (Latency / FPS),112.4 ms (8.9 FPS),54.1 ms (18.5 FPS) ⚡,1176.3 ms (0.9 FPS) ⚠️,440.4 ms (2.3 FPS),ResNet-50 nhanh gấp 20.5 lần Swin-Base; Swin-Base không thể chạy CPU
+Thời gian Huấn luyện (50ep),1.49 h (107s/ep),4.30 h (311s/ep),1.92 h (138s/ep),0.78 h (56s/ep) 🏆,Swin-Tiny huấn luyện nhanh kỷ lục (46.9 phút)
+Báo động giả Polyp (FP),6 ca FP (Prec 97.06%),7 ca FP (Prec 96.65%),1 ca FP (Prec 99.50%) 🏆,11 ca FP (Prec 94.61%),Swin-Base triệt tiêu 83.3% báo động giả so với CNN tốt nhất

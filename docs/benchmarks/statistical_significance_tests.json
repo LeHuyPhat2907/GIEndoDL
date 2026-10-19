@@ -1,0 +1,76 @@
+{
+    "mcnemar_efficientnet_vs_swin_base": {
+        "model_a": "EfficientNetV2-S",
+        "model_b": "Swin-Base",
+        "n_samples": 2133,
+        "both_correct (n11)": 1841,
+        "both_wrong (n00)": 131,
+        "EfficientNetV2-S_only_correct (n01)": 88,
+        "Swin-Base_only_correct (n10)": 73,
+        "chi2_statistic": 1.2174,
+        "p_value": 0.26987,
+        "is_significant_at_005": false,
+        "odds_ratio": 1.2055,
+        "interpretation": "Không có khác biệt thống kê (p >= 0.05, hiệu năng tương đương)"
+    },
+    "mcnemar_efficientnet_vs_swin_tiny": {
+        "model_a": "EfficientNetV2-S",
+        "model_b": "Swin-Tiny",
+        "n_samples": 2133,
+        "both_correct (n11)": 1854,
+        "both_wrong (n00)": 139,
+        "EfficientNetV2-S_only_correct (n01)": 75,
+        "Swin-Tiny_only_correct (n10)": 65,
+        "chi2_statistic": 0.5786,
+        "p_value": 0.44687,
+        "is_significant_at_005": false,
+        "odds_ratio": 1.1538,
+        "interpretation": "Không có khác biệt thống kê (p >= 0.05, hiệu năng tương đương)"
+    },
+    "mcnemar_mobilenet_vs_swin_base": {
+        "model_a": "MobileNetV3",
+        "model_b": "Swin-Base",
+        "n_samples": 2133,
+        "both_correct (n11)": 1805,
+        "both_wrong (n00)": 139,
+        "MobileNetV3_only_correct (n01)": 80,
+        "Swin-Base_only_correct (n10)": 109,
+        "chi2_statistic": 4.1481,
+        "p_value": 0.04168,
+        "is_significant_at_005": true,
+        "odds_ratio": 0.7339,
+        "interpretation": "Khác biệt có ý nghĩa thống kê (p < 0.05)"
+    },
+    "wilcoxon_f1_efficientnet_vs_swin_base": {
+        "model_a": "EfficientNetV2-S",
+        "model_b": "Swin-Base",
+        "w_statistic": 69.0,
+        "p_value": 0.05976,
+        "is_significant_at_005": false,
+        "mean_diff_f1": 1.82,
+        "median_diff_f1": 0.19,
+        "interpretation": "Khác biệt F1 không đạt ngưỡng ý nghĩa thống kê 5%"
+    },
+    "wilcoxon_f1_efficientnet_vs_swin_tiny": {
+        "model_a": "EfficientNetV2-S",
+        "model_b": "Swin-Tiny",
+        "w_statistic": 120.0,
+        "p_value": 0.61557,
+        "is_significant_at_005": false,
+        "mean_diff_f1": -2.78,
+        "median_diff_f1": 0.25,
+        "interpretation": "Khác biệt F1 không đạt ngưỡng ý nghĩa thống kê 5%"
+    },
+    "bootstrap_ci_swin_base_minus_cnn": {
+        "mean_diff_accuracy (%)": -0.718,
+        "ci_95_lower (%)": -1.922,
+        "ci_95_upper (%)": 0.423,
+        "contains_zero": true
+    },
+    "bootstrap_ci_swin_tiny_minus_cnn": {
+        "mean_diff_accuracy (%)": -0.481,
+        "ci_95_lower (%)": -1.547,
+        "ci_95_upper (%)": 0.563,
+        "contains_zero": true
+    }
+}
