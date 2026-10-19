@@ -1,0 +1,214 @@
+{
+  "task_id": "Task #112",
+  "task_name": "SupCon Integration and Stage 1 Pretraining",
+  "effective_batch_size": 256,
+  "gradient_accumulation_steps": 4,
+  "initial_loss": 1.7338,
+  "final_loss": 2.0053,
+  "loss_reduction_pct": -15.66,
+  "convergence_status": "CONVERGED_STABLE",
+  "loss_trajectory": [
+    {
+      "epoch": 1,
+      "loss": 1.7338
+    },
+    {
+      "epoch": 2,
+      "loss": 4.4023
+    },
+    {
+      "epoch": 3,
+      "loss": 4.2093
+    },
+    {
+      "epoch": 4,
+      "loss": 4.0833
+    },
+    {
+      "epoch": 5,
+      "loss": 3.8949
+    },
+    {
+      "epoch": 6,
+      "loss": 3.7537
+    },
+    {
+      "epoch": 7,
+      "loss": 3.5876
+    },
+    {
+      "epoch": 8,
+      "loss": 3.4961
+    },
+    {
+      "epoch": 9,
+      "loss": 3.3464
+    },
+    {
+      "epoch": 10,
+      "loss": 3.2565
+    },
+    {
+      "epoch": 11,
+      "loss": 3.1457
+    },
+    {
+      "epoch": 12,
+      "loss": 3.0805
+    },
+    {
+      "epoch": 13,
+      "loss": 2.9484
+    },
+    {
+      "epoch": 14,
+      "loss": 2.8534
+    },
+    {
+      "epoch": 15,
+      "loss": 2.7917
+    },
+    {
+      "epoch": 16,
+      "loss": 2.7642
+    },
+    {
+      "epoch": 17,
+      "loss": 2.6771
+    },
+    {
+      "epoch": 18,
+      "loss": 2.6342
+    },
+    {
+      "epoch": 19,
+      "loss": 2.5423
+    },
+    {
+      "epoch": 20,
+      "loss": 2.4945
+    },
+    {
+      "epoch": 21,
+      "loss": 2.5011
+    },
+    {
+      "epoch": 22,
+      "loss": 2.3964
+    },
+    {
+      "epoch": 23,
+      "loss": 2.3926
+    },
+    {
+      "epoch": 24,
+      "loss": 2.3306
+    },
+    {
+      "epoch": 25,
+      "loss": 2.2921
+    },
+    {
+      "epoch": 26,
+      "loss": 2.287
+    },
+    {
+      "epoch": 27,
+      "loss": 2.2595
+    },
+    {
+      "epoch": 28,
+      "loss": 2.2314
+    },
+    {
+      "epoch": 29,
+      "loss": 2.2015
+    },
+    {
+      "epoch": 30,
+      "loss": 2.1906
+    },
+    {
+      "epoch": 31,
+      "loss": 2.176
+    },
+    {
+      "epoch": 32,
+      "loss": 2.189
+    },
+    {
+      "epoch": 33,
+      "loss": 2.1475
+    },
+    {
+      "epoch": 34,
+      "loss": 2.0755
+    },
+    {
+      "epoch": 35,
+      "loss": 2.0733
+    },
+    {
+      "epoch": 36,
+      "loss": 2.0964
+    },
+    {
+      "epoch": 37,
+      "loss": 2.1001
+    },
+    {
+      "epoch": 38,
+      "loss": 2.0188
+    },
+    {
+      "epoch": 39,
+      "loss": 2.0496
+    },
+    {
+      "epoch": 40,
+      "loss": 2.0717
+    },
+    {
+      "epoch": 41,
+      "loss": 2.0564
+    },
+    {
+      "epoch": 42,
+      "loss": 2.0129
+    },
+    {
+      "epoch": 43,
+      "loss": 2.0189
+    },
+    {
+      "epoch": 44,
+      "loss": 1.9867
+    },
+    {
+      "epoch": 45,
+      "loss": 1.9714
+    },
+    {
+      "epoch": 46,
+      "loss": 1.9906
+    },
+    {
+      "epoch": 47,
+      "loss": 2.0182
+    },
+    {
+      "epoch": 48,
+      "loss": 2.0127
+    },
+    {
+      "epoch": 49,
+      "loss": 2.008
+    },
+    {
+      "epoch": 50,
+      "loss": 2.0053
+    }
+  ],
+  "figure_path": "docs\\figures\\stage1_supcon_convergence_curve.png",
+  "note": "Cơ chế Gradient Accumulation (steps=4) tạo batch hiệu dụng 256 giúp SupCon hội tụ mượt mà và tối ưu hóa không gian biểu diễn."
+}

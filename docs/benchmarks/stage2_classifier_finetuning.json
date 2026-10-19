@@ -1,0 +1,242 @@
+{
+  "task_id": "Task #113",
+  "task_name": "Classifier Fine-Tuning After SupCon Pretraining",
+  "baseline_from_scratch": {
+    "accuracy_pct": 91.56,
+    "f1_macro_pct": 86.85,
+    "precision_macro_pct": 87.42,
+    "recall_macro_pct": 86.39,
+    "auc_pct": 98.32,
+    "note": "Huấn luyện từ đầu chỉ với Cross-Entropy/Focal Loss (không có tiền huấn luyện tương phản)"
+  },
+  "post_supcon_finetuned": {
+    "accuracy_pct": 93.18,
+    "f1_macro_pct": 89.24,
+    "precision_macro_pct": 89.75,
+    "recall_macro_pct": 88.8,
+    "auc_pct": 98.85,
+    "note": "Stage 1 SupCon Pretraining (50 ep) + Stage 2 Discriminative Fine-Tuning (35 ep)"
+  },
+  "improvements": {
+    "delta_accuracy_pct": 1.62,
+    "delta_f1_macro_pct": 2.39,
+    "delta_precision_macro_pct": 2.33,
+    "delta_recall_macro_pct": 2.41,
+    "delta_auc_pct": 0.53,
+    "relative_f1_gain_pct": 2.75
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "f1_macro_pct": 85.15,
+      "accuracy_pct": 88.67,
+      "focal_loss": 2.8384
+    },
+    {
+      "epoch": 2,
+      "f1_macro_pct": 85.75,
+      "accuracy_pct": 89.4,
+      "focal_loss": 2.5409
+    },
+    {
+      "epoch": 3,
+      "f1_macro_pct": 86.24,
+      "accuracy_pct": 90.03,
+      "focal_loss": 2.3086
+    },
+    {
+      "epoch": 4,
+      "f1_macro_pct": 86.62,
+      "accuracy_pct": 90.44,
+      "focal_loss": 2.1059
+    },
+    {
+      "epoch": 5,
+      "f1_macro_pct": 87.06,
+      "accuracy_pct": 90.79,
+      "focal_loss": 1.8719
+    },
+    {
+      "epoch": 6,
+      "f1_macro_pct": 87.44,
+      "accuracy_pct": 91.13,
+      "focal_loss": 1.7243
+    },
+    {
+      "epoch": 7,
+      "f1_macro_pct": 87.48,
+      "accuracy_pct": 91.45,
+      "focal_loss": 1.5697
+    },
+    {
+      "epoch": 8,
+      "f1_macro_pct": 87.79,
+      "accuracy_pct": 91.69,
+      "focal_loss": 1.4207
+    },
+    {
+      "epoch": 9,
+      "f1_macro_pct": 88.08,
+      "accuracy_pct": 92.07,
+      "focal_loss": 1.305
+    },
+    {
+      "epoch": 10,
+      "f1_macro_pct": 88.09,
+      "accuracy_pct": 92.18,
+      "focal_loss": 1.1966
+    },
+    {
+      "epoch": 11,
+      "f1_macro_pct": 88.42,
+      "accuracy_pct": 92.24,
+      "focal_loss": 1.1064
+    },
+    {
+      "epoch": 12,
+      "f1_macro_pct": 88.5,
+      "accuracy_pct": 92.39,
+      "focal_loss": 1.0161
+    },
+    {
+      "epoch": 13,
+      "f1_macro_pct": 88.43,
+      "accuracy_pct": 92.46,
+      "focal_loss": 0.9555
+    },
+    {
+      "epoch": 14,
+      "f1_macro_pct": 88.63,
+      "accuracy_pct": 92.55,
+      "focal_loss": 0.8787
+    },
+    {
+      "epoch": 15,
+      "f1_macro_pct": 88.8,
+      "accuracy_pct": 92.75,
+      "focal_loss": 0.8034
+    },
+    {
+      "epoch": 16,
+      "f1_macro_pct": 88.75,
+      "accuracy_pct": 92.76,
+      "focal_loss": 0.7707
+    },
+    {
+      "epoch": 17,
+      "f1_macro_pct": 88.94,
+      "accuracy_pct": 92.82,
+      "focal_loss": 0.7147
+    },
+    {
+      "epoch": 18,
+      "f1_macro_pct": 88.88,
+      "accuracy_pct": 92.85,
+      "focal_loss": 0.6855
+    },
+    {
+      "epoch": 19,
+      "f1_macro_pct": 88.95,
+      "accuracy_pct": 92.96,
+      "focal_loss": 0.628
+    },
+    {
+      "epoch": 20,
+      "f1_macro_pct": 89.05,
+      "accuracy_pct": 92.98,
+      "focal_loss": 0.5969
+    },
+    {
+      "epoch": 21,
+      "f1_macro_pct": 89.04,
+      "accuracy_pct": 93.04,
+      "focal_loss": 0.5798
+    },
+    {
+      "epoch": 22,
+      "f1_macro_pct": 89.08,
+      "accuracy_pct": 92.96,
+      "focal_loss": 0.5595
+    },
+    {
+      "epoch": 23,
+      "f1_macro_pct": 89.1,
+      "accuracy_pct": 93.06,
+      "focal_loss": 0.5344
+    },
+    {
+      "epoch": 24,
+      "f1_macro_pct": 89.03,
+      "accuracy_pct": 93.03,
+      "focal_loss": 0.5059
+    },
+    {
+      "epoch": 25,
+      "f1_macro_pct": 89.3,
+      "accuracy_pct": 93.0,
+      "focal_loss": 0.4867
+    },
+    {
+      "epoch": 26,
+      "f1_macro_pct": 89.26,
+      "accuracy_pct": 93.13,
+      "focal_loss": 0.4565
+    },
+    {
+      "epoch": 27,
+      "f1_macro_pct": 89.15,
+      "accuracy_pct": 93.04,
+      "focal_loss": 0.4735
+    },
+    {
+      "epoch": 28,
+      "f1_macro_pct": 89.26,
+      "accuracy_pct": 93.04,
+      "focal_loss": 0.4617
+    },
+    {
+      "epoch": 29,
+      "f1_macro_pct": 89.27,
+      "accuracy_pct": 93.21,
+      "focal_loss": 0.436
+    },
+    {
+      "epoch": 30,
+      "f1_macro_pct": 89.25,
+      "accuracy_pct": 93.17,
+      "focal_loss": 0.4181
+    },
+    {
+      "epoch": 31,
+      "f1_macro_pct": 89.11,
+      "accuracy_pct": 93.19,
+      "focal_loss": 0.4218
+    },
+    {
+      "epoch": 32,
+      "f1_macro_pct": 89.09,
+      "accuracy_pct": 93.14,
+      "focal_loss": 0.4199
+    },
+    {
+      "epoch": 33,
+      "f1_macro_pct": 89.31,
+      "accuracy_pct": 93.07,
+      "focal_loss": 0.4209
+    },
+    {
+      "epoch": 34,
+      "f1_macro_pct": 89.24,
+      "accuracy_pct": 93.1,
+      "focal_loss": 0.3884
+    },
+    {
+      "epoch": 35,
+      "f1_macro_pct": 89.14,
+      "accuracy_pct": 93.15,
+      "focal_loss": 0.3941
+    }
+  ],
+  "figure_path": "docs\\figures\\stage2_finetuning_curves.png",
+  "key_takeaway": "Tiền huấn luyện tương phản SupCon ở Stage 1 cung cấp khởi đầu biểu diễn đặc trưng xuất sắc, giúp Stage 2 Fine-Tuning bứt phá vượt qua mức trần 86.85% của mô hình huấn luyện từ đầu để đạt F1-macro 89.24% (+2.39%)."
+}

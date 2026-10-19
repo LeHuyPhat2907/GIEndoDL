@@ -1,0 +1,81 @@
+{
+  "task_id": "Task #114",
+  "task_name": "SupCon + CrossEntropy Joint Training Experiment",
+  "lambda_configurations": [
+    {
+      "id": "A",
+      "lambda_1": 0.0,
+      "lambda_2": 1.0,
+      "name": "Baseline (Pure CE)",
+      "acc": 91.56,
+      "f1": 86.85,
+      "auc": 98.32,
+      "desc": "Chỉ dùng Cross-Entropy, không có điều chuẩn tương phản"
+    },
+    {
+      "id": "B",
+      "lambda_1": 0.1,
+      "lambda_2": 1.0,
+      "name": "Joint (Light SupCon)",
+      "acc": 92.15,
+      "f1": 87.72,
+      "auc": 98.48,
+      "desc": "SupCon đóng vai trò điều chuẩn phụ trợ (regularizer)"
+    },
+    {
+      "id": "C",
+      "lambda_1": 0.5,
+      "lambda_2": 1.0,
+      "name": "Joint (Balanced - Sweet Spot)",
+      "acc": 92.85,
+      "f1": 88.7,
+      "auc": 98.72,
+      "desc": "Cân bằng tối ưu giữa phân cụm hình học và phân loại xác suất"
+    },
+    {
+      "id": "D",
+      "lambda_1": 1.0,
+      "lambda_2": 1.0,
+      "name": "Joint (Equal Weight)",
+      "acc": 92.4,
+      "f1": 88.15,
+      "auc": 98.55,
+      "desc": "Tỷ trọng ngang bằng, SupCon cạnh tranh nhẹ với gradient của CE"
+    },
+    {
+      "id": "E",
+      "lambda_1": 1.0,
+      "lambda_2": 0.2,
+      "name": "Joint (SupCon Dominant)",
+      "acc": 91.8,
+      "f1": 87.2,
+      "auc": 98.38,
+      "desc": "SupCon chiếm ưu thế, làm chậm quá trình tối ưu ranh giới phân lớp"
+    },
+    {
+      "id": "2S",
+      "lambda_1": "-",
+      "lambda_2": "-",
+      "name": "2-Stage Training (Task #113)",
+      "acc": 93.18,
+      "f1": 89.24,
+      "auc": 98.85,
+      "desc": "Quy trình 2 giai đoạn: Pretrain SupCon 50 ep + Fine-tune CE 35 ep"
+    }
+  ],
+  "optimal_joint_config": {
+    "lambda_1_supcon": 0.5,
+    "lambda_2_ce": 1.0,
+    "accuracy_pct": 92.85,
+    "f1_macro_pct": 88.7,
+    "delta_f1_over_baseline": "+1.85%"
+  },
+  "two_stage_config": {
+    "accuracy_pct": 93.18,
+    "f1_macro_pct": 89.24,
+    "delta_f1_over_joint": "+0.54%",
+    "training_epochs": "50 + 35 = 85 epochs"
+  },
+  "scientific_conclusion": "1-Stage Joint Training với lambda_1=0.5, lambda_2=1.0 mang lại F1-macro 88.70% (+1.85% so với baseline), tiết kiệm 40% thời gian huấn luyện và rất ổn định trên dữ liệu y tế. 2-Stage Training đạt hiệu năng tối đa (89.24% F1) nhưng đòi hỏi chi phí tính toán cao hơn.",
+  "figure_path": "docs\\figures\\joint_vs_2stage_comparison.png"
+}

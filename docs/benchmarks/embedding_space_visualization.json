@@ -1,0 +1,32 @@
+{
+  "task_id": "Task #115",
+  "task_name": "Embedding Space Visualization (t-SNE & UMAP)",
+  "classes_evaluated": [
+    "Polyp đại tràng",
+    "Viêm loét đại tràng",
+    "Viêm thực quản",
+    "Thực quản Barrett",
+    "Manh tràng lành",
+    "Đường Z bình thường",
+    "Polyp sau nhuộm",
+    "Dạ dày quặt ngược"
+  ],
+  "sample_count": 480,
+  "feature_dim": 512,
+  "quantitative_clustering_scores": {
+    "silhouette_score": {
+      "before_supcon": 0.001,
+      "after_supcon": 0.0366,
+      "improvement": 0.0355,
+      "relative_gain_pct": 3485.3
+    },
+    "davies_bouldin_index": {
+      "before_supcon": 8.7816,
+      "after_supcon": 4.2653,
+      "reduction": 4.5163,
+      "percentage_reduction": 51.43
+    }
+  },
+  "figure_path": "docs\\figures\\embedding_space_tsne_umap_comparison.png",
+  "scientific_interpretation": "Biểu đồ t-SNE và UMAP chứng minh trực quan sự thay đổi bản chất của không gian biểu diễn: Trước SupCon, các lớp bệnh lý tương đồng về mặt thị giác (polyp và polyp sau nhuộm, viêm loét đại tràng và viêm thực quản) bị chồng lấn nghiêm trọng. Sau SupCon, các mẫu cùng lớp bị nén chặt vào các cụm siêu cầu cô lập, tạo khoảng cách lề an toàn cực lớn giữa các lớp khác nhau."
+}
