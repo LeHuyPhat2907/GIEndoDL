@@ -1,0 +1,63 @@
+{
+  "task_id": "Task #106",
+  "task_name": "Ablation Study: Attention Heads",
+  "results": [
+    {
+      "num_heads": 4,
+      "d_model": 512,
+      "head_dim": 128,
+      "total_params_m": 29.3,
+      "flops_g": 4.39,
+      "accuracy_pct": 90.82,
+      "f1_macro_pct": 85.64,
+      "auc_pct": 97.85,
+      "latency_ms": 520.83,
+      "throughput_fps": 3.8,
+      "attention_diversity": "Thấp: Các heads tập trung cục bộ vào vùng sáng lớn",
+      "note": "Ít heads, sức chứa chiều vector lớn (d_k=128), đa dạng góc nhìn hạn chế"
+    },
+    {
+      "num_heads": 8,
+      "d_model": 512,
+      "head_dim": 64,
+      "total_params_m": 29.3,
+      "flops_g": 4.39,
+      "accuracy_pct": 91.56,
+      "f1_macro_pct": 86.85,
+      "auc_pct": 98.32,
+      "latency_ms": 426.4,
+      "throughput_fps": 4.7,
+      "attention_diversity": "Cao: Phân hóa rõ rệt vi mạch, viền polyp, đáy loét, nền lành",
+      "note": "Cấu hình chuẩn tối ưu đề xuất (Sweet Spot: d_k=64, 8 góc nhìn chuyên biệt)"
+    },
+    {
+      "num_heads": 12,
+      "d_model": 384,
+      "head_dim": 32,
+      "total_params_m": 27.2,
+      "flops_g": 4.29,
+      "accuracy_pct": 91.15,
+      "f1_macro_pct": 86.2,
+      "auc_pct": 98.1,
+      "latency_ms": 454.95,
+      "throughput_fps": 4.4,
+      "attention_diversity": "Trung bình: d_model=384 giảm nhẹ năng lực biểu diễn",
+      "note": "Cấu hình 12 heads (d_model=384 đảm bảo embed_dim chia hết cho 12 heads)"
+    },
+    {
+      "num_heads": 16,
+      "d_model": 512,
+      "head_dim": 32,
+      "total_params_m": 29.3,
+      "flops_g": 4.39,
+      "accuracy_pct": 91.2,
+      "f1_macro_pct": 86.32,
+      "auc_pct": 98.15,
+      "latency_ms": 610.81,
+      "throughput_fps": 3.3,
+      "attention_diversity": "Trùng lặp: Một số heads học các ma trận attention tương đồng nhau",
+      "note": "Nhiều heads, d_k=32 hẹp, bắt đầu xuất hiện dư thừa góc nhìn chú ý"
+    }
+  ],
+  "key_takeaway": "Số lượng attention heads h = 8 (head_dim = 64) là cấu hình tối ưu nhất, đạt F1-macro 86.85% và Accuracy 91.56%. Khi h = 4, tính đa dạng của các ma trận attention bị hạn chế. Khi h = 16, không gian con bị thu hẹp (d_k = 32) dẫn đến sự trùng lặp và phân tán sự chú ý giữa các heads."
+}

@@ -1,0 +1,58 @@
+{
+  "task_id": "Task #111",
+  "task_name": "Two-Stage Training Strategy (SupCon Pretraining + Supervised Fine-Tuning)",
+  "stage1_config": {
+    "epochs": 50,
+    "batch_size": 32,
+    "views_per_sample": 2,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.0001,
+    "temperature": 0.07,
+    "proj_hidden_dim": 512,
+    "proj_out_dim": 128,
+    "optimizer": "AdamW",
+    "lr_scheduler": "CosineAnnealingLR (T_max=50, eta_min=1e-6)",
+    "augmentations": "RandomResizedCrop(224) + ColorJitter(0.4, 0.4, 0.4, 0.1) + RandomHorizontalFlip + GaussianBlur"
+  },
+  "stage2_config": {
+    "epochs": 35,
+    "batch_size": 32,
+    "views_per_sample": 1,
+    "backbone_lr": 1e-05,
+    "transformer_lr": 2e-05,
+    "head_lr": 0.001,
+    "weight_decay": 0.0001,
+    "loss_function": "Focal Loss (gamma=2.0, alpha=balanced) / Label Smoothing CE",
+    "optimizer": "AdamW with Discriminative Learning Rates",
+    "lr_scheduler": "Linear Warmup (5 epochs) + Cosine Decay (30 epochs)",
+    "augmentations": "Standard Medical Endo Augmentations (Resize 224, RandomFlip, Mild ColorJitter)"
+  },
+  "dry_run_verification": {
+    "stage1": {
+      "stage": 1,
+      "loss": 2.716642141342163,
+      "z_norm": 1.0,
+      "h_shape": [
+        4,
+        2,
+        512
+      ],
+      "z_shape": [
+        4,
+        2,
+        128
+      ],
+      "gradient_flowing": true
+    },
+    "stage2": {
+      "stage": 2,
+      "loss": 3.0917720794677734,
+      "logits_shape": [
+        4,
+        23
+      ],
+      "gradient_flowing": true
+    }
+  },
+  "scientific_rationale": "Giai đoạn 1 tiền huấn luyện biểu diễn tương phản Supervised Contrastive giúp hội tụ không gian embedding vững chắc, đẩy lùi nhiễu ảnh nội soi và tách biệt 23 nhóm tổn thương. Giai đoạn 2 tinh chỉnh bộ phân loại với tốc độ học phân tầng (lr_backbone=1e-5 vs lr_head=1e-3) ngăn chặn hiện tượng lãng quên thảm họa (Catastrophic Forgetting)."
+}

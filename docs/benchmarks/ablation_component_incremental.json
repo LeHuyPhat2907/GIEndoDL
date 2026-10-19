@@ -1,0 +1,78 @@
+{
+  "task_id": "Task #107",
+  "task_name": "Ablation Study: CNN-only vs CNN-CBAM vs CNN-CBAM-Transformer",
+  "comparison_table": [
+    {
+      "model_variant": "CNN-only (ResNet-50)",
+      "params_m": 23.56,
+      "flops_g": 4.13,
+      "delta_params": "-",
+      "accuracy_pct": 89.98,
+      "delta_acc": "-",
+      "f1_macro_pct": 84.23,
+      "delta_f1": "-",
+      "precision_macro_pct": 85.12,
+      "recall_macro_pct": 83.45,
+      "auc_pct": 97.45,
+      "latency_ms": 406.52,
+      "throughput_fps": 4.9,
+      "description": "Mạng nơ-ron tích chập thuần túy; hạn chế trong phân biệt tổn thương phẳng và thiếu tương quan toàn cục."
+    },
+    {
+      "model_variant": "CNN-CBAM",
+      "params_m": 24.08,
+      "flops_g": 4.13,
+      "delta_params": "+0.52M",
+      "accuracy_pct": 91.12,
+      "delta_acc": "+1.14%",
+      "f1_macro_pct": 86.34,
+      "delta_f1": "+2.11%",
+      "precision_macro_pct": 87.05,
+      "recall_macro_pct": 85.78,
+      "auc_pct": 98.08,
+      "latency_ms": 411.47,
+      "throughput_fps": 4.9,
+      "description": "Tích hợp CBAM tại Stage 4: Tái cân chỉnh kênh quan trọng và làm sắc nét ranh giới tổn thương niêm mạc."
+    },
+    {
+      "model_variant": "CNN-CBAM-Transformer (Đề xuất)",
+      "params_m": 29.3,
+      "flops_g": 4.39,
+      "delta_params": "+5.74M",
+      "accuracy_pct": 91.56,
+      "delta_acc": "+1.58%",
+      "f1_macro_pct": 86.85,
+      "delta_f1": "+2.62%",
+      "precision_macro_pct": 87.42,
+      "recall_macro_pct": 86.39,
+      "auc_pct": 98.32,
+      "latency_ms": 448.33,
+      "throughput_fps": 4.5,
+      "description": "Kiến trúc lai toàn diện: Kết hợp trích xuất đặc trưng cục bộ (CNN), tái hiệu chuẩn (CBAM) và tự chú ý toàn cục (Transformer)."
+    }
+  ],
+  "step_by_step_improvements": {
+    "step_1_cnn_to_cbam": {
+      "transition": "CNN-only ➔ CNN-CBAM",
+      "delta_accuracy_pct": 1.14,
+      "delta_f1_macro_pct": 2.11,
+      "delta_params_m": 0.52,
+      "mechanism": "CBAM tái hiệu chuẩn trọng số kênh (chọn lọc vi mạch/loét) và không gian (tập trung biên tổn thương)."
+    },
+    "step_2_cbam_to_transformer": {
+      "transition": "CNN-CBAM ➔ CNN-CBAM-Transformer",
+      "delta_accuracy_pct": 0.44,
+      "delta_f1_macro_pct": 0.51,
+      "delta_params_m": 5.22,
+      "mechanism": "Transformer Encoder với MHSA liên kết ngữ cảnh giải phẫu toàn cục giữa các vùng token 7x7 xa nhau."
+    },
+    "overall_cumulative": {
+      "transition": "CNN-only ➔ Full Proposed Architecture",
+      "total_delta_accuracy_pct": 1.58,
+      "total_delta_f1_macro_pct": 2.62,
+      "total_delta_params_m": 5.74,
+      "relative_f1_gain_pct": 3.11
+    }
+  },
+  "scientific_summary": "Kết quả thực nghiệm chứng minh sự đóng góp cộng hưởng không thể thiếu của cả 2 mô-đun: CBAM đóng góp +2.11% F1-macro với chi phí cực thấp (+0.52M params), trong khi Transformer Encoder đóng góp thêm +0.51% F1-macro nhờ thiết lập tương quan tầm xa toàn cục, nâng tổng mức cải thiện F1-macro lên +2.62%."
+}

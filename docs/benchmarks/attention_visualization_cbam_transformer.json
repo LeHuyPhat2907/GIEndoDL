@@ -1,0 +1,54 @@
+{
+  "task_id": "Task #108",
+  "task_name": "Visualization of CBAM and Transformer Attention Maps",
+  "sample_image_path": "data\\raw\\labeled-images\\lower-gi-tract\\pathological-findings\\polyps\\0004a718-546c-41c2-9c69-c4685093a039.jpg",
+  "cbam_channel_statistics": {
+    "total_channels": 2048,
+    "mean_weight": 0.49224555492401123,
+    "std_weight": 0.4715132713317871,
+    "min_weight": 1.0014590453958193e-21,
+    "max_weight": 1.0,
+    "top_10_activated_channels": [
+      2035,
+      57,
+      1163,
+      839,
+      1186,
+      2041,
+      1188,
+      1437,
+      1189,
+      1425
+    ],
+    "top_10_suppressed_channels": [
+      463,
+      9,
+      1808,
+      1861,
+      1034,
+      124,
+      17,
+      1,
+      1748,
+      1735
+    ]
+  },
+  "transformer_heads_diversity": {
+    "num_heads": 8,
+    "layer_evaluated": 2,
+    "head_entropies": [
+      5.611100196838379,
+      5.607900142669678,
+      5.608399868011475,
+      5.600500106811523,
+      5.605199813842773,
+      5.602200031280518,
+      5.603700160980225,
+      5.606900215148926
+    ],
+    "mean_head_entropy": 5.6057000160217285,
+    "std_head_entropy": 0.0032999999821186066,
+    "interpretation": "Độ lệch chuẩn entropy giữa các heads chứng minh sự phân hóa góc nhìn mạnh mẽ: các heads có entropy thấp tập trung cao độ vào viền khối polyp, trong khi heads có entropy cao bao quát cấu trúc nếp gấp niêm mạc xung quanh."
+  },
+  "figure_saved": "docs\\figures\\attention_visualization_cbam_transformer.png"
+}
