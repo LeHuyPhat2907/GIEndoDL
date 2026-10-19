@@ -1,0 +1,96 @@
+{
+  "benchmark_title": "Ablation and Profiling of Hybrid CNN-CBAM-Transformer Components",
+  "tasks_covered": [
+    "#96",
+    "#97",
+    "#98",
+    "#99",
+    "#100",
+    "#101"
+  ],
+  "device": "cpu",
+  "cbam_placements": [
+    {
+      "placement": "stage4",
+      "total_backbone_params_m": 24.032,
+      "cbam_added_params_k": 524.39,
+      "percentage_added": 2.23,
+      "latency_ms_b2": 150.23,
+      "fps": 13.31,
+      "recommendation": "Khuyến nghị tối ưu (Core Hybrid)"
+    },
+    {
+      "placement": "stage3_4",
+      "total_backbone_params_m": 24.164,
+      "cbam_added_params_k": 655.56,
+      "percentage_added": 2.79,
+      "latency_ms_b2": 143.5,
+      "fps": 13.94,
+      "recommendation": "Đa tỷ lệ cân bằng"
+    },
+    {
+      "placement": "all_stages",
+      "total_backbone_params_m": 24.205,
+      "cbam_added_params_k": 696.71,
+      "percentage_added": 2.96,
+      "latency_ms_b2": 148.34,
+      "fps": 13.48,
+      "recommendation": "Chi phí cao"
+    },
+    {
+      "placement": "residual_blocks",
+      "total_backbone_params_m": 26.025,
+      "cbam_added_params_k": 2516.51,
+      "percentage_added": 10.7,
+      "latency_ms_b2": 199.26,
+      "fps": 10.04,
+      "recommendation": "Chuẩn Woo et al. 2018"
+    }
+  ],
+  "pooling_strategies": [
+    {
+      "pooling_mode": "gap",
+      "total_params_m": 31.426,
+      "num_tokens": 49,
+      "latency_ms": 156.98,
+      "clinical_rationale": "Phù hợp nhất cho y tế: Tích lũy bằng chứng từ toàn bộ các vi tổn thương niêm mạc."
+    },
+    {
+      "pooling_mode": "cls",
+      "total_params_m": 31.427,
+      "num_tokens": 50,
+      "latency_ms": 160.78,
+      "clinical_rationale": "Chuẩn ViT: Tập trung ngữ nghĩa đại diện toàn cục thông qua self-attention."
+    },
+    {
+      "pooling_mode": "hybrid",
+      "total_params_m": 31.952,
+      "num_tokens": 50,
+      "latency_ms": 162.82,
+      "clinical_rationale": "Hợp nhất đa diện: Kết hợp cả biểu diễn CLS và trung bình không gian GAP."
+    }
+  ],
+  "transformer_depths": [
+    {
+      "depth_layers": 2,
+      "total_model_params_m": 31.426,
+      "transformer_params_m": 6.306,
+      "latency_ms": 163.43,
+      "fps": 12.23
+    },
+    {
+      "depth_layers": 3,
+      "total_model_params_m": 34.578,
+      "transformer_params_m": 9.458,
+      "latency_ms": 272.76,
+      "fps": 7.33
+    },
+    {
+      "depth_layers": 4,
+      "total_model_params_m": 37.73,
+      "transformer_params_m": 12.611,
+      "latency_ms": 274.82,
+      "fps": 7.27
+    }
+  ]
+}
