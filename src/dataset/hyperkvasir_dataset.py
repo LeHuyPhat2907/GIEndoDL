@@ -71,7 +71,9 @@ class HyperKvasirDataset(Dataset):
             if not sample_p.exists():
                 alt_dir = self._auto_locate_raw_images()
                 if alt_dir is not None:
-                    print(f"🎉 Kaggle detected! Đã tự động kết nối thư mục ảnh tại: {alt_dir}")
+                    print(
+                        f"🎉 Kaggle detected! Đã tự động kết nối thư mục ảnh tại: {alt_dir}"
+                    )
                     self.raw_images_dir = alt_dir
 
         # Khởi tạo Tensor Shared Memory trong RAM nếu kích hoạt preload_ram
@@ -90,7 +92,9 @@ class HyperKvasirDataset(Dataset):
         if not self.relative_paths:
             return None
         test_rel = self.relative_paths[0]
-        sub_folder = test_rel.split("/")[0] if "/" in test_rel else test_rel.split("\\")[0]
+        sub_folder = (
+            test_rel.split("/")[0] if "/" in test_rel else test_rel.split("\\")[0]
+        )
 
         kaggle_input = Path("/kaggle/input")
         if kaggle_input.exists():
@@ -131,7 +135,9 @@ class HyperKvasirDataset(Dataset):
             f"⚡ Đang nạp {n_samples} ảnh ({self.split}) vào RAM "
             f"({preload_w}x{preload_h} RGB ~ {ram_gb:.2f} GB) bằng đa luồng C++..."
         )
-        self.cached_images = torch.empty((n_samples, preload_h, preload_w, 3), dtype=torch.uint8)
+        self.cached_images = torch.empty(
+            (n_samples, preload_h, preload_w, 3), dtype=torch.uint8
+        )
 
         def _load_single(idx: int):
             img_full_path = self.raw_images_dir / self.relative_paths[idx]
@@ -219,6 +225,7 @@ class HyperKvasirDataset(Dataset):
                 if self.split == "train"
                 else self.img_size[0]
             )
+            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
             img_rgb = cv2.resize(
                 img_rgb, (target_w, target_h), interpolation=cv2.INTER_LINEAR
             )
