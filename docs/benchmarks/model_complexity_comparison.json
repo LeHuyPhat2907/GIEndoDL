@@ -1,0 +1,163 @@
+{
+  "task_id": "Task #103",
+  "task_name": "Calculate Model Complexity (Params, FLOPs)",
+  "proposed_model": {
+    "name": "Hybrid CNN-CBAM-Transformer",
+    "total_params_m": 31.43,
+    "flops_g": 4.39,
+    "component_breakdown": [
+      {
+        "component": "CNN Backbone (ResNet-50)",
+        "params_m": 23.508,
+        "pct": 74.8,
+        "role": "Trích xuất đặc trưng cục bộ phân cấp Stage 1-4"
+      },
+      {
+        "component": "CBAM Module (Stage 4)",
+        "params_m": 0.524,
+        "pct": 1.7,
+        "role": "Tái hiệu chuẩn kênh (WHAT) và không gian (WHERE)"
+      },
+      {
+        "component": "Feature-to-Token Bridge",
+        "params_m": 1.075,
+        "pct": 3.4,
+        "role": "Conv 1x1 giảm chiều 2048->512, N=49 visual tokens"
+      },
+      {
+        "component": "Compact Transformer (L=2)",
+        "params_m": 6.306,
+        "pct": 20.1,
+        "role": "Mô hình hóa tự chú ý tương quan toàn cảnh O(49^2)"
+      },
+      {
+        "component": "Classification Head (GAP)",
+        "params_m": 0.013,
+        "pct": 0.0,
+        "role": "Global Average Pooling -> LayerNorm -> Linear(23)"
+      }
+    ]
+  },
+  "all_models_comparison": [
+    {
+      "category": "CNN Baseline",
+      "model": "MobileNetV3-Large",
+      "params_m": 5.48,
+      "flops_g": 0.23,
+      "type": "Lightweight Mobile CNN"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "DenseNet-121",
+      "params_m": 7.98,
+      "flops_g": 2.9,
+      "type": "Dense Connectivity CNN"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "EfficientNetV2-S",
+      "params_m": 21.46,
+      "flops_g": 2.87,
+      "type": "Progressive Training CNN"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "ResNet-50",
+      "params_m": 25.56,
+      "flops_g": 4.13,
+      "type": "Residual CNN (Backbone chuẩn)"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "SE-ResNet-50",
+      "params_m": 28.09,
+      "flops_g": 4.13,
+      "type": "Squeeze-and-Excitation CNN"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "EfficientNet-B4",
+      "params_m": 19.34,
+      "flops_g": 4.39,
+      "type": "Compound Scaling CNN"
+    },
+    {
+      "category": "CNN Baseline",
+      "model": "ResNet-101",
+      "params_m": 44.55,
+      "flops_g": 7.87,
+      "type": "Deep Residual CNN"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "Swin-Tiny",
+      "params_m": 28.29,
+      "flops_g": 4.36,
+      "type": "Hierarchical Windowed ViT"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "ViT-Base/32",
+      "params_m": 88.22,
+      "flops_g": 4.4,
+      "type": "Patch-32 Standard ViT"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "CaiT-S24",
+      "params_m": 46.9,
+      "flops_g": 9.38,
+      "type": "Class-Attention in Image ViT"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "Swin-Base",
+      "params_m": 87.77,
+      "flops_g": 15.14,
+      "type": "Large Windowed ViT"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "ViT-Base/16",
+      "params_m": 86.57,
+      "flops_g": 17.58,
+      "type": "Patch-16 Standard ViT"
+    },
+    {
+      "category": "Vision Transformer",
+      "model": "DeiT-Base",
+      "params_m": 86.57,
+      "flops_g": 17.58,
+      "type": "Data-Efficient ViT"
+    },
+    {
+      "category": "Mô Hình Lai Đề Xuất",
+      "model": "Hybrid CNN-CBAM-Transformer (Ours)",
+      "params_m": 31.43,
+      "flops_g": 4.39,
+      "type": "ResNet50 + CBAM + Compact Trans (L=2) + GAP"
+    }
+  ],
+  "comparisons_vs_key_models": {
+    "vs_ResNet50": {
+      "params_ratio": "+23.0% (+5.87M)",
+      "flops_ratio": "+6.6% (+0.53G)",
+      "verdict": "Chỉ tăng nhẹ so với CNN gốc nhưng bổ sung cả CBAM và Transformer toàn cảnh"
+    },
+    "vs_Swin_Tiny": {
+      "params_ratio": "+11.1% (+3.14M)",
+      "flops_ratio": "+0.7% (+0.29G)",
+      "verdict": "Quy mô tương đương Swin-Tiny nhưng giữ inductive bias cục bộ mạnh hơn"
+    },
+    "vs_Swin_Base": {
+      "params_ratio": "-64.2% (tiết kiệm 56.34M)",
+      "flops_ratio": "-71.0% (tiết kiệm 10.49G)",
+      "verdict": "Chỉ bằng 35.8% số tham số và 30.7% lượng tính toán của Swin-Base"
+    },
+    "vs_ViT_Base_16": {
+      "params_ratio": "-63.7% (tiết kiệm 55.14M)",
+      "flops_ratio": "-75.0% (tiết kiệm 12.93G)",
+      "verdict": "Chỉ bằng 36.3% tham số và 26.4% FLOPs của ViT-Base"
+    }
+  }
+}

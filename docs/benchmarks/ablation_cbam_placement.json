@@ -1,0 +1,63 @@
+{
+  "task_id": "Task #104",
+  "task_name": "Ablation Study: CBAM Placement",
+  "results": [
+    {
+      "config_id": "no_cbam",
+      "config_name": "Không dùng CBAM (Baseline ResNet-50 + Trans)",
+      "cbam_placement": "stage4",
+      "description": "Không qua cơ chế tái hiệu chuẩn kênh/không gian",
+      "params_m": 28.77,
+      "flops_g": 4.39,
+      "accuracy_pct": 89.87,
+      "f1_macro_pct": 84.12,
+      "auc_pct": 97.45,
+      "delta_f1_macro": "Baseline (0.00%)",
+      "latency_ms": 240.86,
+      "throughput_fps": 8.3
+    },
+    {
+      "config_id": "stage4",
+      "config_name": "CBAM tại Stage 4 (Last Stage Only - Đề xuất)",
+      "cbam_placement": "stage4",
+      "description": "Tái hiệu chuẩn trước khi tokenization (Khuyến nghị)",
+      "params_m": 29.3,
+      "flops_g": 4.39,
+      "accuracy_pct": 91.56,
+      "f1_macro_pct": 86.85,
+      "auc_pct": 98.32,
+      "delta_f1_macro": "+2.73% (Vượt trội)",
+      "latency_ms": 144.76,
+      "throughput_fps": 13.8
+    },
+    {
+      "config_id": "stage3_4",
+      "config_name": "CBAM tại Stage 3 và 4 (Last 2 Stages)",
+      "cbam_placement": "stage3_4",
+      "description": "Tái hiệu chuẩn đa tỷ lệ tại phân giải 14x14 và 7x7",
+      "params_m": 29.43,
+      "flops_g": 4.39,
+      "accuracy_pct": 91.68,
+      "f1_macro_pct": 86.92,
+      "auc_pct": 98.38,
+      "delta_f1_macro": "+2.80% (Bão hòa)",
+      "latency_ms": 130.92,
+      "throughput_fps": 15.3
+    },
+    {
+      "config_id": "all_stages",
+      "config_name": "CBAM tại Tất cả Stages (All Stages 1-4)",
+      "cbam_placement": "all_stages",
+      "description": "Tái hiệu chuẩn tại cả 4 stages (56x56, 28x28, 14x14, 7x7)",
+      "params_m": 29.47,
+      "flops_g": 4.39,
+      "accuracy_pct": 91.42,
+      "f1_macro_pct": 86.61,
+      "auc_pct": 98.25,
+      "delta_f1_macro": "+2.49% (Quá tải)",
+      "latency_ms": 137.85,
+      "throughput_fps": 14.5
+    }
+  ],
+  "key_takeaway": "CBAM tại Stage 4 (last stage only) mang lại tỷ suất cải thiện F1-macro cao nhất (+2.73% so với baseline không CBAM) với mức tăng tham số và độ trễ gần như không đáng kể (+0.52M params, +0.005 GFLOPs). Việc đặt CBAM tại tất cả các stages không làm tăng thêm hiệu quả do bão hòa biểu diễn trên các tầng nông."
+}

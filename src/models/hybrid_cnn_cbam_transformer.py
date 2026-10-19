@@ -111,18 +111,6 @@ class HybridCNNCBAMTransformer(nn.Module):
             cbam_kernel_size=cbam_kernel_size,
         )
 
-        # Giữ lại các alias cho forward hooks của mã nguồn cũ
-        self.conv1 = self.backbone.conv1
-        self.bn1 = self.backbone.bn1
-        self.relu = self.backbone.relu
-        self.maxpool = self.backbone.maxpool
-        self.layer1 = self.backbone.layer1
-        self.layer2 = self.backbone.layer2
-        self.layer3 = self.backbone.layer3
-        self.layer4 = self.backbone.layer4
-        if "cbam4" in self.backbone.cbam_modules:
-            self.cbam4 = self.backbone.cbam_modules["cbam4"]
-
         # 2. Feature-to-Token Bridge (Task #99)
         use_cls = token_pooling in ("cls", "hybrid")
         self.bridge = FeatureToTokenBridge(
@@ -152,6 +140,47 @@ class HybridCNNCBAMTransformer(nn.Module):
             pooling=token_pooling,
             dropout=dropout,
             has_cls_token=use_cls,
+        )
+
+    # Thuộc tính truy xuất trực tiếp các tầng con của Backbone mà không nhân đôi cây module
+    @property
+    def conv1(self):
+        return self.backbone.conv1
+
+    @property
+    def bn1(self):
+        return self.backbone.bn1
+
+    @property
+    def relu(self):
+        return self.backbone.relu
+
+    @property
+    def maxpool(self):
+        return self.backbone.maxpool
+
+    @property
+    def layer1(self):
+        return self.backbone.layer1
+
+    @property
+    def layer2(self):
+        return self.backbone.layer2
+
+    @property
+    def layer3(self):
+        return self.backbone.layer3
+
+    @property
+    def layer4(self):
+        return self.backbone.layer4
+
+    @property
+    def cbam4(self):
+        return (
+            self.backbone.cbam_modules["cbam4"]
+            if "cbam4" in self.backbone.cbam_modules
+            else None
         )
 
     def extract_features(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
