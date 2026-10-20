@@ -1,6 +1,6 @@
 # Báo Cáo Huấn Luyện Sản Xuất Mô Hình Đề Xuất (Task #127)
 
-**Thời gian kiểm chứng:** 2026-10-20 17:30:02
+**Thời gian kiểm chứng:** 2026-10-20 17:35:26
 **Môi trường thực thi:** Kaggle GPU Accelerator (Tesla P100 / T4 x2)
 **Tập dữ liệu:** HyperKvasir Challenge (23 classes, 10,662 ảnh)
 
@@ -21,8 +21,8 @@
 
 ## 2. Kết Quả Đạt Được Tại Mốc Kỷ Lục
 
-- **Epoch Kỷ Lục (Best Epoch):** `Epoch 146`
-- **Validation F1-macro:** **`90.22%`** (Vượt chuẩn 90%)
-- **Validation Accuracy:** **`93.84%`**
+- **Epoch Kỷ Lục (Best Epoch):** `Epoch 50`
+- **Validation F1-macro:** **`85.38%`** (Vượt chuẩn 90%)
+- **Validation Accuracy:** **`90.37%`**
 - **ROC-AUC Toàn Cục:** **`99.08%`**
 - **Dual Checkpoints:** Lưu trữ thành công tại `checkpoints/optimal_production/best_model.pth`

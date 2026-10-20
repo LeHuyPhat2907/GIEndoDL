@@ -90,7 +90,12 @@ class EarlyStopping:
 class OptimalModelTrainer:
     """Bộ khung huấn luyện chính thức chuẩn hóa sản xuất (Production Trainer) cho Kaggle / GPU."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        epochs: Optional[int] = None,
+        patience: Optional[int] = None,
+    ):
         if config_path is None:
             config_path = str(
                 PROJECT_ROOT / "configs" / "optimal_training_kaggle_config.json"
@@ -101,8 +106,16 @@ class OptimalModelTrainer:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.num_classes = self.config["dataset"]["num_classes"]
-        self.epochs = self.config["training"]["full_epochs"]
-        self.patience = self.config["training"]["early_stopping_patience"]
+        self.epochs = (
+            int(epochs)
+            if epochs is not None
+            else int(self.config["training"]["full_epochs"])
+        )
+        self.patience = (
+            int(patience)
+            if patience is not None
+            else int(self.config["training"]["early_stopping_patience"])
+        )
 
         # 1. Khởi tạo mô hình CNN-CBAM-Transformer
         self.model = build_hybrid_model(
@@ -148,8 +161,10 @@ class OptimalModelTrainer:
             betas=tuple(self.config["optimizer"]["betas"]),
         )
 
-        # 4. Bộ điều phối CosineAnnealingLR
-        self.warmup_epochs = self.config["scheduler"]["warmup_epochs"]
+        # 4. Bộ điều phối CosineAnnealingLR (Warmup 8% theo tổng số epochs)
+        self.warmup_epochs = max(
+            3, int(self.epochs * self.config["scheduler"].get("warmup_ratio", 0.08))
+        )
         self.base_head_lr = lrs["classifier_head_lr"]
         self.scheduler = CosineAnnealingLR(
             self.optimizer,
@@ -694,5 +709,34 @@ class OptimalModelTrainer:
 
 
 if __name__ == "__main__":
-    trainer = OptimalModelTrainer()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Huấn luyện mô hình đề xuất CNN-CBAM-Transformer trên Kaggle / GPU"
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help="Số lượng epochs huấn luyện (ví dụ: --epochs 50)",
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=None,
+        help="Patience cho Early Stopping (mặc định: 15)",
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="Đường dẫn file cấu hình json",
+    )
+    args = parser.parse_args()
+
+    trainer = OptimalModelTrainer(
+        config_path=args.config,
+        epochs=args.epochs,
+        patience=args.patience,
+    )
     trainer.run_training_simulation_or_kaggle()
