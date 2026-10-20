@@ -1,85 +1,88 @@
-# Hướng Dẫn Huấn Luyện Sản Xuất Mô Hình Đề Xuất Trên Kaggle GPU (Task #127)
+# Hướng Dẫn Huấn Luyện & Xuất Báo Cáo Lâm Sàng Mô Hình Lai Đề Xuất (Task #127)
 
 **Dự án:** Luận văn Thạc sĩ / Cử nhân: *"Ứng dụng Học Sâu trong Nhận diện và Phân loại Tổn thương Bệnh lý Đường Tiêu hóa qua Ảnh Nội soi"*
 **Repository:** `GIEndoDL` (HUIT, Sinh viên: Lê Huy Phát)
-**Kiến trúc:** `Hybrid CNN-CBAM-Transformer` (ResNet50 + CBAM + Transformer 4 layers, 8 heads, 512D)
-**Mục tiêu:** Huấn luyện mô hình đề xuất trên Kaggle GPU (Tesla P100 / T4 x2) với tùy chọn 50 epochs thử nghiệm trước hoặc 150 epochs toàn diện, xuất đầy đủ 100% artifacts, số liệu và biểu đồ khoa học.
+**Mô hình:** `Hybrid CNN-CBAM-Transformer` (ResNet50 + CBAM + Transformer 4 layers, 8 heads, 512D)
+**Mục tiêu:** Huấn luyện thực tế trên GPU và xuất trọn bộ báo cáo y khoa chuyên sâu (21 files độc lập, không trộn lẫn bất kỳ mô hình hay task nào khác).
 
 ---
 
-## 1. Thiết Lập Môi Trường Kaggle (Chỉ Mất 30 Giây)
+## 1. Thiết Lập Môi Trường Kaggle
 
-1. Truy cập [Kaggle](https://www.kaggle.com/) ➔ Bấm **"+ Create"** ➔ Chọn **"New Notebook"**.
-2. Ở cột **Notebook Settings** bên phải:
-   - **Accelerator:** Chọn **GPU P100** (khuyến nghị ưu tiên 1) hoặc **GPU T4 x2**.
-   - **Language:** Python.
-   - **Persistence:** Variables and Files.
-   - **Internet:** **Bật (ON)** *(Bắt buộc để tải code từ GitHub và dữ liệu từ Simula)*.
+1. Trên Kaggle, mở Notebook của bạn và kiểm tra:
+   - **Accelerator:** GPU P100 (hoặc GPU T4 x2).
+   - **Internet:** Bật (ON).
 
 ---
 
-## 2. Quy Trình 3 Ô Code Huấn Luyện Chuẩn (Giống Các Lần Trước)
+## 2. Quy Trình Chạy Lệnh
 
-Bạn chỉ cần tạo lần lượt 3 ô code trong Notebook Kaggle và bấm chạy:
-
-### Ô Cell 1: Kéo Code từ GitHub & Cài Thư Viện
+### Ô Cell 1: Kéo Code Mới Nhất từ GitHub & Cài Thư Viện
 ```bash
-# 1. Kéo mã nguồn dự án về máy ảo Kaggle
 !git clone https://github.com/LeHuyPhat2907/GIEndoDL.git /kaggle/working/GIEndoDL
 %cd /kaggle/working/GIEndoDL
-
-# 2. Cài đặt các thư viện phụ thuộc
+!git pull origin main
 !pip install -q timm albumentations scikit-learn seaborn matplotlib tabulate wandb
 ```
 
-### Ô Cell 2: Tải Dữ Liệu HyperKvasir Tự Động Bằng Code (~1.5 đến 2 phút)
+### Ô Cell 2: Tải Dữ Liệu HyperKvasir Tự Động (Nếu chưa tải)
 ```bash
-# Tự động tải 3.9 GB ảnh có nhãn từ máy chủ Simula, giải nén và dọn dẹp file zip
 !python src/dataset/download_hyperkvasir.py
 ```
-> [!NOTE]
-> Script `download_hyperkvasir.py` tải trực tiếp từ máy chủ chính thức của **Simula Research Laboratory**:
-> - Hiển thị thanh tiến trình `tqdm` trực quan.
-> - Giải nén trực tiếp vào `data/raw/labeled-images`.
-> - Tự động xóa file zip sau khi giải nén để tiết kiệm tối đa dung lượng đĩa của Kaggle.
-> - **Không cần Kaggle API Key**, **không bị lỗi 403 Forbidden**!
 
-### Ô Cell 3: Bắt Đầu Huấn Luyện 50 Epochs Trước
+### Ô Cell 3: Huấn Luyện Thật & Xuất Trọn Bộ Kết Quả Riêng Biệt
+
+#### 👉 Lựa chọn 1: Huấn luyện lại từ đầu 50 Epochs THẬT trên GPU
 ```bash
-# Huấn luyện 50 epochs (Warmup 4 epochs, Early Stopping patience = 15)
 !python src/training/train_optimal_model.py --epochs 50
 ```
 
-### Ô Cell 4: Đóng Gói Toàn Bộ Kết Quả & Tải File ZIP Về Máy Tính
-```python
-# Tự động nén checkpoints, CSVs, JSON và tất cả biểu đồ vào 1 file zip duy nhất
-!python src/utils/zip_training_results.py
-
-# Hoặc tạo đường link tải trực tiếp 1-click về máy tính trong notebook:
-from IPython.display import FileLink, display
-display(FileLink("GIEndoDL_optimal_results.zip"))
+#### 👉 Lựa chọn 2: Trích xuất NGAY LẬP TỨC từ 50 Epochs bạn vừa chạy xong (Chỉ mất ~30 giây)
+```bash
+!python src/training/train_optimal_model.py --export-only
 ```
 
 ---
 
-## 3. Danh Mục Toàn Bộ Kết Quả Xuất Ra (100% Giống Các Lần Trước)
+## 3. Danh Sách 21 File Kết Quả Độc Lập Cho Mô Hình Đề Xuất
 
-Sau khi chạy xong, toàn bộ kết quả phục vụ viết luận văn tốt nghiệp sẽ được lưu đầy đủ tại thư mục `/kaggle/working/` (hoặc `docs/benchmarks/` & `docs/figures/`):
+Sau khi chạy xong, toàn bộ 21 files sẽ nằm gọn trong thư mục riêng biệt `/kaggle/working/optimal_hybrid_model/`:
 
-### 1. Trọng Số Mô Hình (Checkpoints)
-- `checkpoints/best_model.pth`: Trọng số tại epoch có Macro F1 cao nhất.
-- `checkpoints/last_model.pth`: Trọng số tại epoch dừng cuối cùng.
+| Tên File | Định Dạng | Mô Tả Ý Nghĩa Khoa Học / Lâm Sàng |
+| :--- | :---: | :--- |
+| `best_model.pth` | PTH (~146 MB) | Trọng số mô hình tối ưu nhất tại epoch đạt kỷ lục |
+| `last_model.pth` | PTH (~146 MB) | Trọng số mô hình tại epoch kết thúc |
+| `classification_report.txt` | TXT | Báo cáo phân loại tổng hợp chuẩn Scikit-Learn |
+| `clinical_report.md` | Markdown | Báo cáo đánh giá y khoa toàn diện (Top 5 lớp tốt/kém, Cohen's Kappa, MCC) |
+| `confusion_matrix_normalized.csv` | CSV | Ma trận nhầm lẫn chuẩn hóa tỷ lệ phần trăm nhận diện |
+| `confusion_matrix_normalized.png` | PNG (300 DPI) | Heatmap ma trận nhầm lẫn chuẩn hóa độ phân giải cao |
+| `confusion_matrix_raw.csv` | CSV | Ma trận nhầm lẫn đếm số lượng ảnh thực tế |
+| `confusion_matrix_raw.png` | PNG (300 DPI) | Heatmap ma trận đếm số lượng ca nhận diện |
+| `error_cases.csv` | CSV | Danh sách từng ca chẩn đoán nhầm xếp theo độ tự tin để bác sĩ phân tích |
+| `val_predictions.csv` | CSV | Bảng chi tiết toàn bộ ảnh test kèm xác suất của 23 lớp |
+| `per_class_metrics.csv` | CSV | Bảng chi tiết 23 lớp (Precision, Sensitivity, Specificity, F1, Support) |
+| `per_class_metrics.json` | JSON | Dữ liệu per-class định dạng JSON phục vụ vẽ biểu đồ |
+| `per_class_f1_ranking.png` | PNG (300 DPI) | Biểu đồ xếp hạng F1-Score 23 lớp có vạch chuẩn y khoa 90% |
+| `per_class_precision_recall.png` | PNG (300 DPI) | Biểu đồ cột kép đối chiếu Precision vs Recall từng lớp |
+| `training_curves.png` | PNG (300 DPI) | Dashboard 4 khung (Hội tụ Loss, Acc & F1, Tốc độ học, Thời gian epoch) |
+| `optimal_training_convergence_curves.png` | PNG (300 DPI) | Biểu đồ hội tụ mở rộng có nhóm bệnh lý trọng tâm |
+| `training_history.csv` | CSV | Lịch sử chi tiết 50 epochs (Loss, Acc, F1, LR, Time) |
+| `history.csv` | CSV | File lịch sử đồng bộ tương thích |
+| `training_summary.json` | JSON | Tóm lược cấu hình phần cứng, tham số tối ưu và các mốc kỷ lục |
+| `fold_metrics.json` | JSON | Bảng chỉ số tổng thể (Accuracy, Macro F1, Kappa, MCC) |
+| `run_config.json` | JSON | File cấu hình tham số đảm bảo tính tái lập 100% |
 
-### 2. Số Liệu Báo Cáo Định Lượng (CSV & JSON & Markdown)
-- `docs/benchmarks/training_history.csv`: Bảng lịch sử từng epoch (`train_loss`, `val_loss`, `val_accuracy`, `val_macro_f1`, `learning_rate`, `is_best`).
-- `docs/benchmarks/per_class_metrics.csv`: Bảng đánh giá chi tiết toàn bộ 23 lớp bệnh lý (`support`, `precision`, `recall`, `f1_score`, `auc_roc`).
-- `docs/benchmarks/train_optimal_model.json`: JSON tổng kết toàn bộ siêu tham số, phần cứng, peak metrics.
-- `docs/benchmarks/train_optimal_model.md`: Báo cáo học thuật định dạng chuẩn APA/LaTeX.
+---
 
-### 3. Biểu Đồ Khoa Học Phục Vụ Luận Văn (Figures - 300 DPI)
-- `docs/figures/optimal_training_convergence_curves.png`: Đồ thị 4 ô trực quan hóa suy giảm hàm mất mát, tăng trưởng độ chính xác/F1, lịch trình hạ nhiệt Cosine LR có Warmup, và F1 nhóm bệnh trọng tâm.
-- `docs/figures/confusion_matrix_optimal.png`: Ma trận nhầm lẫn 23x23 chuẩn hóa tỷ lệ nhận diện.
-- `docs/figures/per_class_f1_bar_chart.png`: Biểu đồ cột ngang sắp xếp toàn bộ 23 phân lớp bệnh lý kèm đường chuẩn trung bình.
+## 4. Tải File Nén Về Máy Tính
 
-### Tải Kết Quả Về Máy:
-Chỉ cần mở bảng **Output** ở cột bên phải giao diện Kaggle ➔ Bấm nút **Download** hoặc tải file zip về máy tính cá nhân.
+Tất cả 21 files trên được nén độc lập duy nhất vào file **`optimal_hybrid_model_results.zip`**.
+
+### Cách A: Tải trực tiếp siêu tốc bằng 1 dòng lệnh (Khuyên dùng)
+```bash
+!curl -T /kaggle/working/optimal_hybrid_model_results.zip https://transfer.sh/optimal_hybrid_model_results.zip
+```
+*(Bấm vào link rút gọn in ra trên màn hình để tải ngay về máy tính).*
+
+### Cách B: Tải qua bảng Output của Kaggle
+- Ở cột phải Notebook ➔ Kéo xuống mục **Output** ➔ Bấm nút **Refresh 🔄** ➔ Bấm dấu **3 chấm `...`** cạnh file `optimal_hybrid_model_results.zip` ➔ Chọn **Download**.
