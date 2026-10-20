@@ -50,6 +50,16 @@ Bạn chỉ cần tạo lần lượt 3 ô code trong Notebook Kaggle và bấm 
 !python src/training/train_optimal_model.py --epochs 50
 ```
 
+### Ô Cell 4: Đóng Gói Toàn Bộ Kết Quả & Tải File ZIP Về Máy Tính
+```python
+# Tự động nén checkpoints, CSVs, JSON và tất cả biểu đồ vào 1 file zip duy nhất
+!python src/utils/zip_training_results.py
+
+# Hoặc tạo đường link tải trực tiếp 1-click về máy tính trong notebook:
+from IPython.display import FileLink, display
+display(FileLink("GIEndoDL_optimal_results.zip"))
+```
+
 ---
 
 ## 3. Danh Mục Toàn Bộ Kết Quả Xuất Ra (100% Giống Các Lần Trước)
