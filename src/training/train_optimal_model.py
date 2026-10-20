@@ -455,7 +455,12 @@ class OptimalModelTrainer:
         # Tải lại mô hình tốt nhất để xuất ma trận và báo cáo cuối cùng
         best_model_path = self.checkpoint_dir / "best_model.pth"
         if best_model_path.exists():
-            checkpoint = torch.load(best_model_path, map_location=self.device)
+            try:
+                checkpoint = torch.load(
+                    best_model_path, map_location=self.device, weights_only=False
+                )
+            except TypeError:
+                checkpoint = torch.load(best_model_path, map_location=self.device)
             self.model.load_state_dict(checkpoint["model_state_dict"])
             print("📦 Đã nạp lại mốc trọng số tốt nhất để đánh giá toàn diện...")
 
