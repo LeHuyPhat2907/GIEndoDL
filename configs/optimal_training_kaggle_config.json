@@ -8,6 +8,7 @@
     "input_size": [3, 224, 224],
     "kaggle_path": "/kaggle/input/hyperkvasir-dataset-segmented/segmented-images",
     "kaggle_alt_path": "/kaggle/input/hyperkvasir/labeled-images",
+    "simula_raw_path": "data/raw/labeled-images",
     "local_path": "data/hyperkvasir",
     "split_ratios": {
       "train": 0.70,
