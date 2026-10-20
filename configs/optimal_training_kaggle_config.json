@@ -65,10 +65,14 @@
   },
   "loss_function": {
     "name": "ClassBalancedFocalLoss",
+    "type": "cb_focal",
+    "weight_mode": "power",
     "gamma": 2.0,
-    "alpha_mode": "class-balanced",
-    "class_balanced_beta": 0.999,
-    "label_smoothing": 0.1
+    "class_balanced_beta": 0.75,
+    "label_smoothing": 0.05,
+    "asl_gamma_neg": 4.0,
+    "asl_gamma_pos": 1.0,
+    "asl_clip": 0.05
   },
   "regularization": {
     "dropout": 0.1,
@@ -88,7 +92,9 @@
   },
   "sampling": {
     "sampler": "WeightedRandomSampler",
-    "formula": "w_c = 1 / sqrt(N_c)"
+    "mode": "power",
+    "beta": 0.75,
+    "formula": "w_c = 1 / (N_c)^0.75"
   },
   "monitoring": {
     "wandb_project": "GIEndoDL-HyperKvasir",
