@@ -8,6 +8,7 @@ Bao gồm:
 """
 
 from pathlib import Path
+import shutil
 import sys
 import time
 import zipfile
@@ -97,19 +98,47 @@ def zip_training_artifacts(output_zip: Path = None) -> Path:
     elapsed = time.time() - start_time
     zip_size_mb = output_zip.stat().st_size / (1024 * 1024)
 
+    # Đảm bảo file zip tồn tại ở cả thư mục hiện tại để FileLink không bao giờ bị 404
+    try:
+        cwd_zip = Path.cwd() / output_zip.name
+        if cwd_zip.resolve() != output_zip.resolve():
+            shutil.copy(output_zip, cwd_zip)
+    except Exception:
+        pass
+
+    # Đồng thời tạo thêm 1 file zip siêu nhẹ chỉ chứa báo cáo & biểu đồ (~2MB) để tải nhanh
+    light_zip = output_zip.parent / "GIEndoDL_reports_and_figures.zip"
+    try:
+        with zipfile.ZipFile(light_zip, "w", zipfile.ZIP_DEFLATED) as lzip:
+            for src_p, arc_p in collected_files:
+                if not arc_p.endswith(".pth"):
+                    lzip.write(src_p, arcname=arc_p)
+        cwd_light_zip = Path.cwd() / light_zip.name
+        if cwd_light_zip.resolve() != light_zip.resolve():
+            shutil.copy(light_zip, cwd_light_zip)
+    except Exception:
+        pass
+
     print("=" * 85)
     print("🎉 ĐÓNG GÓI HOÀN TẤT THÀNH CÔNG!")
     print(f"📁 Tổng số file đóng gói: {len(collected_files)} files")
-    print(f"💾 Dung lượng file zip:    {zip_size_mb:.2f} MB")
-    print(f"⏱️ Thời gian nén:          {elapsed:.2f} giây")
-    print(f"📍 Đường dẫn file:         {output_zip}")
+    print(f"💾 Dung lượng trọn gói (gồm Checkpoints): {zip_size_mb:.2f} MB")
+    if light_zip.exists():
+        print(
+            f"⚡ Dung lượng gói báo cáo & biểu đồ siêu nhẹ: {light_zip.stat().st_size / 1024:.1f} KB"
+        )
+    print(f"⏱️ Thời gian nén: {elapsed:.2f} giây")
     print("=" * 85)
 
     try:
         from IPython.display import FileLink, display
 
-        print("\n👉 Bấm vào đường link dưới đây để tải trực tiếp file zip về máy tính:")
+        print("\n👉 Bấm vào các đường link dưới đây để tải về máy tính:")
+        print("1. Gói toàn diện (gồm Trọng số mô hình best_model.pth):")
         display(FileLink(str(output_zip.name)))
+        if light_zip.exists():
+            print("2. Gói siêu nhẹ (chỉ Báo cáo CSV, JSON và Biểu đồ đồ thị):")
+            display(FileLink(str(light_zip.name)))
     except Exception:
         pass
 
