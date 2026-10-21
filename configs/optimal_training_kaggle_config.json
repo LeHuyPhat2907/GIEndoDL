@@ -4,7 +4,8 @@
   "dependencies": ["#120", "#121", "#122", "#123", "#124", "#125", "#126"],
   "dataset": {
     "name": "HyperKvasir",
-    "num_classes": 23,
+    "num_classes": 19,
+    "label_grouping": true,
     "input_size": [3, 224, 224],
     "kaggle_path": "/kaggle/input/hyperkvasir-dataset-segmented/segmented-images",
     "kaggle_alt_path": "/kaggle/input/hyperkvasir/labeled-images",
@@ -35,7 +36,7 @@
   },
   "training": {
     "full_epochs": 150,
-    "early_stopping_patience": 15,
+    "early_stopping_patience": 25,
     "early_stopping_metric": "val_macro_f1",
     "early_stopping_mode": "max",
     "physical_batch_size": 32,

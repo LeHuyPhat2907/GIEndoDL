@@ -15,12 +15,13 @@ class HyperKvasirDataset(Dataset):
 
     def __init__(
         self,
-        csv_file: Union[str, Path],
+        csv_file: Union[str, Path, pd.DataFrame],
         raw_images_dir: Union[str, Path],
         split: str = "train",
         img_size: Tuple[int, int] = (224, 224),
         transform: Optional[Callable] = None,
         class_to_idx: Optional[Dict[str, int]] = None,
+        label_mapping: Optional[Dict[str, str]] = None,
         mean: Tuple[float, float, float] = (0.5729, 0.3557, 0.2515),
         std: Tuple[float, float, float] = (0.3105, 0.2116, 0.1834),
         preload_ram: bool = False,
@@ -38,7 +39,12 @@ class HyperKvasirDataset(Dataset):
             std: Bộ thông số std chuẩn hóa RGB.
             preload_ram: Nạp trước toàn bộ ảnh vào RAM ở độ phân giải 256x256 để xóa sạch 100% độ trễ I/O ổ đĩa.
         """
-        self.df = pd.read_csv(csv_file)
+        if isinstance(csv_file, pd.DataFrame):
+            self.df = csv_file.copy()
+        else:
+            self.df = pd.read_csv(csv_file)
+        if label_mapping is not None:
+            self.df["class_name"] = self.df["class_name"].replace(label_mapping)
         self.raw_images_dir = Path(raw_images_dir)
         self.split = split.lower()
         self.img_size = img_size
