@@ -524,7 +524,36 @@ def run_dryrun(args: argparse.Namespace) -> None:
     if test_df is not None:
         print(f"📊 Mẫu kiểm thử độc lập (Test):     {len(test_df):,} ảnh")
 
-    # 4. Khởi tạo Datasets & DataLoaders
+    # 4. Kiểm tra tính sẵn sàng của file ảnh thực tế
+    if len(path_map) == 0 and Path("/kaggle/input").exists():
+        for root, _, files in os.walk("/kaggle/input"):
+            for f in files:
+                if f.lower().endswith((".jpg", ".jpeg", ".png")):
+                    path_map[f] = os.path.join(root, f)
+        print(f"⚡ Quét bổ sung /kaggle/input: Đã lập chỉ mục {len(path_map):,} file ảnh!")
+
+    if len(path_map) == 0:
+        raise FileNotFoundError(
+            "\n" + "=" * 80 + "\n"
+            "❌ CHƯA CÓ DỮ LIỆU ẢNH TRÊN KAGGLE!\n"
+            "Chương trình không tìm thấy file ảnh .jpg nào để huấn luyện.\n\n"
+            "👉 HƯỚNG DẪN KHẮC PHỤC TRONG 10 GIÂY:\n"
+            "1. Nhìn lên góc TRÊN BÊN PHẢI màn hình Kaggle, bấm nút '+ Add Input'.\n"
+            "2. Tìm từ khóa: hyperkvasir\n"
+            "3. Bấm dấu (+) ở bộ 'vaillant/hyperkvasir' (hoặc 'meetnagadia/hyperkvasir').\n"
+            "4. Chạy lại lệnh huấn luyện.\n"
+            + "=" * 80
+        )
+
+    # Thử đọc 1 ảnh mẫu để bảo đảm tính toàn vẹn
+    sample_file = train_df.iloc[0].get("file_name", "")
+    sample_path = path_map.get(sample_file, "")
+    if sample_path and os.path.exists(sample_path):
+        sample_img = cv2.imread(sample_path)
+        if sample_img is not None:
+            print(f"✅ Kiểm tra đọc ảnh mẫu thành công: {sample_file} -> Kích thước gốc: {sample_img.shape}")
+
+    # 5. Khởi tạo Datasets & DataLoaders
     img_size = (args.img_size, args.img_size)
     print(
         f"📐 Kích thước ảnh nạp (Target Size): {img_size[0]}x{img_size[1]} pixels (Aspect-Ratio Letterboxed)"
