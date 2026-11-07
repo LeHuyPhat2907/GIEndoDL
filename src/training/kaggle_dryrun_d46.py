@@ -13,9 +13,13 @@ import sys
 import time
 import json
 import shutil
+import warnings
 import argparse
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
+
+# Tắt toàn bộ warnings để thanh tiến trình tqdm hiển thị mượt mà trên 1 dòng
+warnings.filterwarnings("ignore")
 
 # Cấu hình UTF-8 cho console
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -160,7 +164,7 @@ def train_one_epoch(
         optimizer.zero_grad(set_to_none=True)
 
         if use_amp and device.type == "cuda" and scaler is not None:
-            with torch.cuda.amp.autocast(dtype=torch.float16):
+            with torch.amp.autocast("cuda", dtype=torch.float16):
                 logits = model(images)
                 loss = criterion(logits, targets)
             scaler.scale(loss).backward()
@@ -213,7 +217,7 @@ def evaluate(
         total_samples += batch_size
 
         if device.type == "cuda":
-            with torch.cuda.amp.autocast(dtype=torch.float16):
+            with torch.amp.autocast("cuda", dtype=torch.float16):
                 logits = model(images)
                 loss = criterion(logits, targets)
         else:
@@ -846,7 +850,7 @@ if __name__ == "__main__":
         "--weight_decay", type=float, default=1e-2, help="Hệ số Weight Decay cho AdamW"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=2, help="Số worker nạp dữ liệu song song"
+        "--num_workers", type=int, default=4, help="Số worker nạp dữ liệu song song"
     )
     parser.add_argument(
         "--img_size",
