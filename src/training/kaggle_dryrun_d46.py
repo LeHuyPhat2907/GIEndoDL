@@ -73,22 +73,52 @@ def build_image_path_index(raw_images_dir: str) -> Dict[str, str]:
     return index
 
 
-def resolve_hyperkvasir_data_dir() -> str:
-    """Tự động phát hiện thư mục ảnh HyperKvasir trên các môi trường Kaggle và Local."""
+def resolve_manifest_path(path_str: str, default_name: str) -> str:
+    """Tự động định vị file manifest (train/val/test CSV) bất kể đang đứng ở thư mục nào."""
+    p = Path(path_str)
+    if p.exists() and p.is_file():
+        return str(p.resolve())
+
     candidates = [
-        "GIEndoDL/data/raw/labeled-images",
-        "data/raw/labeled-images",
-        "/kaggle/input/vaillant/hyperkvasir/labeled-images",
-        "/kaggle/input/meetnagadia/hyperkvasir/labeled-images",
-        "/kaggle/input/hyperkvasir/labeled-images",
-        "/kaggle/input/hyperkvasir-complete/labeled-images",
-        "/kaggle/input/hyperkvasir",
-        "D:/PhatProject/GIEndoDL/data/raw/labeled-images",
+        PROJECT_ROOT / path_str,
+        Path("data/processed") / default_name,
+        PROJECT_ROOT / "data/processed" / default_name,
+        Path("GIEndoDL/data/processed") / default_name,
+        PROJECT_ROOT.parent / "GIEndoDL/data/processed" / default_name,
+        Path("/kaggle/working/GIEndoDL/data/processed") / default_name,
+        Path("/kaggle/working/data/processed") / default_name,
     ]
     for c in candidates:
-        p = Path(c)
-        if p.exists() and any(p.iterdir()):
-            return str(p.resolve())
+        if c.exists() and c.is_file():
+            return str(c.resolve())
+    return path_str
+
+
+def resolve_hyperkvasir_data_dir() -> str:
+    """Tự động phát hiện thư mục ảnh HyperKvasir trên các môi trường Kaggle và Local."""
+    # 1. Tìm trong /kaggle/input (ưu tiên hàng đầu trên Kaggle)
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.exists():
+        for item in kaggle_input.iterdir():
+            if item.is_dir():
+                for root, _, files in os.walk(str(item)):
+                    if any(f.lower().endswith((".jpg", ".jpeg", ".png")) for f in files):
+                        return str(item.resolve())
+
+    # 2. Tìm trong các thư mục local hoặc workspace
+    candidates = [
+        Path("data/raw/labeled-images"),
+        PROJECT_ROOT / "data/raw/labeled-images",
+        Path("GIEndoDL/data/raw/labeled-images"),
+        PROJECT_ROOT.parent / "GIEndoDL/data/raw/labeled-images",
+        Path("D:/PhatProject/GIEndoDL/data/raw/labeled-images"),
+    ]
+    for c in candidates:
+        if c.exists():
+            for root, _, files in os.walk(str(c)):
+                if any(f.lower().endswith((".jpg", ".jpeg", ".png")) for f in files):
+                    return str(c.resolve())
+
     return "data/raw/labeled-images"
 
 
@@ -455,10 +485,31 @@ def run_dryrun(args: argparse.Namespace) -> None:
         f"⚡ Đã lập chỉ mục {len(path_map)} ảnh trong {time.time() - t_idx0:.3f} giây."
     )
 
+    # Tự động tải qua kagglehub nếu trên Kaggle mà chưa thấy ảnh
+    if len(path_map) == 0 and Path("/kaggle").exists():
+        print("⚠️ Chưa tìm thấy ảnh trong /kaggle/input. Bắt đầu tự động tải qua kagglehub...")
+        try:
+            import kagglehub
+            dl_path = kagglehub.dataset_download("meetnagadia/hyperkvasir")
+            print(f"✅ Tải thành công dataset qua kagglehub: {dl_path}")
+            raw_images_dir = dl_path
+            path_map = build_image_path_index(raw_images_dir)
+            print(f"⚡ Đã lập chỉ mục {len(path_map)} ảnh từ dataset vừa tải.")
+        except Exception as e:
+            print(f"⚠️ Lưu ý: Không thể tải tự động qua kagglehub ({e}).")
+            print("👉 Vui lòng nhấn '+ Add Input' trên Kaggle và thêm 'vaillant/hyperkvasir' vào notebook.")
+
     # 3. Nạp Manifests phân hoạch sạch từ Phase 7
-    train_df = pd.read_csv(args.train_csv)
-    val_df = pd.read_csv(args.val_csv)
-    test_df = pd.read_csv(args.test_csv) if os.path.exists(args.test_csv) else None
+    train_csv_path = resolve_manifest_path(args.train_csv, "train_split.csv")
+    val_csv_path = resolve_manifest_path(args.val_csv, "val_split.csv")
+    test_csv_path = resolve_manifest_path(args.test_csv, "test_split.csv")
+
+    print(f"📄 Train manifest:                  {train_csv_path}")
+    print(f"📄 Val manifest:                    {val_csv_path}")
+
+    train_df = pd.read_csv(train_csv_path)
+    val_df = pd.read_csv(val_csv_path)
+    test_df = pd.read_csv(test_csv_path) if os.path.exists(test_csv_path) else None
 
     # Lấy danh sách 17 nhãn chuẩn
     classes = sorted(train_df["final_class"].unique())
@@ -718,19 +769,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_csv",
         type=str,
-        default="GIEndoDL/data/processed/train_split.csv",
+        default="data/processed/train_split.csv",
         help="Đường dẫn train_split.csv",
     )
     parser.add_argument(
         "--val_csv",
         type=str,
-        default="GIEndoDL/data/processed/val_split.csv",
+        default="data/processed/val_split.csv",
         help="Đường dẫn val_split.csv",
     )
     parser.add_argument(
         "--test_csv",
         type=str,
-        default="GIEndoDL/data/processed/test_split.csv",
+        default="data/processed/test_split.csv",
         help="Đường dẫn test_split.csv",
     )
     parser.add_argument(
@@ -742,7 +793,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="GIEndoDL/outputs/kaggle_dryrun_d46",
+        default="outputs/kaggle_dryrun_d46",
         help="Thư mục xuất kết quả",
     )
     parser.add_argument(
