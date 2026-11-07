@@ -105,7 +105,16 @@ def resolve_hyperkvasir_data_dir() -> str:
                     if any(f.lower().endswith((".jpg", ".jpeg", ".png")) for f in files):
                         return str(item.resolve())
 
-    # 2. Tìm trong các thư mục local hoặc workspace
+    # 2. Tìm trong cache của kagglehub (nếu tải tự động bằng code)
+    kagglehub_cache = Path("/root/.cache/kagglehub")
+    if not kagglehub_cache.exists():
+        kagglehub_cache = Path.home() / ".cache" / "kagglehub"
+    if kagglehub_cache.exists():
+        for root, _, files in os.walk(str(kagglehub_cache)):
+            if any(f.lower().endswith((".jpg", ".jpeg", ".png")) for f in files):
+                return root
+
+    # 3. Tìm trong các thư mục local hoặc workspace
     candidates = [
         Path("data/raw/labeled-images"),
         PROJECT_ROOT / "data/raw/labeled-images",
