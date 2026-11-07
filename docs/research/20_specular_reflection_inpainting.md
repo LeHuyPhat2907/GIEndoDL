@@ -1,18 +1,13 @@
-# ✨ Báo cáo Kỹ thuật: Phát Hiện & Tái Tạo Điểm Lóa Sáng Nội Soi (Specular Reflection Inpainting)
+# Báo Cáo Kỹ Thuật: Chuẩn Hóa Phản Quang Mềm (Soft Reflection Suppression) Thay Thế Inpainting
 
-> **Module chính:** `src/preprocessing/specular_removal.py` | **Hình minh họa:** `docs/figures/13_specular_reflection_removal.png`
-
----
-
-## 1. Nguyên lý Hoạt động của Thuật toán
-
-1. **Phát hiện Vùng Lóa Bão Hòa (Dual-Space Masking):** Kết hợp đồng thời không gian màu HSV ($V \ge 240, S \le 45$) và kênh Grayscale ($I \ge 245$) để định vị các điểm ảnh bị bão hòa ánh sáng.
-2. **Morphological Dilation:** Sử dụng kernel elip $3 \times 3$ nở biên mặt nạ để bao phủ toàn bộ gradient nhiễu xung quanh đốm lóa.
-3. **Thuật toán Telea Fast Marching:** Nội suy lan truyền gradient từ các vùng niêm mạc lân cận lành lặn vào tâm đốm lóa, khôi phục kết cấu mô tự nhiên mà không làm biến dạng ranh giới polyp.
+> **Mã công việc:** Task D29
+> **Phương pháp:** Soft Saturation Clamping với bộ lọc Bilateral và Gaussian Mask Smoothing.
 
 ---
 
-## 2. Giá trị Lâm sàng & Tối ưu cho Mạng Học Sâu
+## 1. Khuyết Điểm Nghiêm Trọng Của Specular Inpainting Cổ Điển
+- Các thuật toán Inpainting truyền thống (Telea / Navier-Stokes) cố gắng vẽ lại vùng lóe sáng bằng cách nội suy từ điểm ảnh lân cận. Trong lòng ruột có dịch nhầy, điều này tạo ra các 'mảng nhựa mờ nhân tạo' (blurry synthetic patches), xóa mất các lỗ tuyến pit-pattern bên dưới và đánh lừa mạng CNN.
 
-- **Ngăn chặn Gradient Giả mạo (Spurious Edge Artifacts):** Các đốm lóa trắng thường tạo ra các cạnh nhân tạo có gradient rất cao, dễ làm đánh lừa các bộ lọc tích chập (Convolutional Filters).
-- **Tối ưu hóa Khối Attention CBAM:** Giúp bản đồ trọng số chú ý (Spatial Attention Map) không bị hút vào các đốm đèn nội soi mà tập trung 100% vào tổn thương bệnh lý.
+## 2. Cơ Chế Chuẩn Hóa Phản Quang Mềm
+- Thay vì xóa bỏ điểm ảnh, thuật toán nén nhẹ 45% độ chói đỉnh của điểm lóe sáng về gần mức trung bình của niêm mạc xung quanh bằng mặt nạ Gaussian mềm ($\sigma=2.0$).
+- Nhờ đó, mắt người và mạng nơ-ron không còn bị lóa mắt bởi các điểm phản xạ ánh sáng trắng bão hòa, trong khi cấu trúc vi mô niêm mạc không hề bị bóp méo hay mờ nhòe.

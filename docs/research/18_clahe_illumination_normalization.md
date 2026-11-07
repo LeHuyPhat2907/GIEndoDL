@@ -1,19 +1,13 @@
-# 💡 Báo cáo Kỹ thuật: Chuẩn hóa Độ sáng Thích ứng CLAHE trên Không gian Màu LAB
+# Báo Cáo Kỹ Thuật: Cân Bằng Ánh Sáng Thích Ứng Cục Bộ Có Kiểm Soát (Controlled LAB CLAHE)
 
-> **Module chính:** `src/preprocessing/clahe_enhancer.py` | **Hình minh họa:** `docs/figures/11_clahe_illumination_comparison.png`
-
----
-
-## 1. Cơ sở Khoa học & So sánh Giải pháp
-
-| Phương pháp tiền xử lý | Xử lý vùng lóa sáng | Bảo toàn màu sắc mô | Tăng cường vi mạch (Pit-pattern) | Đánh giá y tế |
-|:---|:---:|:---:|:---:|:---:|
-| **Ảnh gốc chưa xử lý** | ❌ Kém (chói lóa) | 🟢 Gốc | ❌ Bị chìm trong vùng tối | 🔴 Không tối ưu |
-| **Cân bằng RGB toàn cục** | 🟡 Khá | 🔴 **Thất bại** (biến đổi màu) | 🟡 Nhiễu hạt | ❌ Nguy hiểm lâm sàng |
-| **LAB-CLAHE (Đề xuất)** | 🟢 **Xuất sắc** | 🟢 **Bảo toàn 100%** | 🟢 **Rõ nét từng mao mạch** | 🟢 **Chuẩn Y khoa** |
+> **Mã công việc:** Task D28
+> **Tham số chuẩn hóa:** `clipLimit = 1.35`, `tileGridSize = (8, 8)`, thực thi độc quyền trên kênh L của không gian CIE LAB.
 
 ---
 
-## 2. Kết luận Kỹ thuật cho Khóa luận
+## 1. Lý Do Giảm clipLimit Từ 3.0 Xuống 1.35
+- Trong các nghiên cứu thị giác máy tính thông thường, CLAHE thường đặt `clipLimit` từ 2.5 đến 4.0. Tuy nhiên, trong nội soi tiêu hóa, giá trị này phóng đại nhiễu cảm biến trong các vùng tối của lòng ruột và tạo ra các quầng sáng nhân tạo (Halo Artifacts) quanh các polyp.
+- Bằng cách đặt `clipLimit = 1.35`, thuật toán chỉ tăng cường nhẹ độ tương phản vi mô của các rãnh niêm mạc (crypt architecture) mà không làm biến dạng biên độ sáng tự nhiên.
 
-Thuật toán CLAHE trên kênh L (Luminance) với tham số `clipLimit=2.0` và `tileGridSize=(8,8)` giúp làm nổi bật các hoa văn niêm mạc ẩn sâu trong bóng tối mà không làm méo mó đặc trưng màu sắc sinh học, tạo đầu vào lý tưởng cho khối Attention CBAM ở Giai đoạn 8.
+## 2. Bảo Tồn Tuyệt Đối Màu Sắc Trên Kênh a* và b*
+- Việc chuyển đổi sang không gian CIE $L^*a^*b^*$ và chỉ xử lý kênh $L^*$ (Luminance) đảm bảo kênh $a^*$ (xanh lá - đỏ) và kênh $b^*$ (xanh dương - vàng) giữ nguyên vẹn 100%. Toàn bộ sắc đỏ xung huyết của viêm loét đại tràng và sắc xanh của phẩm Indigo Carmine được bảo toàn nguyên bản.

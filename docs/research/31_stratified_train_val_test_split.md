@@ -1,21 +1,16 @@
-# ✂️ Báo cáo Kỹ thuật: Phân Chia Tập Dữ Liệu Phân Tầng Chuẩn Y Khoa (Stratified Split)
+# Báo Cáo Kỹ Thuật: Phân Hoạch Dữ Liệu Train / Val / Test & 5-Fold Group-Stratified (Task D39 & D40)
 
-> **Tập dữ liệu:** HyperKvasir (10,662 ảnh) | **Hình minh họa:** `docs/figures/24_stratified_split_distribution.png`
-
----
-
-## 1. Bảng Thống Kê Chi Tiết Phân Chia Tập Dữ Liệu
-
-| Phân vùng (Split) | Tỷ lệ (%) | Số lượng ảnh | Vai trò trong Pipeline Huấn Luyện |
-|:---|:---:|:---:|:---|
-| **Train Split** | `70.0%` | **7,463** | Huấn luyện mạng nơ-ron kết hợp Data Augmentation đa dạng |
-| **Validation Split** | `15.0%` | **1,599** | Tinh chỉnh Hyperparameters, kiểm tra Early Stopping, chống Overfitting |
-| **Test Split** | `15.0%` | **1,600** | **Khóa độc lập**, chỉ đánh giá hiệu năng cuối cùng (Final Benchmark) |
-| **Tổng cộng** | `100.0%` | **10,662** | Phân tầng chính xác 100% trên cả 23 lớp bệnh học |
+> **Mã công việc:** Task D39 & Task D40
+> **Tổng mẫu hợp lệ:** 10,644 mẫu trên 17 phân lớp mục tiêu (Loại bỏ 12 mẫu trùng tuyệt đối, 6 mẫu trĩ holdout).
+> **Khóa hạt giống ngẫu nhiên:** `Seed = 42` (6 tầng: OS, Python, NumPy, PyTorch CPU, PyTorch CUDA, cuDNN Deterministic).
 
 ---
 
-## 2. Cam Kết Chuẩn Mực Nghiên Cứu Y Sinh (Reproducibility & Zero-Leakage)
+## 1. Kết Quả Phân Chia Train / Val / Test (Tỷ lệ 70 / 15 / 15)
+- **Tập Train (Huấn luyện):** `7,452` mẫu (70.01%).
+- **Tập Val (Thẩm định):** `1,601` mẫu (15.04%).
+- **Tập Test (Kiểm tra độc lập):** `1,591` mẫu (14.95%).
 
-1. **Fixed Seed (`seed=42`):** Đảm bảo bất kỳ nhà nghiên cứu nào trên thế giới cũng có thể tái lập chính xác 100% cùng một tập Train/Val/Test.
-2. **Bảo Toàn Lớp Thiểu Số:** Các lớp khó như trĩ (`hemorrhoids`) và Barretts được phân bổ chặt chẽ theo tỷ lệ, đảm bảo không có lớp nào bị 'bỏ rơi' khỏi tập Test.
+## 2. Kiểm Toán Rò Rỉ Ca Bệnh (Zero Data Leakage)
+- **Chỉ số Rò rỉ Ranh giới:** $\Lambda = 0.00000000\%$ (Trùng lặp 0 cụm ca bệnh giữa các tập).
+- Mọi phân lớp đều có tối thiểu 13 mẫu thẩm định trong tập Val và 14 mẫu trong tập Test (ngay cả lớp nhỏ nhất `barretts-esophagus`).

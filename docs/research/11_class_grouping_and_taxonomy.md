@@ -1,43 +1,61 @@
-# 🏷️ Báo cáo Phân nhóm Nhãn Đa tầng & Chiến lược Phân loại (Label Taxonomy)
+# Báo Cáo Phân Nhóm Nhãn Đa Tầng & Chiến Lược Phân Cấp Y Sinh (Label Taxonomy & Hierarchical Grouping)
 
-> **Master Dataset:** HyperKvasir (10,662 ảnh) | **Metadata File:** `data/processed/hyperkvasir_metadata.csv`
-
----
-
-## 1. Ba Chiến lược Phân loại Đa tầng của Đề tài
-
-| Cấp độ phân loại | Số lượng lớp | Mục tiêu ứng dụng trong Khóa luận & Bài báo |
-|:---|:---:|:---|
-| **Tầng 1 (Super-Category)** | **4 Nhóm** | Phân loại cấp cao: *Mốc giải phẫu vs Bệnh lý vs Can thiệp vs Chất lượng view*. |
-| **Tầng 2 (Clinical Aggregated)** | **8 Lớp** | Đối sánh công bằng (*Fair Benchmark*) trực tiếp với các mô hình trên Kvasir-v2. |
-| **Tầng 3 (Fine-Grained 23-Class)** | **23 Lớp** | **Nhiệm vụ trọng tâm của Đề tài:** Đánh giá năng lực của kiến trúc đề xuất *CNN-CBAM-Transformer + SupCon* trên bài toán phân loại siêu chi tiết. |
+> **Mã tài liệu:** `DOC-RES-11-TAXONOMY`
+> **Cơ sở thực nghiệm:** Phân tích hình thái DINOv2 (Task D16), Đa tạp t-SNE/UMAP (Task D17), Chuẩn quốc tế TRIPOD-AI
+> **Tổng mẫu Master Metadata:** 10,662 mẫu (10,644 mẫu sạch hợp lệ cho huấn luyện)
 
 ---
 
-## 2. Bảng Ánh xạ Nhãn Chi tiết (23 Lớp ➔ 4 Nhóm Lớn)
+## 1. Bản Chất Khoa Học Của Việc Tái Cấu Trúc Schema
 
-| ID (23) | Tên lớp 23 (Fine-grained) | Nhóm lớn (Super Category) | Số lượng ảnh | Tỷ trọng (%) |
-|:---:|:---|:---|:---:|:---:|
-| `0` | **barretts** | `Pathological_Findings` | 41 | 0.38% |
-| `1` | **barretts-short-segment** | `Pathological_Findings` | 53 | 0.50% |
-| `2` | **bbps-0-1** | `Quality_of_Mucosal_Views` | 646 | 6.06% |
-| `3` | **bbps-2-3** | `Quality_of_Mucosal_Views` | 1,148 | 10.77% |
-| `4` | **cecum** | `Anatomical_Landmarks` | 1,009 | 9.46% |
-| `5` | **dyed-lifted-polyps** | `Therapeutic_Interventions` | 1,002 | 9.40% |
-| `6` | **dyed-resection-margins** | `Therapeutic_Interventions` | 989 | 9.28% |
-| `7` | **esophagitis-a** | `Pathological_Findings` | 403 | 3.78% |
-| `8` | **esophagitis-b-d** | `Pathological_Findings` | 260 | 2.44% |
-| `9` | **hemorrhoids** | `Pathological_Findings` | 6 | 0.06% |
-| `10` | **ileum** | `Anatomical_Landmarks` | 9 | 0.08% |
-| `11` | **impacted-stool** | `Quality_of_Mucosal_Views` | 131 | 1.23% |
-| `12` | **polyps** | `Pathological_Findings` | 1,028 | 9.64% |
-| `13` | **pylorus** | `Anatomical_Landmarks` | 999 | 9.37% |
-| `14` | **retroflex-rectum** | `Anatomical_Landmarks` | 391 | 3.67% |
-| `15` | **retroflex-stomach** | `Anatomical_Landmarks` | 764 | 7.17% |
-| `16` | **ulcerative-colitis-grade-0-1** | `Pathological_Findings` | 35 | 0.33% |
-| `17` | **ulcerative-colitis-grade-1** | `Pathological_Findings` | 201 | 1.89% |
-| `18` | **ulcerative-colitis-grade-1-2** | `Pathological_Findings` | 11 | 0.10% |
-| `19` | **ulcerative-colitis-grade-2** | `Pathological_Findings` | 443 | 4.15% |
-| `20` | **ulcerative-colitis-grade-2-3** | `Pathological_Findings` | 28 | 0.26% |
-| `21` | **ulcerative-colitis-grade-3** | `Pathological_Findings` | 133 | 1.25% |
-| `22` | **z-line** | `Anatomical_Landmarks` | 932 | 8.74% |
+Trong giai đoạn huấn luyện thử nghiệm Run 4 trước đây, mô hình học sâu bị kẹt ở mức 69.28% Macro F1 dù đạt Accuracy 85.93%. Phân tích dữ liệu ở Tasks D01–D17 đã chứng minh hai nguyên nhân căn bản:
+1. **Nghịch lý Lớp Vi mô (< 15 mẫu):** Lớp `hemorrhoids` (6 ảnh) và `ileum` (8 ảnh) chỉ có 1–2 ảnh trong tập Test. Khi dự đoán sai 1 ảnh, F1 lập tức rơi về 0.00%, kéo tụt 9–10% tổng Macro F1 trung bình toàn mạng.
+2. **Xung đột Hình học Lớp Lai (Negative Margin):** Các lớp chuyển tiếp trung gian của Viêm loét đại tràng (`uc-grade-0-1`, `1-2`, `2-3`) và Barrett thực quản (`barretts-short-segment`) có Cosine Similarity > 0.98 với lớp liền kề, tạo ra các đám mây điểm chồng lấn hoàn toàn khiến hàm mất mát Cross-Entropy bị dao động gradient đối kháng triền miên.
+
+---
+
+## 2. Chi Tiết 4 Quyết Định Chuẩn Hóa Cốt Lõi (Tasks D19 – D22)
+
+### 2.1. Task D19: Xử Lý Các Lớp Cực Vi Mô (< 15 Ảnh)
+- **`hemorrhoids` (6 ảnh):** Tách khỏi bài toán phân loại chính 17 lớp, chuyển sang tập **Thẩm định Chuyên biệt Độc lập (Holdout Special Study)**. Điều này bảo toàn giá trị khoa học của dữ liệu mà không làm sai lệch trọng số phân phối của bộ phân loại đa lớp.
+- **`ileum` (8 ảnh):** Hợp nhất cùng `cecum` thành mốc giải phẫu **`cecum-and-ileum`** (1,023 ảnh). Trong thực hành lâm sàng, việc quan sát được manh tràng hoặc đẩy ống soi qua van Bauhin vào hồi tràng đều có chung một ý nghĩa quy trình: *Khẳng định thủ thuật nội soi đại tràng đã hoàn thành trọn vẹn (Complete Colonoscopy Indicator)*.
+
+### 2.2. Task D20: Chuẩn Hóa Phân Độ Viêm Loét Đại Tràng Mayo 3 Mức Kinh Điển
+Chuẩn y tế quốc tế Mayo Endoscopic Subscore (MES) chỉ công nhận các mức rời rạc: Mayo 1 (Nhẹ), Mayo 2 (Trung bình), Mayo 3 (Nặng). Các lớp lai trung gian là hệ quả của sự phân vân chủ quan giữa các bác sĩ gán nhãn:
+- `uc-grade-0-1` (35) + `uc-grade-1` (196) $\to$ **`mayo-grade-1`** (231 mẫu).
+- `uc-grade-1-2` (11) + `uc-grade-2` (438) $\to$ **`mayo-grade-2`** (449 mẫu).
+- `uc-grade-2-3` (28) + `uc-grade-3` (133) $\to$ **`mayo-grade-3`** (161 mẫu).
+> **Kết quả:** Cả 3 mức Mayo đều có cỡ mẫu dồi dào ($N \ge 160$), phản ánh trung thực mức độ nghiêm trọng của bệnh nhân để chỉ định phác đồ thuốc sinh học.
+
+### 2.3. Task D21: Chuẩn Hóa Barrett Thực Quản (`barretts-esophagus`)
+- Phân tích DINOv2 ở Task D16 xác nhận `barretts` và `barretts-short-segment` có Cosine Similarity lên đến **0.9896** (cao nhất trong 23 lớp).
+- Phân tích UMAP ở Task D17 chứng minh hai lớp này hòa lẫn thành một cụm duy nhất.
+- Về giải phẫu bệnh: Cả hai đều là tổn thương chuyển sản ruột (Intestinal Metaplasia), chỉ khác nhau chiều dài tổn thương đo bằng thước đo cơ học của dây soi ($< 3\text{ cm}$ vs $\ge 3\text{ cm}$). Hợp nhất thành **`barretts-esophagus`** ($N=91$) tạo nên lớp bệnh lý thực quản đồng nhất và đủ mẫu kiểm định.
+
+### 2.4. Task D22: Bảo Tồn Phân Độ Viêm Thực Quản Trào Ngược Los Angeles
+- Duy trì tách biệt hai phân lớp: **`esophagitis-grade-a`** ($N=376$) và **`esophagitis-grade-b-d`** ($N=261$).
+- *Ý nghĩa lâm sàng:* Phân biệt giữa tổn thương trợt xước nhẹ $\le 5\text{ mm}$ (Grade A - điều trị nội khoa bảo tồn) và vết loét lan rộng $> 5\text{ mm}$ hoặc bao quanh chu vi (Grade B-D - nguy cơ hẹp và biến chứng) là yêu cầu tiên quyết trong phác đồ điều trị GERD quốc tế.
+
+---
+
+## 3. Cấu Trúc Phân Bố 5 Nhóm Cơ Quan Giải Phẫu (Organ Groups)
+
+### Upper GI Tract
+- **Tổng số mẫu:** 3,450 mẫu (32.4%)
+- **Các phân lớp thành phần:** `barretts-esophagus`, `esophagitis-grade-a`, `esophagitis-grade-b-d`, `normal-z-line`, `pylorus`, `retroflex-stomach`
+
+### Lower GI Tract - Colorectum
+- **Tổng số mẫu:** 2,441 mẫu (22.9%)
+- **Các phân lớp thành phần:** `cecum-and-ileum`, `polyps`, `retroflex-rectum`
+
+### Lower GI Tract - Inflammatory Bowel Disease
+- **Tổng số mẫu:** 841 mẫu (7.9%)
+- **Các phân lớp thành phần:** `mayo-grade-1`, `mayo-grade-2`, `mayo-grade-3`
+
+### Chromoendoscopy - Interventions
+- **Tổng số mẫu:** 1,989 mẫu (18.7%)
+- **Các phân lớp thành phần:** `dyed-lifted-polyps`, `dyed-resection-margins`
+
+### Bowel Preparation Quality
+- **Tổng số mẫu:** 1,923 mẫu (18.1%)
+- **Các phân lớp thành phần:** `bbps-grade-0-1`, `bbps-grade-2-3`, `impacted-stool`

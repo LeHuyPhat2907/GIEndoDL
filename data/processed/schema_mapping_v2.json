@@ -1,0 +1,63 @@
+{
+  "schema_version": "2.0-optimal-17class",
+  "date_created": "2026-11-07",
+  "total_target_classes": 17,
+  "mapping_rules": {
+    "barretts": "barretts-esophagus",
+    "barretts-short-segment": "barretts-esophagus",
+    "esophagitis-a": "esophagitis-grade-a",
+    "esophagitis-b-d": "esophagitis-grade-b-d",
+    "ulcerative-colitis-grade-0-1": "mayo-grade-1",
+    "ulcerative-colitis-grade-1": "mayo-grade-1",
+    "ulcerative-colitis-grade-1-2": "mayo-grade-2",
+    "ulcerative-colitis-grade-2": "mayo-grade-2",
+    "ulcerative-colitis-grade-2-3": "mayo-grade-3",
+    "ulcerative-colitis-grade-3": "mayo-grade-3",
+    "cecum": "cecum-and-ileum",
+    "ileum": "cecum-and-ileum",
+    "hemorrhoids": "hemorrhoids",
+    "polyps": "polyps",
+    "dyed-lifted-polyps": "dyed-lifted-polyps",
+    "dyed-resection-margins": "dyed-resection-margins",
+    "pylorus": "pylorus",
+    "z-line": "normal-z-line",
+    "retroflex-stomach": "retroflex-stomach",
+    "retroflex-rectum": "retroflex-rectum",
+    "bbps-0-1": "bbps-grade-0-1",
+    "bbps-2-3": "bbps-grade-2-3",
+    "impacted-stool": "impacted-stool"
+  },
+  "organ_groups": {
+    "Upper GI Tract": [
+      "barretts-esophagus",
+      "esophagitis-grade-a",
+      "esophagitis-grade-b-d",
+      "normal-z-line",
+      "pylorus",
+      "retroflex-stomach"
+    ],
+    "Lower GI Tract - Colorectum": [
+      "cecum-and-ileum",
+      "polyps",
+      "retroflex-rectum"
+    ],
+    "Lower GI Tract - Inflammatory Bowel Disease": [
+      "mayo-grade-1",
+      "mayo-grade-2",
+      "mayo-grade-3"
+    ],
+    "Chromoendoscopy - Interventions": [
+      "dyed-lifted-polyps",
+      "dyed-resection-margins"
+    ],
+    "Bowel Preparation Quality": [
+      "bbps-grade-0-1",
+      "bbps-grade-2-3",
+      "impacted-stool"
+    ]
+  },
+  "special_holdout_classes": [
+    "hemorrhoids"
+  ],
+  "rationale": "Consolidated based on DINOv2 morphological similarity (Task D16), t-SNE/UMAP manifold topology (Task D17), and Mayo/Los Angeles clinical standards."
+}

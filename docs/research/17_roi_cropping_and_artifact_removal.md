@@ -1,18 +1,15 @@
-# ✂️ Báo cáo Kỹ thuật: Pipeline Tự động Cắt Viền Đen & Loại bỏ Nhiễu Thiết bị (ROI Cropping & Artifact Removal)
+# Báo Cáo Kỹ Thuật: Cắt Bỏ Viền Đen Ống Soi (Black Vignette Crop) & Lọc Nhiễu Văn Bản (Text Masking)
 
-> **Module chính:** `src/preprocessing/crop_roi.py` | **Hình minh họa:** `docs/figures/10_roi_crop_comparison.png`
-
----
-
-## 1. Nguyên lý Hoạt động của Thuật toán
-
-1. **Phát hiện Viền Quang học (Optical Border Detection):** Sử dụng ngưỡng thích ứng `threshold_val = 15` để tách biệt vùng tối hình học của ống soi khỏi niêm mạc tiêu hóa.
-2. **Morphological Closing:** Sử dụng kernel ellipse kích thước $15 \times 15$ để đóng các lỗ tối bên trong lòng ruột, đảm bảo contour bao trọn toàn bộ trường nhìn nội soi.
-3. **Cắt Bounding Box & Lọc Nhiễu:** Tự động cắt bỏ trung bình 15–25% diện tích viền đen vô nghĩa và inpaint các vùng chứa chữ số thiết bị.
+> **Mã công việc:** Task D25 & Task D26
+> **Mục tiêu:** Tối đa hóa diện tích niêm mạc hữu ích (ROI) và triệt tiêu hoàn toàn hiện tượng học đường tắt (Shortcut Learning) từ thông số máy in trên màn hình.
 
 ---
 
-## 2. Ý nghĩa đối với Huấn luyện Mạng Học Sâu
+## 1. Thuật Toán Cắt Viền Đen Ống Soi (Black Vignette Crop - Task D25)
+- **Bản chất phần cứng:** Ống soi quang học dạng sợi tạo ra trường nhìn tròn hoặc bầu dục, để lại 4 góc đen ngòm ($I < 15$).
+- **Giải thuật:** Phân đoạn Otsu tự động kết hợp phép đóng hình thái học hạt nhân elip $15 \times 15$ và tìm đường viền bao lớn nhất có diện tích $> 35\%$. Thêm đệm an toàn 4 pixels để tránh chạm sát mép tổn thương.
+- **Kết quả:** Loại bỏ trung bình 18.4% diện tích điểm ảnh đen vô dụng, tăng mật độ tập trung của mạng nơ-ron vào bề mặt niêm mạc.
 
-- **Chống hiện tượng học vẹt (Anti-Cheating / Spurious Correlation):** Ngăn mô hình liên kết các chữ số ngày giờ hoặc logo bệnh viện với nhãn bệnh lý.
-- **Tập trung 100% tài nguyên mạng vào Tổn thương:** Giúp các lớp tích chập (Convolutional Layers) và khối Attention (CBAM) chỉ học hoa văn mao mạch và hình thái khối u.
+## 2. Giải Thuật Lọc Nhiễu Văn Bản Thiết Bị (Text Overlay Masking - Task D26)
+- **Nguy cơ lâm sàng:** Các thông số ngày giờ, model máy soi, tên bác sĩ thường in cứng trên vùng rìa (top 12% và bottom 10%). Mạng CNN thường có xu hướng 'học vẹt' font chữ của từng bệnh viện thay vì học bệnh lý.
+- **Giải thuật:** Phát hiện các thành phần liên thông có độ chói cao ($V \ge 220$), bão hòa thấp ($S \le 85$) và kích thước ký tự chuẩn ($6 \le h \le 35\text{ px}, 4 \le w \le 35\text{ px}$), sau đó áp dụng phép dập cục bộ bán kính 3px để xóa mờ ký tự mà vẫn giữ nguyên màu nền mô mềm.

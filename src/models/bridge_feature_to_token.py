@@ -16,6 +16,7 @@ import sys
 from typing import Tuple
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     try:
@@ -154,6 +155,37 @@ class FeatureToTokenBridge(nn.Module):
             tokens = torch.cat([cls_tokens, tokens], dim=1)  # [B, 50, D]
 
         # 4. Cộng Positional Embedding và áp dụng Dropout
-        tokens = self.pos_drop(tokens + self.pos_embed)
+        if tokens.shape[1] == self.pos_embed.shape[1]:
+            pos_emb = self.pos_embed
+        else:
+            pos_emb = self._interpolate_pos_embed(tokens.shape[1])
+        tokens = self.pos_drop(tokens + pos_emb)
 
         return tokens
+
+    def _interpolate_pos_embed(self, new_num_tokens: int) -> torch.Tensor:
+        """Nội suy bicubic cho positional embedding khi kích thước ảnh thay đổi."""
+        if self.use_cls_token:
+            cls_pos = self.pos_embed[:, :1, :]
+            spatial_pos = self.pos_embed[:, 1:, :]
+            new_spatial = new_num_tokens - 1
+        else:
+            cls_pos = None
+            spatial_pos = self.pos_embed
+            new_spatial = new_num_tokens
+
+        orig_hw = int(spatial_pos.shape[1] ** 0.5)
+        new_hw = int(new_spatial**0.5)
+        d_model = spatial_pos.shape[-1]
+
+        spatial_reshaped = spatial_pos.permute(0, 2, 1).reshape(
+            1, d_model, orig_hw, orig_hw
+        )
+        interpolated = F.interpolate(
+            spatial_reshaped, size=(new_hw, new_hw), mode="bicubic", align_corners=False
+        )
+        interpolated = interpolated.flatten(2).permute(0, 2, 1)
+
+        if cls_pos is not None:
+            return torch.cat([cls_pos, interpolated], dim=1)
+        return interpolated

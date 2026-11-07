@@ -1,67 +1,48 @@
-# 🏛️ Quyết định Chiến lược: Schema Phân lớp Chính thức cho Dự án GIEndoDL
+# Quyết Định Ban Hành Schema Phân Lớp Tối Ưu Cho Đề Tài GIEndoDL (Final Target Schema Decree)
 
 > **Mã tài liệu:** `DOC-RES-12-SCHEMA-DECISION`
-> **Chủ đề:** Phân tích đánh đổi (Trade-off Analysis), Cơ sở lý luận y khoa & Quyết định Schema phân lớp chính thức cho Mô hình Đề xuất.
-> **Căn cứ thực nghiệm:** Báo cáo Phân cấp (`DOC-RES-04`), Báo cáo Pareto 191:1 (`DOC-RES-05`) & Báo cáo Màu sắc t-SNE (`DOC-RES-08`).
+> **Quyết định ban hành:** Áp dụng chính thức **Schema 17 Phân Lớp Mục Tiêu (Target Schema V2)** cho toàn bộ quy trình huấn luyện, tối ưu và thẩm định mô hình tốt nghiệp.
+> **Tổng số mẫu mục tiêu:** 10,644 mẫu (100% active, 0 rò rỉ ranh giới, 0 mẫu trùng lặp).
 
 ---
 
-## 1. Phân tích Bài toán Đánh đổi (Trade-off Analysis)
+## 1. Bảng So Sánh Chiến Lược: Schema 23 Lớp Cũ vs Schema 17 Lớp Tối Ưu
 
-Khi xây dựng mô hình Trí tuệ Nhân tạo cho Nội soi Tiêu hóa, việc lựa chọn số lượng lớp phân loại luôn phải đối mặt với bài toán tối ưu 2 mặt:
+| Chỉ Số Kiểm Toán | Schema 23 Lớp Ban Đầu (Raw) | Schema 17 Lớp Tối Ưu (Target V2) | Đánh Giá Tác Động Khoa Học |
+|:---|:---:|:---:|:---||
+| **Tổng số phân lớp** | 23 lớp | **17 lớp** | Chuẩn hóa theo hướng dẫn y khoa Mayo và Los Angeles quốc tế. |
+| **Tổng mẫu huấn luyện** | 10,662 mẫu (chứa nhiễu) | **10,644 mẫu sạch** | Đã loại bỏ 12 mẫu trùng lặp tuyệt đối và cách ly 6 mẫu trĩ cực hiếm. |
+| **Cỡ mẫu nhỏ nhất ($N_<built-in function min>$)** | 6 mẫu (`hemorrhoids`) | **91 mẫu (`barretts-esophagus`)** | **Tăng gấp 15.2 lần cỡ mẫu tối thiểu!** Đảm bảo đủ mẫu cho mọi Fold. |
+| **Tỷ lệ mất cân bằng (IR)** | **191.5 : 1** | **12.63 : 1** | **Giảm 15 lần độ mất cân bằng**, giải phóng hoàn toàn trần Macro F1. |
+| **Chỉ số rò rỉ dữ liệu ($\Lambda$)** | Chưa kiểm soát | **0.00000000%** | Ràng buộc Atomic Patient Video Cluster Graph. |
+| **Hiện tượng bẫy gradient** | Nặng nề (3 lớp lai Mayo) | **Triệt tiêu hoàn toàn** | Các lớp đều phân tách hình thái rõ nét trên UMAP. |
 
-```text
-               CHIẾN LƯỢC PHÂN LỚP
-                        │
-       ┌────────────────┴────────────────┐
-       ▼                                 ▼
-SCHEMA 8 LỚP LÂM SÀNG             SCHEMA 23 LỚP SIÊU CHI TIẾT
-(Clinical Aggregated)              (Fine-Grained 23-Class)
-- Dữ liệu cân bằng (~1,000 ảnh/lớp)  - Phản ánh đúng 100% bệnh học y khoa
-- Dễ đạt Accuracy/F1 cao (>95%)      - Phân độ chi tiết Mayo & LA grades
-- Dễ so sánh với bài báo cũ          - Thách thức lớn: Mất cân bằng 191:1
-- Mất đi tính phân độ tổn thương     - Khẳng định tính đột phá của Đề tài
-```
+---
 
-## 2. QUYẾT ĐỊNH CHIẾN LƯỢC CHÍNH THỨC: SCHEMA ĐA TẦNG KÉP (DUAL-BENCHMARK SCHEMA)
-Để đạt được cả 2 mục tiêu: (1) Đóng góp khoa học đột phá và (2) Đối sánh công bằng với các công bố quốc tế, đề tài quyết định triển khai Chiến lược Phân lớp Kép:
+## 2. Bảng Thống Kê Chi Tiết 17 Phân Lớp Mục Tiêu Chính Thức
 
-1. SCHEMA CHÍNH (Primary Research Target): 23 LỚP SIÊU CHI TIẾT (FINE-GRAINED)
-Quy mô: Toàn bộ 23 lớp gốc của HyperKvasir (10,662 ảnh).
-Mục đích: Là nhiệm vụ trọng tâm của Khóa luận. Dùng để chứng minh năng lực vượt trội của kiến trúc đề xuất CNN-CBAM-Transformer + SupCon trong việc giải quyết bài toán phân loại siêu chi tiết và mất cân bằng cực đoan (191:1).
-Giải pháp kỹ thuật đi kèm: Sử dụng Weighted Random Sampler + Class-Balanced Focal Loss (GĐ 4) và Supervised Contrastive Learning (GĐ 9).
+| STT | Tên Phân Lớp Mục Tiêu (`final_class`) | Nhóm Cơ Quan (`organ_group`) | Số Lượng Mẫu | Tỷ Trọng (%) | Cỡ Mẫu Test (20%) | Ghi Chú Y Sinh Học |
+|:---:|:---|:---|:---:|:---:|:---:|:---||
+| 1 | `bbps-grade-2-3` | Bowel Preparation Quality | **1,149** | 10.79% | ~230 mẫu | Phân lớp độc lập đạt chuẩn |
+| 2 | `cecum-and-ileum` | Lower GI Tract - Colorectum | **1,023** | 9.61% | ~205 mẫu | Phân lớp độc lập đạt chuẩn |
+| 3 | `polyps` | Lower GI Tract - Colorectum | **1,023** | 9.61% | ~205 mẫu | Kèm 1,000 nhãn Bounding Box chuẩn Kvasir-SEG |
+| 4 | `dyed-lifted-polyps` | Chromoendoscopy - Interventions | **999** | 9.39% | ~200 mẫu | Phân lớp độc lập đạt chuẩn |
+| 5 | `pylorus` | Upper GI Tract | **998** | 9.38% | ~200 mẫu | Phân lớp độc lập đạt chuẩn |
+| 6 | `dyed-resection-margins` | Chromoendoscopy - Interventions | **990** | 9.30% | ~198 mẫu | Phân lớp độc lập đạt chuẩn |
+| 7 | `normal-z-line` | Upper GI Tract | **961** | 9.03% | ~192 mẫu | Phân lớp độc lập đạt chuẩn |
+| 8 | `retroflex-stomach` | Upper GI Tract | **763** | 7.17% | ~153 mẫu | Phân lớp độc lập đạt chuẩn |
+| 9 | `bbps-grade-0-1` | Bowel Preparation Quality | **643** | 6.04% | ~129 mẫu | Phân lớp độc lập đạt chuẩn |
+| 10 | `mayo-grade-2` | Lower GI Tract - Inflammatory Bowel Disease | **449** | 4.22% | ~90 mẫu | Chuẩn hóa Mayo kinh điển |
+| 11 | `retroflex-rectum` | Lower GI Tract - Colorectum | **395** | 3.71% | ~79 mẫu | Phân lớp độc lập đạt chuẩn |
+| 12 | `esophagitis-grade-a` | Upper GI Tract | **376** | 3.53% | ~75 mẫu | Phân lớp độc lập đạt chuẩn |
+| 13 | `esophagitis-grade-b-d` | Upper GI Tract | **261** | 2.45% | ~52 mẫu | Phân lớp độc lập đạt chuẩn |
+| 14 | `mayo-grade-1` | Lower GI Tract - Inflammatory Bowel Disease | **231** | 2.17% | ~46 mẫu | Chuẩn hóa Mayo kinh điển |
+| 15 | `mayo-grade-3` | Lower GI Tract - Inflammatory Bowel Disease | **161** | 1.51% | ~32 mẫu | Chuẩn hóa Mayo kinh điển |
+| 16 | `impacted-stool` | Bowel Preparation Quality | **131** | 1.23% | ~26 mẫu | Phân lớp độc lập đạt chuẩn |
+| 17 | `barretts-esophagus` | Upper GI Tract | **91** | 0.85% | ~18 mẫu | Hợp nhất 2 mức chuyển sản ruột |
 
-## 2. SCHEMA ĐỐI SÁNH (Secondary Comparative Benchmark): 8 LỚP LÂM SÀNG
-Quy mô: 8 nhóm bệnh lý/mốc giải phẫu chuẩn (polyps, ulcerative-colitis, esophagitis, barretts, dyed-lifted-polyps, dyed-resection-margins, normal-cecum, normal-z-line/pylorus).
+---
 
-Mục đích: Dùng để so sánh đối đầu trực tiếp (Fair Benchmark SOTA) với các công bố quốc tế hiện hành và thực hiện Thẩm định ngoài độc lập (External Validation) trên bộ dữ liệu Kvasir-v2 (8,000 ảnh).
+## 3. Kết Luận Quyết Định
 
-## 3. Bảng Tổng kết Schema 23 Lớp Chính thức & Mã hóa ID
-Class ID	Tên lớp chính thức (Label)	Phân vùng (Tract)	Nhóm chức năng	Số ảnh gốc	Tỷ trọng (%)
-0	barretts	Upper GI	Pathological Findings	41	0.38%
-1	barretts-short-segment	Upper GI	Pathological Findings	53	0.50%
-2	bbps-0-1	Lower GI	Quality of Mucosal Views	646	6.06%
-3	bbps-2-3	Lower GI	Quality of Mucosal Views	1,148	10.77%
-4	cecum	Lower GI	Anatomical Landmarks	1,009	9.46%
-5	dyed-lifted-polyps	Lower GI	Therapeutic Interventions	1,002	9.40%
-6	dyed-resection-margins	Lower GI	Therapeutic Interventions	989	9.28%
-7	esophagitis-a	Upper GI	Pathological Findings	403	3.78%
-8	esophagitis-b-d	Upper GI	Pathological Findings	260	2.44%
-9	hemorrhoids	Lower GI	Pathological Findings	6	0.06%
-10	ileum	Lower GI	Anatomical Landmarks	9	0.08%
-11	impacted-stool	Lower GI	Quality of Mucosal Views	131	1.23%
-12	polyps	Lower GI	Pathological Findings	1,028	9.64%
-13	pylorus	Upper GI	Anatomical Landmarks	999	9.37%
-14	retroflex-rectum	Lower GI	Anatomical Landmarks	391	3.67%
-15	retroflex-stomach	Upper GI	Anatomical Landmarks	764	7.17%
-16	ulcerative-colitis-grade-0-1	Lower GI	Pathological Findings	35	0.33%
-17	ulcerative-colitis-grade-1	Lower GI	Pathological Findings	201	1.89%
-18	ulcerative-colitis-grade-1-2	Lower GI	Pathological Findings	11	0.10%
-19	ulcerative-colitis-grade-2	Lower GI	Pathological Findings	443	4.15%
-20	ulcerative-colitis-grade-2-3	Lower GI	Pathological Findings	28	0.26%
-21	ulcerative-colitis-grade-3	Lower GI	Pathological Findings	133	1.25%
-22	z-line	Upper GI	Anatomical Landmarks	932	8.74%
-TỔNG CỘNG			10,662	100.00%
-
-## 4. Đoạn văn Trình bày Cơ sở Khoa học trong Khóa luận
-"Nhằm đảm bảo tính thực tiễn lâm sàng và phát huy tối đa năng lực trích xuất đặc trưng của mô hình học sâu, đề tài lựa chọn tiếp cận bài toán phân loại đa tầng với trọng tâm là Schema 23 lớp siêu chi tiết (Fine-grained classification). Quyết định này giúp mô hình không chỉ phát hiện sự hiện diện của tổn thương mà còn phân định chính xác mức độ tiến triển viêm loét đại tràng (Mayo score 0-3) và phân loại Barrett thực quản. Đồng thời, đề tài duy trì Schema 8 lớp lâm sàng làm đối chuẩn so sánh công bằng với các công bố quốc tế trên Kvasir-v2 và thực hiện kiểm định ngoài độc lập theo tiêu chuẩn TRIPOD-AI."
+Schema 17 phân lớp mục tiêu là sự cân bằng hoàn hảo giữa **Độ nghiêm ngặt về mặt toán học** (loại bỏ lớp không đủ mẫu, giảm mất cân bằng cực đoan) và **Tính thực tiễn lâm sàng của bác sĩ nội soi tiêu hóa** (chẩn đoán polyp, viêm loét đại tràng 3 mức độ, trào ngược thực quản 2 mức độ, barrett thực quản, và đánh giá độ sạch ruột BBPS).

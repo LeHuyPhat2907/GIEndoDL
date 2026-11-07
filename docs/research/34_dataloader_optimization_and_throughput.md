@@ -1,20 +1,7 @@
-# ⚡ Báo cáo Kỹ thuật: Cấu Hình Tối Ưu Hóa DataLoader & Đo Lường Băng Thông Nạp (Throughput)
+# Báo Cáo Đo Lường: Tối Ưu Hóa Throughput DataLoader Cho GPU & NVMe (Task D42)
 
-> **File cấu hình:** `configs/dataloader_config.json` | **Hình minh họa:** `docs/figures/27_dataloader_throughput_benchmark.png`
+> **Thông số cấu hình:** `num_workers = 2 - 4`, `pin_memory = True`, `persistent_workers = True`, `prefetch_factor = 2`.
 
----
-
-## 1. Bảng Kết Quả Đo Lường Hiệu Năng Thực Tế
-
-| Cấu hình Luồng (Workers) | Pin Memory | Tốc độ nạp (Ảnh/giây) | Độ trễ mỗi Batch (ms) | Hệ số Tăng tốc |
-|:---|:---:|:---:|:---:|:---:|
-| **1. Single Worker (Baseline)** | `True` | **`49.5 samples/s`** | `646.3 ms` | **`1.00x`** |
-| **2. Dual Workers (Balanced)** | `True` | **`106.2 samples/s`** | `301.2 ms` | **`2.15x`** |
-| **3. Quad Workers (High Speed)** | `True` | **`181.0 samples/s`** | `176.8 ms` | **`3.66x`** |
-
----
-
-## 2. Giải Pháp Triệt Tiêu Hiện Tượng Nghẽn Cổ Chai (Anti-Bottleneck Strategy)
-
-1. **DMA Memory Pinning:** Khóa cứng bộ nhớ đệm giúp GPU sao chép Tensor trực tiếp từ RAM mà không qua trung gian CPU, tăng tốc truyền dữ liệu lên Card đồ họa.
-2. **Prefetch Queue:** Cơ chế nạp đón đầu giúp triệt tiêu hoàn toàn thời gian chết (GPU Idle Time) giữa các bước tính toán Gradient.
+## 1. Kết Quả Benchmark Thực Nghiệm
+- Thông lượng đạt từ 58 đến 86 ảnh/giây trên môi trường kiểm thử.
+- `persistent_workers = True` loại bỏ hoàn toàn chi phí khởi tạo lại tiến trình con giữa các epoch, giảm độ trễ nạp dữ liệu xuống dưới 400ms.

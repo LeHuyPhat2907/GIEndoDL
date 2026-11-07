@@ -1,53 +1,36 @@
 {
-    "n_splits": 5,
-    "seed": 42,
-    "total_samples": 10662,
-    "num_classes": 23,
-    "classes": [
-        "barretts",
-        "barretts-short-segment",
-        "bbps-0-1",
-        "bbps-2-3",
-        "cecum",
-        "dyed-lifted-polyps",
-        "dyed-resection-margins",
-        "esophagitis-a",
-        "esophagitis-b-d",
-        "hemorrhoids",
-        "ileum",
-        "impacted-stool",
-        "polyps",
-        "pylorus",
-        "retroflex-rectum",
-        "retroflex-stomach",
-        "ulcerative-colitis-grade-0-1",
-        "ulcerative-colitis-grade-1",
-        "ulcerative-colitis-grade-1-2",
-        "ulcerative-colitis-grade-2",
-        "ulcerative-colitis-grade-2-3",
-        "ulcerative-colitis-grade-3",
-        "z-line"
-    ],
-    "folds": {
-        "fold_0": {
-            "train_samples": 8529,
-            "val_samples": 2133
-        },
-        "fold_1": {
-            "train_samples": 8529,
-            "val_samples": 2133
-        },
-        "fold_2": {
-            "train_samples": 8530,
-            "val_samples": 2132
-        },
-        "fold_3": {
-            "train_samples": 8530,
-            "val_samples": 2132
-        },
-        "fold_4": {
-            "train_samples": 8530,
-            "val_samples": 2132
-        }
+  "total_samples": 10644,
+  "num_folds": 5,
+  "folds": [
+    {
+      "fold_index": 0,
+      "sample_count": 2136,
+      "percentage": 20.07,
+      "num_clusters": 1970
+    },
+    {
+      "fold_index": 1,
+      "sample_count": 2131,
+      "percentage": 20.02,
+      "num_clusters": 1967
+    },
+    {
+      "fold_index": 2,
+      "sample_count": 2129,
+      "percentage": 20.0,
+      "num_clusters": 1968
+    },
+    {
+      "fold_index": 3,
+      "sample_count": 2125,
+      "percentage": 19.96,
+      "num_clusters": 1967
+    },
+    {
+      "fold_index": 4,
+      "sample_count": 2123,
+      "percentage": 19.95,
+      "num_clusters": 1967
     }
+  ]
 }

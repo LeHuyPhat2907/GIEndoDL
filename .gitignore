@@ -6,6 +6,7 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/*.csv
+!data/processed/*.json
 !data/processed/5folds/
 !data/processed/5folds/**
 *.zip

@@ -1,15 +1,14 @@
-# 🎨 Báo cáo Kỹ thuật: Cân Bằng & Chuẩn Hóa Màu Sắc Bằng Thuật Toán Reinhard (Device Bias Removal)
+# Báo Cáo Khoa Học: Quyết Định Loại Bỏ Reinhard Color Normalization Để Bảo Tồn Huyết Sắc Tố Đỏ
 
-> **Module chính:** `src/preprocessing/reinhard_normalizer.py` | **Hình minh họa:** `docs/figures/12_reinhard_color_normalization.png`
+> **Mã công việc:** Task D27
+> **Quyết định chiến lược:** Formally Eliminate Reinhard Color Normalization → Giữ nguyên không gian màu sRGB tự nhiên.
 
 ---
 
-## 1. Cơ sở Toán học của Reinhard Color Transfer
+## 1. Nghịch Lý Sinh Hóa Của Reinhard Normalization Trong Nội Soi Tiêu Hóa
+- Thuật toán Reinhard ánh xạ trung bình và độ lệch chuẩn của các kênh màu về một bức ảnh tham chiếu (Reference Image).
+- Trong nội soi đường tiêu hóa, **Độ đỏ xung huyết (Erythema) và Mạng mạch máu (Vascularity)** là tiêu chuẩn chẩn đoán cốt lõi của Viêm loét đại tràng (Mayo 1, 2, 3) và Viêm thực quản trào ngược (Los Angeles A/B/C/D). Khi áp dụng Reinhard, thuật toán hiểu lầm sự sung huyết viêm loét nghiêm trọng là 'sự sai lệch màu sắc' và cưỡng bức tẩy trắng nó về mức trung bình của niêm mạc lành!
+- Đối với các ca thủ thuật nhuộm màu Indigo Carmine (`dyed-lifted-polyps`, `dyed-resection-margins`), Reinhard biến màu xanh lam nhân tạo thành màu xám đục dị thường.
 
-Thuật toán ánh xạ không gian màu từ ảnh nguồn $S$ sang ảnh tham chiếu chuẩn $R$ theo công thức:
-$$\text{Pixel}_{\text{norm}}^{c} = (\text{Pixel}_{\text{src}}^{c} - \mu_{\text{src}}^{c}) \cdot \frac{\sigma_{\text{ref}}^{c}}{\sigma_{\text{src}}^{c}} + \mu_{\text{ref}}^{c}, \quad c \in \{L, A, B\}$$
-
-## 2. Giá trị Lâm sàng & Khắc phục Sai lệch Thiết bị (Device Bias)
-
-1. **Triệt tiêu hiện tượng lệch màu giữa các hãng máy nội soi:** Đưa tất cả hình ảnh từ các dòng máy khác nhau (Olympus, Pentax, Karl Storz) về một dải nhiệt độ màu hồng niêm mạc đồng nhất.
-2. **Tăng cường khả năng Tổng quát hóa (Generalization):** Giúp mạng học sâu không bị phụ thuộc vào màu đèn chiếu của từng phòng khám, cải thiện trực tiếp chỉ số Macro F1-score trên tập kiểm định ngoài độc lập.
+## 2. Giải Pháp Thay Thế: Data Augmentation Nhẹ + CBAM Attention
+- Giữ nguyên màu sắc sRGB thực tế, hỗ trợ mô hình thích nghi thông qua tăng cường ColorJitter nhẹ nhàng và khối chú ý CBAM tự động thích ứng với các dải màu sinh học.

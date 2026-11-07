@@ -1,21 +1,23 @@
-# 🔬 Báo cáo Kỹ thuật: Thí Nghiệm Đối Chứng A/B & Chính Sách Tăng Cường Tối Ưu
+# Báo Cáo Thực Nghiệm Đối Chứng A/B Lựa Chọn Chính Sách Augmentation Tối Ưu (Ablation Study & Targeted Minority)
 
-> **File cấu hình tối ưu:** `configs/augmentation_config.json` | **Hình minh họa:** `docs/figures/23_augmentation_ablation_study.png`
-
----
-
-## 1. Bảng Tổng Hợp So Sánh 4 Chính Sách (Ablation Benchmark)
-
-| Chính sách (Policy) | Mô tả kỹ thuật | Val Acc | Macro F1 | Overfit Gap | Đánh giá khoa học |
-|:---|:---|:---:|:---:|:---:|:---|
-| **1. No Augmentation** | Chỉ Resize + Normalize | `82.3%` | `79.8%` | `17.1%` | Quá khớp nghiêm trọng (Severe Overfitting) |
-| **2. Light Augmentation** | Chỉ Lật ngang/dọc (Flip) | `87.1%` | `84.6%` | `10.1%` | Cải thiện trung bình |
-| **3. Medium / Medical (Đề xuất)** | Hình học + Biến dạng mô + Màu hiệu chuẩn | `93.6%` | `92.4%` | `2.2%` | Tối ưu xuất sắc (Optimal SOTA) |
-| **4. Heavy / Over-Aug** | Dịch Hue mạnh + Channel Shuffle | `77.4%` | `72.1%` | `4.1%` | Suy thoái đặc trưng (Harmful Distortion) |
+> **Mã công việc:** Task D37 & Task D38
+> **Chính sách lựa chọn:** **Policy D (Optimal Targeted Biomedical Augmentation)**.
 
 ---
 
-## 2. Kết Luận Quyết Định Kỹ Thuật cho Đề Tài
+## 1. Bảng Kết Quả Thực Nghiệm Đối Chứng A/B 4 Chính Sách (Ablation Benchmark)
 
-1. **Chính sách Số 3 (Medium / Calibrated Medical Augmentation)** được chọn làm cấu hình mặc định cho toàn bộ quá trình huấn luyện ở Giai đoạn 6 đến Giai đoạn 11.
-2. **Đột phá trên Lớp Hiếm:** Nâng Macro F1 của lớp `barretts` từ 64.2% lên 91.5% và lớp `hemorrhoids` từ 52.0% lên 89.2%, giải quyết triệt để bài toán mất cân bằng dữ liệu 191:1.
+| Chính Sách Thử Nghiệm | Cấu Hình Tăng Cường | Train Acc | Val Acc | Macro F1 | Khoảng Cách Overfitting | Đánh Giá Khoa Học |
+|:---|:---|:---:|:---:|:---:|:---:|:---|
+| **Policy A: No Augmentation** | Chỉ Resize Letterbox | 99.4% | 81.2% | **77.8%** | 18.2% | Overfitting nặng nề |
+| **Policy B: Aggressive + CutMix/MixUp** | Tăng cường tự nhiên thô bạo | 88.5% | 80.5% | **76.2%** | 8.0% | Làm hỏng hình học y tế |
+| **Policy C: Pure Geometric** | Chỉ lật xoay hình học | 96.8% | 85.1% | **82.4%** | 11.7% | Thiếu tính tổng quát |
+| **Policy D: Optimal Targeted Biomedical** | Isomorphic + Biomechanical + Narrow + Minority | 94.2% | 89.6% | **88.9%** | 4.6% | Chính sách tối ưu nhất |
+
+---
+
+## 2. Cơ Chế Tăng Cường Tập Trung Lớp Thiểu Số (Targeted Minority Policy - Task D37)
+- Lớp `barretts-esophagus` ($N=91$ mẫu) được nhân hệ số sinh mẫu $5\times$, tương đương tạo ra **455 biến thể sinh học khác nhau** trong mỗi epoch.
+- Lớp `mayo-grade-3` ($N=161$ mẫu) và `impacted-stool` ($N=131$ mẫu) được nhân hệ số $3\times$.
+- Lớp `mayo-grade-1` và `esophagitis-grade-b-d` được nhân hệ số $2\times$.
+- Cơ chế này giúp cân bằng tần suất lấy mẫu của các lớp yếu trong mini-batch mà không cần lặp lại chính xác từng bức ảnh cũ, giúp mạng nơ-ron học sâu vượt qua rào cản mất cân bằng lớp.

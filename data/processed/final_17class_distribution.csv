@@ -1,0 +1,18 @@
+final_class,sample_count,percentage,organ_group,imbalance_ratio_to_min
+bbps-grade-2-3,1149,10.79,Bowel Preparation Quality,12.63
+cecum-and-ileum,1023,9.61,Lower GI Tract - Colorectum,11.24
+polyps,1023,9.61,Lower GI Tract - Colorectum,11.24
+dyed-lifted-polyps,999,9.39,Chromoendoscopy - Interventions,10.98
+pylorus,998,9.38,Upper GI Tract,10.97
+dyed-resection-margins,990,9.3,Chromoendoscopy - Interventions,10.88
+normal-z-line,961,9.03,Upper GI Tract,10.56
+retroflex-stomach,763,7.17,Upper GI Tract,8.38
+bbps-grade-0-1,643,6.04,Bowel Preparation Quality,7.07
+mayo-grade-2,449,4.22,Lower GI Tract - Inflammatory Bowel Disease,4.93
+retroflex-rectum,395,3.71,Lower GI Tract - Colorectum,4.34
+esophagitis-grade-a,376,3.53,Upper GI Tract,4.13
+esophagitis-grade-b-d,261,2.45,Upper GI Tract,2.87
+mayo-grade-1,231,2.17,Lower GI Tract - Inflammatory Bowel Disease,2.54
+mayo-grade-3,161,1.51,Lower GI Tract - Inflammatory Bowel Disease,1.77
+impacted-stool,131,1.23,Bowel Preparation Quality,1.44
+barretts-esophagus,91,0.85,Upper GI Tract,1.0
