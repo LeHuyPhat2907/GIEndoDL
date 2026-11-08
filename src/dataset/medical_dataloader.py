@@ -80,11 +80,20 @@ class EndoMedicalDataset(Dataset):
         else:
             import albumentations as A
 
+            h, w = target_size[1], target_size[0]
+            try:
+                crop_op = A.RandomResizedCrop(size=(h, w), scale=(0.8, 1.0))
+            except Exception:
+                crop_op = A.RandomResizedCrop(height=h, width=w, scale=(0.8, 1.0))
+
+            try:
+                resize_op = A.Resize(height=h, width=w)
+            except Exception:
+                resize_op = A.Resize(size=(h, w))
+
             self.fast_train_transform = A.Compose(
                 [
-                    A.RandomResizedCrop(
-                        target_size[1], target_size[0], scale=(0.8, 1.0)
-                    ),
+                    crop_op,
                     A.HorizontalFlip(p=0.5),
                     A.VerticalFlip(p=0.5),
                     A.ColorJitter(
@@ -94,14 +103,10 @@ class EndoMedicalDataset(Dataset):
                         hue=0.05,
                         p=0.5,
                     ),
-                    A.GaussNoise(var_limit=(10.0, 30.0), p=0.2),
+                    A.GaussNoise(p=0.2),
                 ]
             )
-            self.fast_val_transform = A.Compose(
-                [
-                    A.Resize(target_size[1], target_size[0]),
-                ]
-            )
+            self.fast_val_transform = A.Compose([resize_op])
 
         # Chuẩn hóa ImageNet tiêu chuẩn
         self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
