@@ -65,6 +65,15 @@ ORGAN_GROUP_MAP = {
     "hemorrhoids": "Trĩ hậu môn trực tràng (Hemorrhoids)",
     "bbps-0-1": "Chất lượng làm sạch ruột kém (BBPS 0-1)",
     "bbps-2-3": "Chất lượng làm sạch ruột tốt (BBPS 2-3)",
+    "bbps-grade-0-1": "Chất lượng làm sạch ruột kém (BBPS 0-1)",
+    "bbps-grade-2-3": "Chất lượng làm sạch ruột tốt (BBPS 2-3)",
+    "cecum-and-ileum": "Manh tràng & Hồi tràng (Cecum & Ileum)",
+    "esophagitis-grade-a": "Viêm thực quản trào ngược độ A (GERD LA Grade A)",
+    "esophagitis-grade-b-d": "Viêm thực quản trào ngược độ B-D (GERD LA Grade B-D)",
+    "mayo-grade-1": "Viêm loét đại tràng nhẹ (Mayo Grade 1)",
+    "mayo-grade-2": "Viêm loét đại tràng vừa (Mayo Grade 2)",
+    "mayo-grade-3": "Viêm loét đại tràng nặng (Mayo Grade 3)",
+    "normal-z-line": "Đường Z bình thường (Normal Z-line)",
     "impacted-stool": "Phân tồn đọng (Impacted Stool)",
 }
 
@@ -195,7 +204,7 @@ def export_all_clinical_results(
             linecolor="#e0e0e0",
         )
         plt.title(
-            f"{model_name} (Fold {fold_idx}) - Normalized Confusion Matrix (23 Classes)",
+            f"{model_name} (Fold {fold_idx}) - Normalized Confusion Matrix ({num_classes} Classes)",
             fontsize=14,
             fontweight="bold",
             pad=15,
@@ -336,7 +345,7 @@ def export_all_clinical_results(
             )
 
         plt.title(
-            f"{model_name} (Fold {fold_idx}) - Bảng xếp hạng F1-Score của 23 lớp tổn thương",
+            f"{model_name} (Fold {fold_idx}) - Bảng xếp hạng F1-Score của {num_classes} lớp tổn thương",
             fontsize=13,
             fontweight="bold",
             pad=12,
@@ -376,7 +385,7 @@ def export_all_clinical_results(
         )
         plt.ylabel("Tỷ lệ (%)", fontsize=11, fontweight="bold")
         plt.title(
-            f"{model_name} (Fold {fold_idx}) - Đối chiếu Precision vs Recall qua 23 lớp",
+            f"{model_name} (Fold {fold_idx}) - Đối chiếu Precision vs Recall qua {num_classes} lớp",
             fontsize=13,
             fontweight="bold",
         )
@@ -561,7 +570,7 @@ def export_all_clinical_results(
         "## 1. 📊 TỔNG QUAN HIỆU NĂNG LÂM SÀNG",
         "| Chỉ số lâm sàng | Giá trị (%) / Điểm | Ý nghĩa Y khoa |",
         "| :--- | :---: | :--- |",
-        f"| **Overall Accuracy** | **{acc:.2f}%** | Tỷ lệ chẩn đoán chính xác toàn bộ 23 lớp |",
+        f"| **Overall Accuracy** | **{acc:.2f}%** | Tỷ lệ chẩn đoán chính xác toàn bộ {num_classes} lớp |",
         f"| **Macro F1-Score** | **{macro_f1:.2f}%** | Đánh giá công bằng giữa lớp hiếm và lớp nhiều |",
         f"| **Weighted F1-Score** | **{weighted_f1:.2f}%** | F1 có trọng số theo tần suất thực tế |",
         f"| **Macro Precision** | **{macro_prec:.2f}%** | Độ tin cậy dương tính trung bình |",
@@ -630,13 +639,13 @@ def export_all_clinical_results(
             "---",
             "## 5. 📁 TỔNG HỢP CÁC TỆP DỮ LIỆU ĐÃ XUẤT",
             "- `fold_metrics.json`: Tổng hợp các chỉ số cơ bản.",
-            "- `per_class_metrics.csv` & `.json`: Bảng chỉ số chi tiết cho từng lớp trong 23 lớp.",
+            f"- `per_class_metrics.csv` & `.json`: Bảng chỉ số chi tiết cho từng lớp trong {num_classes} lớp.",
             "- `confusion_matrix_normalized.csv` & `.png`: Ma trận nhầm lẫn chuẩn hóa (300 DPI).",
             "- `confusion_matrix_raw.csv` & `.png`: Ma trận nhầm lẫn số lượng mẫu tuyệt đối (300 DPI).",
             "- `training_curves.png`: Dashboard 4 đồ thị tiến trình hội tụ (Loss, Accuracy, F1, LR, Time).",
             "- `per_class_f1_ranking.png`: Biểu đồ cột ngang xếp hạng F1-score từng lớp bệnh.",
             "- `per_class_precision_recall.png`: Biểu đồ so sánh Precision vs Recall.",
-            "- `val_predictions.csv`: Bảng kết quả dự đoán chi tiết từng ảnh (kèm xác suất 23 lớp).",
+            f"- `val_predictions.csv`: Bảng kết quả dự đoán chi tiết từng ảnh (kèm xác suất {num_classes} lớp).",
             "- `error_cases.csv`: Danh sách các ca chẩn đoán nhầm để phân tích nguyên nhân y khoa.",
             "- `classification_report.txt`: Báo cáo phân loại dạng văn bản tiêu chuẩn.",
         ]
