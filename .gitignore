@@ -9,6 +9,8 @@ data/processed/*
 !data/processed/*.json
 !data/processed/5folds/
 !data/processed/5folds/**
+!data/processed/23classes/
+!data/processed/23classes/**
 *.zip
 *.tar.gz
 *.7z

@@ -145,6 +145,35 @@ class EndoMedicalDataset(Dataset):
                     A.GridDistortion(num_steps=5, distort_limit=0.15, p=0.25),
                 ]
             )
+            try:
+                elastic_op = A.ElasticTransform(alpha=120, sigma=9.6, p=0.6)
+            except Exception:
+                elastic_op = A.ElasticTransform(p=0.5)
+
+            self.rare_classes = {
+                "hemorrhoids",
+                "barretts",
+                "ulcerative-colitis-grade-1-2",
+                "ileum",
+            }
+
+            self.fast_train_transform_rare = A.Compose(
+                [
+                    crop_op,
+                    A.HorizontalFlip(p=0.5),
+                    A.VerticalFlip(p=0.5),
+                    elastic_op,
+                    A.GridDistortion(num_steps=5, distort_limit=0.15, p=0.5),
+                    A.ColorJitter(
+                        brightness=0.1,
+                        contrast=0.15,
+                        saturation=0.15,
+                        hue=0.02,
+                        p=0.7,
+                    ),
+                    A.GaussNoise(p=0.2),
+                ]
+            )
             self.fast_val_transform = A.Compose([resize_op])
 
         # Chuẩn hóa ImageNet tiêu chuẩn
@@ -200,7 +229,10 @@ class EndoMedicalDataset(Dataset):
             # Chế độ tối ưu C++ siêu tốc (Chuẩn Run 4 & Run 6 ~200 FPS)
             img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
             if self.is_train and self.use_augmentation:
-                if (
+                cls_name = str(row.get("final_class", row.get("class_name", "")))
+                if cls_name in getattr(self, "rare_classes", set()):
+                    img_rgb = self.fast_train_transform_rare(image=img_rgb)["image"]
+                elif (
                     getattr(self, "curriculum_aug", False)
                     and getattr(self, "current_epoch", 1) > 15
                 ):
