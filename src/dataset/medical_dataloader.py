@@ -54,6 +54,7 @@ class EndoMedicalDataset(Dataset):
         class_to_idx: Optional[Dict[str, int]] = None,
         path_map: Optional[Dict[str, str]] = None,
         fast_mode: bool = False,
+        curriculum_aug: bool = False,
     ):
         self.df = df.reset_index(drop=True)
         self.raw_images_dir = raw_images_dir
@@ -62,6 +63,8 @@ class EndoMedicalDataset(Dataset):
         self.use_augmentation = use_augmentation
         self.path_map = path_map
         self.fast_mode = fast_mode
+        self.curriculum_aug = curriculum_aug
+        self.current_epoch = 1
 
         # Ánh xạ nhãn sang số nguyên [0, 16]
         if class_to_idx is None:
@@ -106,11 +109,51 @@ class EndoMedicalDataset(Dataset):
                     A.GaussNoise(p=0.2),
                 ]
             )
+
+            try:
+                coarse_drop = A.CoarseDropout(
+                    num_holes_range=(1, 4),
+                    hole_height_range=(12, 24),
+                    hole_width_range=(12, 24),
+                    p=0.3,
+                )
+            except Exception:
+                coarse_drop = A.CoarseDropout(
+                    max_holes=4,
+                    max_height=24,
+                    max_width=24,
+                    min_holes=1,
+                    min_height=12,
+                    min_width=12,
+                    p=0.3,
+                )
+
+            self.fast_train_transform_advanced = A.Compose(
+                [
+                    crop_op,
+                    A.HorizontalFlip(p=0.5),
+                    A.VerticalFlip(p=0.5),
+                    A.ColorJitter(
+                        brightness=0.25,
+                        contrast=0.25,
+                        saturation=0.2,
+                        hue=0.08,
+                        p=0.6,
+                    ),
+                    A.GaussNoise(p=0.25),
+                    coarse_drop,
+                    A.GridDistortion(num_steps=5, distort_limit=0.15, p=0.25),
+                ]
+            )
             self.fast_val_transform = A.Compose([resize_op])
 
         # Chuẩn hóa ImageNet tiêu chuẩn
         self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
         self.std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+    def set_epoch(self, epoch: int) -> None:
+        """Cập nhật epoch hiện tại để kích hoạt Curriculum Augmentation."""
+        self.current_epoch = epoch
 
     def __len__(self) -> int:
         return len(self.df)
@@ -154,10 +197,16 @@ class EndoMedicalDataset(Dataset):
             }
 
         if self.fast_mode:
-            # Chế độ tối ưu C++ siêu tốc (Chuẩn Run 4: ~200 FPS, hoàn thành 50 epochs trong ~30 phút)
+            # Chế độ tối ưu C++ siêu tốc (Chuẩn Run 4 & Run 6 ~200 FPS)
             img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
             if self.is_train and self.use_augmentation:
-                img_rgb = self.fast_train_transform(image=img_rgb)["image"]
+                if (
+                    getattr(self, "curriculum_aug", False)
+                    and getattr(self, "current_epoch", 1) > 15
+                ):
+                    img_rgb = self.fast_train_transform_advanced(image=img_rgb)["image"]
+                else:
+                    img_rgb = self.fast_train_transform(image=img_rgb)["image"]
             else:
                 img_rgb = self.fast_val_transform(image=img_rgb)["image"]
         else:
