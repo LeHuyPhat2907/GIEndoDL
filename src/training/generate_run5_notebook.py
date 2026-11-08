@@ -128,7 +128,8 @@ notebook = {
                 "    --device cuda \\\n",
                 "    --epochs 50 \\\n",
                 "    --batch_size 32 \\\n",
-                "    --img_size 256 \\\n",
+                "    --img_size 224 \
+                --fast \\\n",
                 "    --lr 1e-4 \\\n",
                 "    --weight_decay 1e-2 \\\n",
                 "    --beta 0.75 \\\n",

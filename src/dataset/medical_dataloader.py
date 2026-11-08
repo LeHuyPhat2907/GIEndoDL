@@ -6,6 +6,7 @@ Phase 7: Tasks D41 - D44:
 - Task D43: Bộ lấy mẫu có trọng số WeightedRandomSampler với tham số lũy thừa beta=0.75 san phẳng phân bố mini-batch.
 - Task D44: Hàm tổn thất Class-Balanced Focal Loss (beta=0.75, gamma=2.0) kết hợp Label Smoothing 0.05.
 """
+# ruff: noqa: E402
 
 import sys
 import os
@@ -52,6 +53,7 @@ class EndoMedicalDataset(Dataset):
         use_augmentation: bool = True,
         class_to_idx: Optional[Dict[str, int]] = None,
         path_map: Optional[Dict[str, str]] = None,
+        fast_mode: bool = False,
     ):
         self.df = df.reset_index(drop=True)
         self.raw_images_dir = raw_images_dir
@@ -59,6 +61,7 @@ class EndoMedicalDataset(Dataset):
         self.is_train = is_train
         self.use_augmentation = use_augmentation
         self.path_map = path_map
+        self.fast_mode = fast_mode
 
         # Ánh xạ nhãn sang số nguyên [0, 16]
         if class_to_idx is None:
@@ -71,8 +74,34 @@ class EndoMedicalDataset(Dataset):
         self.num_classes = len(self.class_to_idx)
 
         # Bộ tiền xử lý quang học Phase 5 & Tăng cường Phase 6
-        self.preprocessor = EndoscopeOpticalPreprocessor()
-        self.augmenter = BiomedicalEndoAugmenter(img_size=target_size)
+        if not self.fast_mode:
+            self.preprocessor = EndoscopeOpticalPreprocessor()
+            self.augmenter = BiomedicalEndoAugmenter(img_size=target_size)
+        else:
+            import albumentations as A
+
+            self.fast_train_transform = A.Compose(
+                [
+                    A.RandomResizedCrop(
+                        target_size[1], target_size[0], scale=(0.8, 1.0)
+                    ),
+                    A.HorizontalFlip(p=0.5),
+                    A.VerticalFlip(p=0.5),
+                    A.ColorJitter(
+                        brightness=0.2,
+                        contrast=0.2,
+                        saturation=0.15,
+                        hue=0.05,
+                        p=0.5,
+                    ),
+                    A.GaussNoise(var_limit=(10.0, 30.0), p=0.2),
+                ]
+            )
+            self.fast_val_transform = A.Compose(
+                [
+                    A.Resize(target_size[1], target_size[0]),
+                ]
+            )
 
         # Chuẩn hóa ImageNet tiêu chuẩn
         self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -119,20 +148,28 @@ class EndoMedicalDataset(Dataset):
                 "has_bbox": False,
             }
 
-        # 2. Tiền xử lý quang học Phase 5 (Cắt viền đen, xóa ký tự, phản quang mềm, LAB CLAHE, letterbox)
-        processed_bgr, meta = self.preprocessor.process_pipeline(
-            img_bgr, target_size=self.target_size
-        )
-        img_rgb = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
-
-        # 3. Tăng cường y sinh Phase 6 (Chỉ áp dụng khi is_train=True)
-        if self.is_train and self.use_augmentation:
-            cls_name = row["final_class"]
-            is_minority = self.augmenter.get_minority_multiplier(cls_name) > 1
-            train_pipe = self.augmenter.get_optimal_train_pipeline(
-                is_minority=is_minority
+        if self.fast_mode:
+            # Chế độ tối ưu C++ siêu tốc (Chuẩn Run 4: ~200 FPS, hoàn thành 50 epochs trong ~30 phút)
+            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            if self.is_train and self.use_augmentation:
+                img_rgb = self.fast_train_transform(image=img_rgb)["image"]
+            else:
+                img_rgb = self.fast_val_transform(image=img_rgb)["image"]
+        else:
+            # 2. Tiền xử lý quang học Phase 5 (Cắt viền đen, xóa ký tự, phản quang mềm, LAB CLAHE, letterbox)
+            processed_bgr, meta = self.preprocessor.process_pipeline(
+                img_bgr, target_size=self.target_size
             )
-            img_rgb = train_pipe(image=img_rgb)["image"]
+            img_rgb = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
+
+            # 3. Tăng cường y sinh Phase 6 (Chỉ áp dụng khi is_train=True)
+            if self.is_train and self.use_augmentation:
+                cls_name = row["final_class"]
+                is_minority = self.augmenter.get_minority_multiplier(cls_name) > 1
+                train_pipe = self.augmenter.get_optimal_train_pipeline(
+                    is_minority=is_minority
+                )
+                img_rgb = train_pipe(image=img_rgb)["image"]
 
         # 4. Chuẩn hóa pixel [0, 1] & chuẩn hóa ImageNet
         norm_img = (img_rgb.astype(np.float32) / 255.0 - self.mean) / self.std
@@ -187,6 +224,7 @@ def create_medical_dataloaders(
     use_weighted_sampler: bool = True,
     beta: float = 0.75,
     path_map: Optional[Dict[str, str]] = None,
+    fast_mode: bool = False,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
     """Khởi tạo 3 DataLoader tối ưu hóa throughput với pin_memory và persistent_workers."""
     # Khởi tạo Datasets
@@ -196,6 +234,7 @@ def create_medical_dataloaders(
         target_size=target_size,
         is_train=True,
         path_map=path_map,
+        fast_mode=fast_mode,
     )
     val_dataset = EndoMedicalDataset(
         val_df,
@@ -204,6 +243,7 @@ def create_medical_dataloaders(
         is_train=False,
         class_to_idx=train_dataset.class_to_idx,
         path_map=path_map,
+        fast_mode=fast_mode,
     )
     test_dataset = EndoMedicalDataset(
         test_df,
@@ -212,6 +252,7 @@ def create_medical_dataloaders(
         is_train=False,
         class_to_idx=train_dataset.class_to_idx,
         path_map=path_map,
+        fast_mode=fast_mode,
     )
 
     # Sampler cho tập Train

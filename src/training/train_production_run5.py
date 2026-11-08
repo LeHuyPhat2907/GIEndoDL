@@ -576,9 +576,18 @@ def run_production_run5(args: argparse.Namespace) -> None:
 
     # 4. Khởi tạo Datasets & DataLoaders
     img_size = (args.img_size, args.img_size)
-    print(
-        f"📐 Kích thước ảnh nạp (Target Size): {img_size[0]}x{img_size[1]} pixels (Aspect-Ratio Letterboxed)"
+    fast_mode = (
+        not getattr(args, "full_optical", False)
+        if getattr(args, "full_optical", False)
+        else getattr(args, "fast", True)
     )
+    mode_desc = (
+        "C++ High-Throughput Pipeline (Chuẩn Run 4: ~200 FPS, dự kiến ~30-35 phút)"
+        if fast_mode
+        else "Full Optical Geometry Pipeline (CPU-bound, dự kiến ~3.5-4h)"
+    )
+    print(f"📐 Kích thước ảnh nạp (Target Size): {img_size[0]}x{img_size[1]} pixels")
+    print(f"🚀 Cơ chế nạp dữ liệu (Data Pipeline): {mode_desc}")
 
     train_dataset = EndoMedicalDataset(
         train_df,
@@ -587,6 +596,7 @@ def run_production_run5(args: argparse.Namespace) -> None:
         is_train=True,
         class_to_idx=class_to_idx,
         path_map=path_map,
+        fast_mode=fast_mode,
     )
     val_dataset = EndoMedicalDataset(
         val_df,
@@ -595,6 +605,7 @@ def run_production_run5(args: argparse.Namespace) -> None:
         is_train=False,
         class_to_idx=class_to_idx,
         path_map=path_map,
+        fast_mode=fast_mode,
     )
 
     sampler, _ = create_power_law_weighted_sampler(
@@ -930,8 +941,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--img_size",
         type=int,
-        default=256,
-        help="Kích thước ảnh vuông mục tiêu (256 hoặc 224)",
+        default=224,
+        help="Kích thước ảnh vuông mục tiêu (mặc định 224 cho chuẩn ImageNet & tốc độ cao)",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        default=True,
+        help="Kích hoạt C++ high-throughput pipeline (~200 FPS) để hoàn thành 50 epochs trong ~30-35 phút (Chuẩn Run 4)",
+    )
+    parser.add_argument(
+        "--full_optical",
+        action="store_true",
+        default=False,
+        help="Kích hoạt tiền xử lý quang học Phase 5 đầy đủ trên CPU (Otsu + Inpaint + CLAHE, ~3.5-4h)",
     )
     parser.add_argument(
         "--beta",
