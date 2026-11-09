@@ -228,10 +228,10 @@ class InferenceEngine:
                 "latency_ms": round(inference_time_ms, 2),
                 "fps": round(fps, 1),
                 "device": str(self.device),
-                "model_name": "Hybrid CNN-CBAM-Transformer (Run 4)",
-                "total_parameters": "31.43M",
+                "model_name": "Hybrid CNN-CBAM-Transformer (Run 4 Production)",
+                "total_parameters": "29.30M",
                 "backbone": "ResNet-50",
-                "attention": "CBAM Stage 4 + Compact Transformer (4 layers, 8 heads)",
+                "attention": "CBAM Stage 4 + Compact Transformer (2 layers, 8 heads)",
             },
             "images": {
                 "original_base64": orig_b64,
