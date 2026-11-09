@@ -675,13 +675,14 @@
                 const row = document.createElement('div');
                 row.className = "space-y-1";
                 const isTop = idx === 0;
+                const displayName = item.name_vn || item.label || 'Tổn thương chưa xác định';
                 row.innerHTML = `
                     <div class="flex justify-between items-center text-[11px] ${isTop ? 'font-bold text-slate-900' : 'text-slate-600'}">
-                        <span class="truncate pr-2">${item.class_name}</span>
-                        <span class="font-mono flex-shrink-0">${item.probability.toFixed(1)}%</span>
+                        <span class="truncate pr-2" title="${displayName}">${idx + 1}. ${displayName}</span>
+                        <span class="font-mono flex-shrink-0 font-semibold ${isTop ? 'text-hospital-700' : 'text-slate-500'}">${item.probability.toFixed(1)}%</span>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                        <div class="${isTop ? 'bg-hospital-600' : 'bg-slate-300'} h-1.5 rounded-full" style="width: ${Math.min(item.probability, 100)}%"></div>
+                        <div class="${isTop ? 'bg-hospital-600' : 'bg-slate-300'} h-1.5 rounded-full transition-all duration-300" style="width: ${Math.min(item.probability, 100)}%"></div>
                     </div>
                 `;
                 top5Container.appendChild(row);
