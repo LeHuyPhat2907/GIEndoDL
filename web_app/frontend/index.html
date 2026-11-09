@@ -109,6 +109,16 @@
                     </div>
                 </div>
 
+                <!-- Chọn Mô hình Thực Nghiệm (Run 7 vs Run 4) -->
+                <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-hospital-600"></i>
+                    <span class="font-medium text-slate-700">Mô hình:</span>
+                    <select id="model-select" onchange="onModelChange(this.value)" class="bg-transparent font-bold text-hospital-800 outline-none cursor-pointer">
+                        <option value="run7" selected>Run 7 (Toàn vẹn 23 Lớp - SOTA)</option>
+                        <option value="run4">Run 4 (19 Phân lớp Lâm sàng)</option>
+                    </select>
+                </div>
+
                 <!-- Chuyển góc nhìn: Bác sĩ Lâm sàng vs Hội đồng Kỹ thuật -->
                 <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
                     <button id="btn-mode-doctor" onclick="switchMode('doctor')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-hospital-700 shadow-xs border border-slate-200/80">
@@ -342,6 +352,14 @@
                         <span id="metric-fps" class="font-mono font-bold text-emerald-700 text-sm">-- FPS</span>
                     </div>
                 </div>
+
+                <div class="mt-2.5 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-[11px] text-slate-600 flex justify-between items-center">
+                    <span class="flex items-center space-x-1.5">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5 text-hospital-600"></i>
+                        <span>Mô hình thực nghiệm:</span>
+                    </span>
+                    <b id="active-model-display" class="font-bold text-hospital-700">Run 7 (23 Lớp SOTA)</b>
+                </div>
             </div>
 
             <!-- Nút Hành động Xuất Phiếu Kết Quả Khám Bệnh -->
@@ -406,7 +424,7 @@
                     </div>
                     <div>
                         <p>Thiết bị nội soi: <b>Olympus EVIS EXERA III (HD Video)</b></p>
-                        <p>Mô hình hỗ trợ: <b>Hybrid CNN-CBAM-Transformer (29,30M tham số)</b></p>
+                        <p>Mô hình hỗ trợ: <b id="report-model-name">Hybrid CNN-CBAM-Transformer (Run 7 - 23 Lớp SOTA)</b></p>
                         <p>Thời gian suy luận: <b id="report-latency" class="font-mono text-slate-900">14.2 ms (185 FPS)</b></p>
                     </div>
                 </div>
@@ -462,9 +480,36 @@
 
         let currentMode = 'doctor';
         let currentView = 'heatmap';
+        let currentModel = 'run7';
         let selectedPresetId = null;
         let selectedFile = null;
         let lastResult = null;
+
+        // Xử lý chuyển đổi mô hình (Run 7 vs Run 4)
+        async function onModelChange(val) {
+            currentModel = val;
+            const modelBadge = document.getElementById('active-model-display');
+            if (modelBadge) {
+                modelBadge.innerText = val === 'run7' ? 'Run 7 (23 Lớp SOTA)' : 'Run 4 (19 Lớp)';
+            }
+            try {
+                const formData = new FormData();
+                formData.append('model_id', val);
+                const res = await fetch('/api/switch_model', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log(`Đã chuyển sang mô hình: ${data.model_name}`);
+                    if (selectedFile || selectedPresetId) {
+                        runAnalysis();
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi chuyển đổi mô hình:", err);
+            }
+        }
 
         // Cập nhật ngày giờ thực tế
         const now = new Date();
@@ -594,6 +639,7 @@
             lucide.createIcons();
 
             const formData = new FormData();
+            formData.append('model_key', currentModel);
             if (selectedFile) {
                 formData.append('file', selectedFile);
             } else if (selectedPresetId) {
@@ -693,6 +739,11 @@
             document.getElementById('metric-fps').innerText = `${data.inference_metrics.fps} FPS`;
             document.getElementById('header-fps').innerText = `${data.inference_metrics.fps} FPS`;
 
+            const modelDisplay = document.getElementById('active-model-display');
+            if (modelDisplay && data.inference_metrics) {
+                modelDisplay.innerText = `${data.active_run || 'Run 7'} (${data.inference_metrics.num_classes || 23} Lớp SOTA)`;
+            }
+
             lucide.createIcons();
         }
 
@@ -748,6 +799,7 @@
             document.getElementById('report-confidence').innerText = `Độ tin cậy của thuật toán: ${lastResult.confidence}% (Mức độ cảnh báo: ${lastResult.clinical_meta.severity_vn})`;
             document.getElementById('report-recommendation').innerText = lastResult.clinical_meta.recommendation;
             document.getElementById('report-latency').innerText = `${lastResult.inference_metrics.latency_ms} ms (${lastResult.inference_metrics.fps} FPS)`;
+            document.getElementById('report-model-name').innerText = (lastResult.inference_metrics.model_name || 'Hybrid CNN-CBAM-Transformer') + ` (${lastResult.inference_metrics.total_parameters || '29.30M'})`;
 
             const now = new Date();
             document.getElementById('report-date').innerText = `Ngày khám: ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN')}`;

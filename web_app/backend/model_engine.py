@@ -1,8 +1,9 @@
 """Engine Trí tuệ Nhân tạo & Giải thích Mô hình XAI (Grad-CAM++) cho Web App.
 
-Nạp mô hình tối ưu Run 4: Hybrid CNN-CBAM-Transformer (31.4M tham số),
-thực hiện tiền xử lý chuẩn y khoa, đo lường độ trễ suy diễn (Latency ms / FPS),
-và kết xuất bản đồ chú ý Grad-CAM++ chỉ rõ vùng tổn thương bệnh học.
+Hỗ trợ đa mô hình thực nghiệm:
+- Run 7 (Mặc định): Toàn vẹn 23 Phân lớp Bệnh học HyperKvasir (SOTA Production - 29,30M tham số).
+- Run 4: 19 Phân lớp Lâm sàng gộp chuẩn y tế.
+- Run 6: 17 Phân lớp Dữ liệu Sạch Data-Centric AI (DCAI SOTA).
 """
 
 from pathlib import Path
@@ -10,6 +11,7 @@ import sys
 import time
 import base64
 import io
+import json
 from typing import Dict, Any, List
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -30,61 +32,133 @@ from web_app.backend.clinical_metadata import CLINICAL_METADATA
 HYPERKVASIR_MEAN = [0.5729, 0.3557, 0.2515]
 HYPERKVASIR_STD = [0.3105, 0.2116, 0.1834]
 
+# Danh sách 23 lớp chuẩn từ classes_23.json
+CLASSES_23_LIST = [
+    "barretts",
+    "barretts-short-segment",
+    "bbps-0-1",
+    "bbps-2-3",
+    "cecum",
+    "dyed-lifted-polyps",
+    "dyed-resection-margins",
+    "esophagitis-a",
+    "esophagitis-b-d",
+    "hemorrhoids",
+    "ileum",
+    "impacted-stool",
+    "polyps",
+    "pylorus",
+    "retroflex-rectum",
+    "retroflex-stomach",
+    "ulcerative-colitis-grade-0-1",
+    "ulcerative-colitis-grade-1",
+    "ulcerative-colitis-grade-1-2",
+    "ulcerative-colitis-grade-2",
+    "ulcerative-colitis-grade-2-3",
+    "ulcerative-colitis-grade-3",
+    "z-line"
+]
+
+AVAILABLE_CHECKPOINTS = {
+    "run7": {
+        "name": "Run 7 (Toàn vẹn 23 Lớp - SOTA)",
+        "num_classes": 23,
+        "layers": 2,
+        "pooling": "gap",
+        "path": Path(r"D:\KhoaLuanCuNhan\optimal_hybrid_model_run7_results\best_model.pth"),
+        "classes": CLASSES_23_LIST,
+        "description": "Mô hình SOTA đề xuất trên toàn vẹn 23 lớp bệnh học HyperKvasir (Top-3 Acc 90.46%)"
+    },
+    "run4": {
+        "name": "Run 4 (19 Phân lớp Lâm sàng)",
+        "num_classes": 19,
+        "layers": 4,
+        "pooling": "hybrid",
+        "path": Path(r"D:\KhoaLuanCuNhan\optimal_hybrid_model_run4_results\best_model.pth"),
+        "classes": list(CLINICAL_METADATA.keys())[:19],
+        "description": "Mô hình tiền trạm trên 19 lớp lâm sàng (F1 69.28%)"
+    }
+}
+
 
 class InferenceEngine:
-    """Inference Engine tải mô hình tối ưu Run 4 và sinh kết quả chẩn đoán + Grad-CAM++."""
+    """Inference Engine tải mô hình tối ưu Run 7 (hoặc Run 4) và sinh kết quả chẩn đoán + Grad-CAM++."""
 
-    def __init__(self, checkpoint_path: str = None, device: str = None):
+    def __init__(self, model_key: str = "run7", device: str = None):
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = torch.device(device)
 
-        if checkpoint_path is None:
-            # Ưu tiên tìm trong outputs/optimal_hybrid_model_run4 hoặc D:\KhoaLuanCuNhan
-            candidates = [
-                PROJECT_ROOT
-                / "outputs"
-                / "optimal_hybrid_model_run4"
-                / "best_model.pth",
-                Path(
-                    r"D:\KhoaLuanCuNhan\optimal_hybrid_model_run4_results\best_model.pth"
-                ),
-                PROJECT_ROOT / "checkpoints" / "optimal_production" / "best_model.pth",
+        self.model_key = model_key
+        self.load_model(model_key)
+
+        # Pipeline biến đổi ảnh chuẩn y khoa (224x224, HyperKvasir Normalization)
+        self.transform = T.Compose(
+            [
+                T.Resize((224, 224), interpolation=T.InterpolationMode.BILINEAR),
+                T.ToTensor(),
+                T.Normalize(mean=HYPERKVASIR_MEAN, std=HYPERKVASIR_STD),
             ]
-            for cand in candidates:
-                if cand.exists():
-                    checkpoint_path = str(cand)
-                    break
+        )
 
-        if checkpoint_path is None or not Path(checkpoint_path).exists():
-            raise FileNotFoundError(
-                f"Không tìm thấy file trọng số best_model.pth: {checkpoint_path}"
-            )
+    def load_model(self, model_key: str = "run7"):
+        """Nạp trọng số mô hình theo khóa (run7 hoặc run4)."""
+        cfg = AVAILABLE_CHECKPOINTS.get(model_key, AVAILABLE_CHECKPOINTS["run7"])
+        ckpt_path = cfg["path"]
 
-        print(f"[*] Đang nạp mô hình từ: {checkpoint_path} lên thiết bị: {self.device}")
-        ckpt = torch.load(checkpoint_path, map_location=self.device)
+        # Fallback nếu đường dẫn chưa thấy
+        if not ckpt_path.exists():
+            cand = PROJECT_ROOT / "checkpoints" / "optimal_production" / "best_model.pth"
+            if cand.exists():
+                ckpt_path = cand
 
-        self.num_classes = ckpt.get("num_classes", 19)
-        self.classes: List[str] = ckpt.get("classes", list(CLINICAL_METADATA.keys()))
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f"Không tìm thấy file checkpoint: {ckpt_path}")
 
-        cfg = ckpt.get("config", {})
-        arch_cfg = cfg.get("architecture", {})
+        print(f"[*] Đang nạp mô hình [{model_key.upper()}] từ: {ckpt_path} lên thiết bị: {self.device}")
+        ckpt = torch.load(ckpt_path, map_location=self.device)
+
+        if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
+            state_dict = ckpt["model_state_dict"]
+        else:
+            state_dict = ckpt
+
+        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+        # Tự động nhận diện số lớp qua head.fc.weight
+        if "head.fc.weight" in state_dict:
+            fc_classes = state_dict["head.fc.weight"].shape[0]
+            self.num_classes = fc_classes
+        else:
+            self.num_classes = cfg["num_classes"]
+
+        if self.num_classes == 23:
+            self.classes = CLASSES_23_LIST
+            self.transformer_layers = 2
+            self.pooling = "gap"
+            self.model_name = "Hybrid CNN-CBAM-Transformer (Run 7 SOTA - 23 Lớp Bệnh Học)"
+            self.active_run = "Run 7"
+        else:
+            self.classes = cfg["classes"]
+            self.transformer_layers = cfg.get("layers", 4)
+            self.pooling = cfg.get("pooling", "hybrid")
+            self.model_name = "Hybrid CNN-CBAM-Transformer (Run 4 - 19 Phân Lớp Lâm Sàng)"
+            self.active_run = "Run 4"
 
         # Khởi tạo kiến trúc CNN-CBAM-Transformer đúng cấu hình đã huấn luyện
         self.model = build_hybrid_model(
             num_classes=self.num_classes,
             pretrained_backbone=False,
-            transformer_layers=arch_cfg.get("transformer_layers", 4),
-            d_model=arch_cfg.get("transformer_dim", 512),
-            nhead=arch_cfg.get("transformer_heads", 8),
-            dim_feedforward=arch_cfg.get("transformer_ffn_dim", 2048),
-            token_pooling=arch_cfg.get("pooling_mode", "hybrid"),
-            dropout=cfg.get("regularization", {}).get("dropout", 0.1),
+            cbam_placement="stage4",
+            transformer_layers=self.transformer_layers,
+            d_model=512,
+            nhead=8,
+            dim_feedforward=2048,
+            token_pooling=self.pooling,
+            dropout=0.1,
         )
 
-        state_dict = ckpt["model_state_dict"]
-        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         self.model.load_state_dict(state_dict, strict=True)
         self.model.to(self.device)
         self.model.eval()
@@ -103,20 +177,11 @@ class InferenceEngine:
         self.target_layer.register_forward_hook(forward_hook)
         self.target_layer.register_full_backward_hook(backward_hook)
 
-        # Pipeline biến đổi ảnh chuẩn y khoa (224x224, HyperKvasir Normalization)
-        self.transform = T.Compose(
-            [
-                T.Resize((224, 224), interpolation=T.InterpolationMode.BILINEAR),
-                T.ToTensor(),
-                T.Normalize(mean=HYPERKVASIR_MEAN, std=HYPERKVASIR_STD),
-            ]
-        )
-
-        print("[+] Khởi tạo Inference Engine thành công! Sẵn sàng phục vụ 19 phân lớp.")
+        self.model_key = model_key
+        print(f"[+] Khởi tạo thành công mô hình {self.active_run} với {self.num_classes} phân lớp bệnh học!")
 
     def predict(self, pil_image: Image.Image) -> Dict[str, Any]:
         """Thực hiện suy diễn và tính toán Grad-CAM++ trên ảnh đầu vào."""
-        # Chuyển ảnh RGB
         if pil_image.mode != "RGB":
             pil_image = pil_image.convert("RGB")
 
@@ -141,7 +206,7 @@ class InferenceEngine:
         top5_indices = top5_indices.detach().cpu().numpy()
 
         pred_idx = int(top5_indices[0])
-        pred_label = self.classes[pred_idx]
+        pred_label = self.classes[pred_idx] if pred_idx < len(self.classes) else f"class_{pred_idx}"
         confidence = float(top5_probs[0]) * 100.0
 
         # Tính toán Grad-CAM++
@@ -153,48 +218,55 @@ class InferenceEngine:
         gradients = self.gradients.detach().cpu()  # [1, 2048, 7, 7]
 
         # Thuật toán Grad-CAM++
-        # Trọng số bậc 2 và bậc 3 của đạo hàm
         grad_2 = gradients.pow(2)
         grad_3 = gradients.pow(3)
-        eps = 1e-7
 
-        sum_act = activations.sum(dim=(2, 3), keepdim=True)
-        alpha = grad_2 / (2.0 * grad_2 + sum_act * grad_3 + eps)
-        alpha = F.relu(alpha)
+        spatial_sum = activations.sum(dim=(2, 3), keepdim=True)
+        denom = 2.0 * grad_2 + spatial_sum * grad_3
+        denom = torch.where(denom != 0.0, denom, torch.ones_like(denom))
 
-        weights = (alpha * F.relu(gradients)).sum(dim=(2, 3), keepdim=True)
+        alphas = grad_2 / denom
+        relu_grads = F.relu(score.exp() * gradients)
+        weights = (alphas * relu_grads).sum(dim=(2, 3), keepdim=True)
+
         cam = (weights * activations).sum(dim=1, keepdim=True)
         cam = F.relu(cam)
 
-        cam = cam.squeeze().numpy()
-        cam = (cam - cam.min()) / (cam.max() - cam.min() + eps)
-        cam_resized = cv2.resize(cam, (orig_w, orig_h))
+        cam = cam.squeeze().detach().cpu().numpy()
+        cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
 
-        # Tạo Heatmap màu JET
-        heatmap_u8 = np.uint8(255 * cam_resized)
-        heatmap_color = cv2.applyColorMap(heatmap_u8, cv2.COLORMAP_JET)
-        heatmap_color = cv2.cvtColor(heatmap_color, cv2.COLOR_BGR2RGB)
+        # Nội suy song tuyến lên kích thước gốc của ảnh
+        cam_resized = cv2.resize(cam, (orig_w, orig_h), interpolation=cv2.INTER_CUBIC)
+        heatmap_colored = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
+        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
 
-        # Phủ nhiệt với ảnh gốc (tỷ lệ 50% - 50%)
-        blended = np.uint8(orig_np * 0.55 + heatmap_color * 0.45)
+        # Phủ lên ảnh gốc (Alpha Blending 50-50)
+        overlay = np.uint8(0.55 * orig_np + 0.45 * heatmap_colored)
 
-        # Chuyển đổi Base64 để gửi về giao diện Web
-        orig_b64 = self._np_to_base64(orig_np)
-        heatmap_b64 = self._np_to_base64(blended)
-        pure_cam_b64 = self._np_to_base64(heatmap_color)
+        # Mã hóa Base64
+        def np_to_b64(arr):
+            im = Image.fromarray(arr)
+            buf = io.BytesIO()
+            im.save(buf, format="JPEG", quality=88)
+            return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
 
-        # Lấy thông tin lâm sàng
+        orig_b64 = np_to_b64(orig_np)
+        heatmap_b64 = np_to_b64(overlay)
+        pure_cam_b64 = np_to_b64(heatmap_colored)
+
+        # Lấy metadata lâm sàng
         meta = CLINICAL_METADATA.get(
             pred_label,
             {
+                "class_id": pred_idx,
                 "name_vn": pred_label,
                 "name_en": pred_label,
-                "tract": "Hệ tiêu hóa",
-                "category": "Phân loại bệnh lý",
-                "severity": "warning",
-                "severity_vn": "Cần theo dõi",
-                "color": "#3b82f6",
-                "recommendation": "Đề xuất bác sĩ thăm khám và đối chiếu lâm sàng.",
+                "tract": "Đường tiêu hóa",
+                "category": "Chẩn đoán hình ảnh học",
+                "severity": "normal",
+                "severity_vn": "Khảo sát lâm sàng",
+                "color": "#0284c7",
+                "recommendation": "Quan sát kỹ hình thái niêm mạc xung quanh tổn thương.",
                 "follow_up": "Theo dõi định kỳ.",
             },
         )
@@ -203,23 +275,25 @@ class InferenceEngine:
         top5_list = []
         for i in range(len(top5_indices)):
             c_idx = int(top5_indices[i])
-            c_label = self.classes[c_idx]
+            c_label = self.classes[c_idx] if c_idx < len(self.classes) else f"class_{c_idx}"
             c_prob = float(top5_probs[i]) * 100.0
             c_meta = CLINICAL_METADATA.get(c_label, {})
             top5_list.append(
                 {
+                    "rank": i + 1,
                     "class_id": c_idx,
                     "label": c_label,
                     "name_vn": c_meta.get("name_vn", c_label),
                     "name_en": c_meta.get("name_en", c_label),
                     "probability": round(c_prob, 2),
                     "severity": c_meta.get("severity", "normal"),
-                    "color": c_meta.get("color", "#3b82f6"),
+                    "color": c_meta.get("color", "#0284c7"),
                 }
             )
 
         return {
             "status": "success",
+            "active_run": self.active_run,
             "pred_label": pred_label,
             "confidence": round(confidence, 2),
             "clinical_meta": meta,
@@ -228,10 +302,11 @@ class InferenceEngine:
                 "latency_ms": round(inference_time_ms, 2),
                 "fps": round(fps, 1),
                 "device": str(self.device),
-                "model_name": "Hybrid CNN-CBAM-Transformer (Run 4 Production)",
+                "model_name": self.model_name,
                 "total_parameters": "29.30M",
+                "num_classes": self.num_classes,
                 "backbone": "ResNet-50",
-                "attention": "CBAM Stage 4 + Compact Transformer (2 layers, 8 heads)",
+                "attention": f"CBAM Stage 4 + Compact Transformer ({self.transformer_layers} layers, 8 heads)",
             },
             "images": {
                 "original_base64": orig_b64,
@@ -242,21 +317,14 @@ class InferenceEngine:
             },
         }
 
-    def _np_to_base64(self, arr: np.ndarray) -> str:
-        pil_img = Image.fromarray(arr)
-        buf = io.BytesIO()
-        pil_img.save(buf, format="JPEG", quality=90)
-        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode(
-            "utf-8"
-        )
 
-
-# Singleton instance toàn cục
 _ENGINE_INSTANCE = None
 
 
-def get_engine() -> InferenceEngine:
+def get_engine(model_key: str = "run7") -> InferenceEngine:
     global _ENGINE_INSTANCE
     if _ENGINE_INSTANCE is None:
-        _ENGINE_INSTANCE = InferenceEngine()
+        _ENGINE_INSTANCE = InferenceEngine(model_key=model_key)
+    elif _ENGINE_INSTANCE.model_key != model_key:
+        _ENGINE_INSTANCE.load_model(model_key)
     return _ENGINE_INSTANCE

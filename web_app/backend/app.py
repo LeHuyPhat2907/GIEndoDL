@@ -114,10 +114,10 @@ PRESET_CASES = [
 
 @app.on_event("startup")
 async def startup_event():
-    """Khởi động và tải trước mô hình AI."""
+    """Khởi động và tải trước mô hình AI Run 7 (Toàn vẹn 23 Lớp - SOTA)."""
     print("[*] Khởi động FastAPI server...")
-    _ = get_engine()
-    print("[+] Mô hình đã sẵn sàng nhận yêu cầu chẩn đoán!")
+    _ = get_engine(model_key="run7")
+    print("[+] Mô hình Run 7 SOTA (23 phân lớp) đã sẵn sàng nhận yêu cầu chẩn đoán!")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -139,8 +139,49 @@ async def health_check():
     return {
         "status": "healthy",
         "system": "GIEndoDL CADx Platform",
-        "model_version": "Run 4 Optimal Production (19 Classes)",
+        "active_model": engine.model_name,
+        "active_run": engine.active_run,
         "device": str(engine.device),
+        "num_classes": engine.num_classes,
+        "parameters": "29.30M",
+    }
+
+
+@app.get("/api/models")
+async def get_models():
+    """Trả về danh sách mô hình thực nghiệm có thể lựa chọn."""
+    engine = get_engine()
+    return {
+        "active_model": engine.model_key,
+        "models": [
+            {
+                "id": "run7",
+                "name": "Run 7 (Toàn vẹn 23 Lớp - SOTA Đề xuất)",
+                "num_classes": 23,
+                "description": "Mô hình SOTA đề xuất trên toàn bộ 23 lớp bệnh học HyperKvasir (Acc 72.09%, Macro F1 55.55%, Top-3 Acc 90.46%)",
+                "is_default": True,
+            },
+            {
+                "id": "run4",
+                "name": "Run 4 (19 Phân lớp Lâm sàng)",
+                "num_classes": 19,
+                "description": "Mô hình tiền trạm trên 19 lớp lâm sàng gộp (Acc 85.93%, Macro F1 69.28%)",
+                "is_default": False,
+            },
+        ],
+    }
+
+
+@app.post("/api/switch_model")
+async def switch_model(model_id: str = Form(...)):
+    """Chuyển đổi nóng mô hình thực nghiệm (Run 7 vs Run 4)."""
+    if model_id not in ["run7", "run4"]:
+        raise HTTPException(status_code=400, detail=f"Mô hình không hợp lệ: {model_id}")
+    engine = get_engine(model_key=model_id)
+    return {
+        "status": "success",
+        "active_model": engine.model_key,
+        "model_name": engine.model_name,
         "num_classes": engine.num_classes,
     }
 
@@ -152,9 +193,13 @@ async def get_presets():
 
 
 @app.post("/api/predict")
-async def predict_image(file: UploadFile = File(None), preset_id: str = Form(None)):
+async def predict_image(
+    file: UploadFile = File(None),
+    preset_id: str = Form(None),
+    model_key: str = Form("run7"),
+):
     """API chính: Nhận ảnh từ tải lên hoặc mã ca mẫu -> Thực hiện chẩn đoán lâm sàng + Grad-CAM++."""
-    engine = get_engine()
+    engine = get_engine(model_key=model_key)
 
     try:
         pil_img = None

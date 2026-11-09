@@ -320,4 +320,85 @@ CLINICAL_METADATA: Dict[str, Dict[str, Any]] = {
         ),
         "follow_up": "Ghi nhận mốc giải phẫu bình thường.",
     },
+
+    # --- Bổ sung 5 phân lớp cho Không gian 23 lớp toàn vẹn (Production Run 7) ---
+    "barretts": {
+        "class_id": 0,
+        "name_vn": "Barrett thực quản đoạn dài (Thang Prague C&M >= 3cm)",
+        "name_en": "Long-Segment Barrett's Esophagus",
+        "tract": "Đường tiêu hóa trên (Upper GI - Thực quản)",
+        "category": "Tổn thương tiền ác tính (Chuyển sản ruột)",
+        "severity": "critical",
+        "severity_vn": "Khẩn cấp / Tiền ác tính cao",
+        "color": "#ef4444",
+        "recommendation": (
+            "Phát hiện dải biểu mô chuyển sản ruột Barrett liên tục hoặc đảo niêm mạc kéo dài >= 3 cm. "
+            "Nguy cơ tiến triển thành ung thư biểu mô tuyến thực quản (EAC) rất đáng kể. "
+            "Khuyến nghị thực hiện nội soi phóng đại dải tần hẹp (NBI) và sinh thiết 4 góc mỗi 2 cm theo Seattle Protocol. "
+            "Nếu có loạn sản mức độ cao (HGD), chỉ định cắt niêm mạc nội soi (EMR/ESD) hoặc triệt đốt sóng cao tần (RFA)."
+        ),
+        "follow_up": "Nội soi định kỳ 1 năm/lần hoặc ngay sau khi can thiệp điều trị.",
+    },
+    "barretts-short-segment": {
+        "class_id": 1,
+        "name_vn": "Barrett thực quản đoạn ngắn (Thang Prague C&M < 3cm)",
+        "name_en": "Short-Segment Barrett's Esophagus",
+        "tract": "Đường tiêu hóa trên (Upper GI - Thực quản)",
+        "category": "Tổn thương tiền ác tính (Chuyển sản ruột)",
+        "severity": "warning",
+        "severity_vn": "Cảnh báo / Theo dõi định kỳ",
+        "color": "#f59e0b",
+        "recommendation": (
+            "Biểu mô dạng trụ vượt quá nếp gấp dạ dày nhưng chiều dài tổn thương < 3 cm. "
+            "Tiến hành sinh thiết theo dõi nhằm loại trừ tổn thương loạn sản vi thể. "
+            "Chỉ định điều trị duy trì ức chế bơm proton (PPI) liều chuẩn nhằm giảm thiểu kích thích trào ngược acid."
+        ),
+        "follow_up": "Nội soi kiểm tra lại sau 2–3 năm nếu không phát hiện loạn sản.",
+    },
+    "ulcerative-colitis-grade-0-1": {
+        "class_id": 16,
+        "name_vn": "Viêm loét đại tràng (Mayo Độ 0–1, Thuyên giảm đến Nhẹ)",
+        "name_en": "Ulcerative Colitis (Mayo Grade 0-1, Remission/Mild)",
+        "tract": "Đường tiêu hóa dưới (Lower GI - Đại tràng)",
+        "category": "Bệnh lý viêm ruột mạn tính (IBD)",
+        "severity": "normal",
+        "severity_vn": "Lâm sàng ổn định / Giai đoạn hồi phục",
+        "color": "#10b981",
+        "recommendation": (
+            "Niêm mạc đại tràng gần như hồi phục hoặc chỉ còn sung huyết rất nhẹ, lưới mạch máu còn quan sát rõ. "
+            "Khuyến nghị duy trì liều thuốc kháng viêm 5-ASA cơ bản và tránh các tác nhân gây bùng phát đợt cấp."
+        ),
+        "follow_up": "Tái khám và kiểm tra Calprotectin phân định kỳ 6 tháng.",
+    },
+    "ulcerative-colitis-grade-1-2": {
+        "class_id": 18,
+        "name_vn": "Viêm loét đại tràng (Mayo Độ 1–2, Nhẹ đến Trung bình)",
+        "name_en": "Ulcerative Colitis (Mayo Grade 1-2, Mild-to-Moderate)",
+        "tract": "Đường tiêu hóa dưới (Lower GI - Đại tràng)",
+        "category": "Bệnh lý viêm ruột mạn tính (IBD)",
+        "severity": "warning",
+        "severity_vn": "Viêm tiến triển mức độ trung bình",
+        "color": "#f59e0b",
+        "recommendation": (
+            "Niêm mạc sung huyết đỏ lan tỏa, mất cấu trúc mạch máu, bắt đầu xuất hiện các điểm xuất huyết vi thể. "
+            "Chỉ định tăng liều 5-ASA đường uống kết hợp dạng bọt/thụt hậu môn tại chỗ, xét nghiệm dấu ấn viêm hệ thống."
+        ),
+        "follow_up": "Đánh giá lại đáp ứng lâm sàng sau 4–8 tuần.",
+    },
+    "ulcerative-colitis-grade-2-3": {
+        "class_id": 20,
+        "name_vn": "Viêm loét đại tràng (Mayo Độ 2–3, Trung bình đến Nặng)",
+        "name_en": "Ulcerative Colitis (Mayo Grade 2-3, Moderate-to-Severe)",
+        "tract": "Đường tiêu hóa dưới (Lower GI - Đại tràng)",
+        "category": "Bệnh lý viêm ruột mạn tính (IBD)",
+        "severity": "critical",
+        "severity_vn": "Khẩn cấp / Viêm loét hoạt động mạnh",
+        "color": "#ef4444",
+        "recommendation": (
+            "Niêm mạc mủn nát, dễ chảy máu khi chạm dụng cụ soi, nhiều ổ loét nông và giả mạc đục. "
+            "Chỉ định dùng Corticosteroid toàn thân đợt tấn công hoặc xem xét phác đồ thuốc sinh học (Anti-TNF) sớm."
+        ),
+        "follow_up": "Theo dõi sát diễn tiến lâm sàng hàng tuần và tái soi sau khi lui bệnh.",
+    },
 }
+
