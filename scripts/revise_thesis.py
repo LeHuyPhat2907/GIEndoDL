@@ -214,101 +214,166 @@ def main():
     doc.paragraphs[29].runs[0].bold = True
 
     # -------------------------------------------------------------------------
-    # 3. CHÈN 4 TRANG BẮT BUỘC (NHẬN XÉT GVHD, GVPB, CAM ĐOAN, TÓM TẮT)
+    # 3. CHÈN 4 TRANG BẮT BUỘC (MẪU 5: GVHD, MẪU 6: GVPB, MẪU 4: CAM ĐOAN, TÓM TẮT)
     # -------------------------------------------------------------------------
-    print("🛠️ Đang chuẩn bị chèn 4 trang bắt buộc...")
+    print("🛠️ Đang chuẩn bị chèn 4 trang bắt buộc theo đúng quy chuẩn...")
     # Ta chèn sau P33 trước P36 (Lời cảm ơn)
     target_p = doc.paragraphs[35]
+    target_p.paragraph_format.page_break_before = True
 
-    # Trang Nhận xét GVHD
-    p_gvhd_title = target_p.insert_paragraph_before("NHẬN XÉT CỦA GIẢNG VIÊN HƯỚNG DẪN")
+    # Trang 1: (Mẫu 5: Nhận xét và chấm điểm của giảng viên hướng dẫn KLTN)
+    p_gvhd_head = target_p.insert_paragraph_before(
+        "(Mẫu 5: Nhận xét và chấm điểm của giảng viên hướng dẫn KLTN)"
+    )
+    p_gvhd_head.paragraph_format.page_break_before = True
+    p_gvhd_head.runs[0].font.name = "Times New Roman"
+    p_gvhd_head.runs[0].font.size = Pt(11)
+    p_gvhd_head.runs[0].font.italic = True
+
+    p_gvhd_qh = target_p.insert_paragraph_before(
+        "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập – Tự do – Hạnh phúc\n_________________"
+    )
+    p_gvhd_qh.runs[0].font.name = "Times New Roman"
+    p_gvhd_qh.runs[0].font.size = Pt(13)
+    p_gvhd_qh.runs[0].bold = True
+    p_gvhd_qh.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    p_gvhd_title = target_p.insert_paragraph_before(
+        "NHẬN XÉT VÀ CHẤM ĐIỂM KHOÁ LUẬN TỐT NGHIỆP\nCỦA GIẢNG VIÊN HƯỚNG DẪN"
+    )
     p_gvhd_title.runs[0].font.name = "Times New Roman"
     p_gvhd_title.runs[0].font.size = Pt(14)
     p_gvhd_title.runs[0].bold = True
     p_gvhd_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     p_gvhd_body = target_p.insert_paragraph_before(
-        "Họ và tên Giảng viên hướng dẫn: TS. Phùng Thế Bảo\n"
-        "Đơn vị công tác: Khoa Công nghệ Thông tin - Trường Đại học Công Thương TP.HCM\n"
-        "Đề tài khóa luận: Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi\n"
-        "Mã đề tài: CNTT-KLCN169\n"
-        "Sinh viên thực hiện: Lê Huy Phát, Phan Anh Thư, Diêm Thị Kiều Oanh\n\n"
-        "1. Ý thức chấp hành quy chế và thái độ làm việc của sinh viên:\n"
+        "Họ và tên sinh viên:\n"
+        "  1. Lê Huy Phát                 MSSV: 2001230653          Lớp: 14DHTH10\n"
+        "  2. Phan Anh Thư                MSSV: 2001230960          Lớp: 14ĐHTH16\n"
+        "  3. Diêm Thị Kiều Oanh          MSSV: 2001230632          Lớp: 14DHTH16\n"
+        "Ngành: Công nghệ thông tin\n"
+        "Tên đề tài KLTN: Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi\n"
+        "Mã đề tài: CNTT-KLCN169\n\n"
+        "Nội dung nhận xét:\n\n"
+        "1. Tinh thần, thái độ làm việc của sinh viên:\n"
         "....................................................................................................................................................\n"
-        "2. Khối lượng và mức độ hoàn thành nhiệm vụ nghiên cứu:\n"
+        "....................................................................................................................................................\n\n"
+        "2. Hình thức của khoá luận tốt nghiệp:\n"
         "....................................................................................................................................................\n"
-        "3. Phương pháp nghiên cứu và hàm lượng khoa học của đề tài:\n"
+        "....................................................................................................................................................\n\n"
+        "3. Nội dung của khoá luận tốt nghiệp (mức độ hoàn thành mục tiêu, phương pháp, kết quả đạt được):\n"
         "....................................................................................................................................................\n"
-        "4. Điểm mạnh và các kết quả cốt lõi đạt được:\n"
-        "....................................................................................................................................................\n"
-        "5. Những hạn chế và điểm cần hoàn thiện:\n"
-        "....................................................................................................................................................\n"
-        "6. Kết luận và đề nghị cho phép bảo vệ: Đạt [  ] / Không đạt [  ]\n"
-        "Điểm đánh giá (thang điểm 10): ..... / 10\n\n"
+        "....................................................................................................................................................\n\n"
+        "4. Điểm đánh giá (thang điểm 10):\n"
+        "- Điểm bằng số: .......... / 10\n"
+        "- Điểm bằng chữ: ...................................................................................................................\n\n"
         "                                                                TP. Hồ Chí Minh, ngày ... tháng ... năm 2026\n"
-        "                                                                                   GIẢNG VIÊN HƯỚNG DẪN\n\n\n"
+        "                                                                                   GIẢNG VIÊN HƯỚNG DẪN\n"
+        "                                                                                   (Ký và ghi rõ họ tên)\n\n\n"
         "                                                                                   TS. Phùng Thế Bảo\n"
     )
     p_gvhd_body.runs[0].font.name = "Times New Roman"
     p_gvhd_body.runs[0].font.size = Pt(12)
 
-    # Trang Nhận xét GVPB
-    p_gvpb_title = target_p.insert_paragraph_before("NHẬN XÉT CỦA GIẢNG VIÊN PHẢN BIỆN")
+    # Trang 2: (Mẫu 6: Nhận xét và chấm điểm của giảng viên phản biện KLTN)
+    p_gvpb_head = target_p.insert_paragraph_before(
+        "(Mẫu 6: Nhận xét và chấm điểm của giảng viên phản biện KLTN)"
+    )
+    p_gvpb_head.paragraph_format.page_break_before = True
+    p_gvpb_head.runs[0].font.name = "Times New Roman"
+    p_gvpb_head.runs[0].font.size = Pt(11)
+    p_gvpb_head.runs[0].font.italic = True
+
+    p_gvpb_qh = target_p.insert_paragraph_before(
+        "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập – Tự do – Hạnh phúc\n_________________"
+    )
+    p_gvpb_qh.runs[0].font.name = "Times New Roman"
+    p_gvpb_qh.runs[0].font.size = Pt(13)
+    p_gvpb_qh.runs[0].bold = True
+    p_gvpb_qh.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    p_gvpb_title = target_p.insert_paragraph_before(
+        "NHẬN XÉT VÀ CHẤM ĐIỂM KHOÁ LUẬN TỐT NGHIỆP\nCỦA GIẢNG VIÊN PHẢN BIỆN"
+    )
     p_gvpb_title.runs[0].font.name = "Times New Roman"
     p_gvpb_title.runs[0].font.size = Pt(14)
     p_gvpb_title.runs[0].bold = True
     p_gvpb_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     p_gvpb_body = target_p.insert_paragraph_before(
-        "Họ và tên Giảng viên phản biện: ..................................................................................................\n"
-        "Đơn vị công tác: Khoa Công nghệ Thông tin - Trường Đại học Công Thương TP.HCM\n"
-        "Đề tài khóa luận: Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi\n"
-        "Mã đề tài: CNTT-KLCN169\n"
-        "Sinh viên thực hiện: Lê Huy Phát, Phan Anh Thư, Diêm Thị Kiều Oanh\n\n"
-        "1. Đánh giá về bố cục, hình thức trình bày và chuẩn mực học thuật:\n"
+        "Họ và tên sinh viên:\n"
+        "  1. Lê Huy Phát                 MSSV: 2001230653          Lớp: 14DHTH10\n"
+        "  2. Phan Anh Thư                MSSV: 2001230960          Lớp: 14ĐHTH16\n"
+        "  3. Diêm Thị Kiều Oanh          MSSV: 2001230632          Lớp: 14DHTH16\n"
+        "Ngành: Công nghệ thông tin\n"
+        "Tên đề tài KLTN: Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi\n"
+        "Mã đề tài: CNTT-KLCN169\n\n"
+        "Nội dung nhận xét:\n\n"
+        "1. Hình thức của khoá luận tốt nghiệp:\n"
         "....................................................................................................................................................\n"
-        "2. Đánh giá về tính mới, tính thực tiễn và độ tin cậy của thực nghiệm:\n"
+        "....................................................................................................................................................\n\n"
+        "2. Nội dung của khoá luận tốt nghiệp:\n"
         "....................................................................................................................................................\n"
-        "3. Đánh giá về các kết quả đạt được so với mục tiêu đề ra:\n"
+        "....................................................................................................................................................\n\n"
+        "3. Câu hỏi thảo luận dành cho sinh viên trong buổi bảo vệ:\n"
         "....................................................................................................................................................\n"
-        "4. Các câu hỏi thảo luận dành cho sinh viên trong buổi bảo vệ:\n"
-        "....................................................................................................................................................\n"
-        "5. Kết luận và đề nghị cho phép bảo vệ: Đạt [  ] / Không đạt [  ]\n"
-        "Điểm đánh giá (thang điểm 10): ..... / 10\n\n"
+        "....................................................................................................................................................\n\n"
+        "4. Điểm đánh giá (thang điểm 10):\n"
+        "- Điểm bằng số: .......... / 10\n"
+        "- Điểm bằng chữ: ...................................................................................................................\n\n"
         "                                                                TP. Hồ Chí Minh, ngày ... tháng ... năm 2026\n"
-        "                                                                                   GIẢNG VIÊN PHẢN BIỆN\n\n\n"
-        "                                                                                ..........................................\n"
+        "                                                                                   GIẢNG VIÊN PHẢN BIỆN\n"
+        "                                                                                   (Ký và ghi rõ họ tên)\n\n\n"
+        "                                                                                ..................................................\n"
     )
     p_gvpb_body.runs[0].font.name = "Times New Roman"
     p_gvpb_body.runs[0].font.size = Pt(12)
 
-    # Trang Lời Cam Đoan
+    # Trang 3: (Mẫu 4: Lời cam đoan)
+    p_camdoan_head = target_p.insert_paragraph_before("(Mẫu 4: Lời cam đoan)")
+    p_camdoan_head.paragraph_format.page_break_before = True
+    p_camdoan_head.runs[0].font.name = "Times New Roman"
+    p_camdoan_head.runs[0].font.size = Pt(11)
+    p_camdoan_head.runs[0].font.italic = True
+
     p_camdoan_title = target_p.insert_paragraph_before("LỜI CAM ĐOAN")
     p_camdoan_title.runs[0].font.name = "Times New Roman"
     p_camdoan_title.runs[0].font.size = Pt(14)
     p_camdoan_title.runs[0].bold = True
     p_camdoan_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    p_camdoan_body = target_p.insert_paragraph_before(
-        "Chúng em xin cam đoan rằng toàn bộ nội dung được trình bày trong bản khóa luận tốt nghiệp với đề tài "
-        "“Ứng dụng học sâu trong nhận diện và phân loại tổn thương đường tiêu hóa từ ảnh nội soi” (Mã đề tài: CNTT-KLCN169) "
-        "là kết quả nghiên cứu khoa học thực chất, độc lập và trung thực của nhóm tác giả dưới sự định hướng, hướng dẫn tận tình "
-        "của TS. Phùng Thế Bảo.\n\n"
-        "Mọi kết quả thực nghiệm, số liệu phân tích lâm sàng, bảng đối soát mô hình và mã nguồn lập trình được trình bày trong "
-        "khóa luận đều được ghi nhận khách quan, minh bạch từ hệ thống điện toán thực tế của dự án. Toàn bộ các tài liệu tham khảo, "
-        "thang phân loại y khoa quốc tế và công trình của các tác giả khác được kế thừa đều được trích dẫn nguồn gốc rõ ràng, "
-        "đầy đủ theo đúng các chuẩn mực đạo đức khoa học và liêm chính học thuật của Trường Đại học Công Thương TP.HCM.\n\n"
-        "Nếu có bất kỳ sự gian lận hay sao chép trái phép nào không tuân thủ quy chế, nhóm sinh viên xin hoàn toàn chịu mọi hình "
-        "thức kỷ luật trước Nhà trường và Hội đồng chấm khóa luận tốt nghiệp.\n\n"
-        "                                                                TP. Hồ Chí Minh, ngày 08 tháng 11 năm 2026\n"
-        "                                                                                  ĐẠI DIỆN NHÓM TÁC GIẢ\n\n\n"
-        "                                                                                       Lê Huy Phát\n"
+    p_camdoan_sv = target_p.insert_paragraph_before(
+        "Chúng tôi tên:\n"
+        "  1. Lê Huy Phát                 MSSV: 2001230653          Lớp: 14DHTH10\n"
+        "  2. Phan Anh Thư                MSSV: 2001230960          Lớp: 14ĐHTH16\n"
+        "  3. Diêm Thị Kiều Oanh          MSSV: 2001230632          Lớp: 14DHTH16\n\n"
+        "Chúng tôi xin cam đoan các số liệu, thông tin sử dụng trong bài Khoá luận tốt nghiệp này được thu thập "
+        "từ nguồn tài liệu khoa học chuyên ngành (có trích dẫn đầy đủ và theo đúng qui định);\n"
     )
-    p_camdoan_body.runs[0].font.name = "Times New Roman"
-    p_camdoan_body.runs[0].font.size = Pt(12)
+    p_camdoan_sv.runs[0].font.name = "Times New Roman"
+    p_camdoan_sv.runs[0].font.size = Pt(13)
 
-    # Trang Tóm tắt Tiếng Việt & Abstract Tiếng Anh
+    p_camdoan_content = target_p.insert_paragraph_before("Nội dung trong khoá luận ")
+    p_camdoan_content.runs[0].font.name = "Times New Roman"
+    p_camdoan_content.runs[0].font.size = Pt(13)
+    r_bold = p_camdoan_content.add_run("KHÔNG SAO CHÉP")
+    r_bold.font.name = "Times New Roman"
+    r_bold.font.size = Pt(13)
+    r_bold.bold = True
+    r_tail = p_camdoan_content.add_run(
+        " từ các nguồn tài liệu khác.\n\n"
+        "Nếu sai sót chúng tôi xin hoàn toàn chịu trách nhiệm theo qui định của nhà trường và pháp luật.\n\n"
+        "                                                                TP. Hồ Chí Minh, ngày 08 tháng 11 năm 2026\n"
+        "                                                                            Sinh viên thực hiện\n"
+        "                                                                        (Ký và ghi rõ họ tên)\n\n\n"
+        "        Lê Huy Phát                     Phan Anh Thư                   Diêm Thị Kiều Oanh\n"
+    )
+    r_tail.font.name = "Times New Roman"
+    r_tail.font.size = Pt(13)
+
+    # Trang 4: Tóm tắt Khóa Luận & Abstract
     p_tomtat_title = target_p.insert_paragraph_before("TÓM TẮT KHÓA LUẬN")
+    p_tomtat_title.paragraph_format.page_break_before = True
     p_tomtat_title.runs[0].font.name = "Times New Roman"
     p_tomtat_title.runs[0].font.size = Pt(14)
     p_tomtat_title.runs[0].bold = True
