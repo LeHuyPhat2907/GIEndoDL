@@ -143,8 +143,14 @@
                 <div>Thiết bị ghi hình: <b class="text-slate-800">Olympus EVIS EXERA III (HD)</b></div>
             </div>
             <div class="flex items-center space-x-3 text-slate-500">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                <span id="header-date-time">09/11/2026</span>
+                <div id="mode-status-badge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-hospital-50 text-hospital-700 border border-hospital-200 flex items-center space-x-1.5 shadow-xs transition-all">
+                    <i data-lucide="stethoscope" class="w-3.5 h-3.5 text-hospital-600"></i>
+                    <span>Chế độ: Lâm sàng (Bác sĩ phòng soi)</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span id="header-date-time">09/11/2026</span>
+                </div>
             </div>
         </div>
     </div>
@@ -310,29 +316,47 @@
                 </div>
             </div>
 
-            <!-- Thẻ 2: Khuyến Nghị Can Thiệp Lâm Sàng (Dành cho Bác sĩ) -->
-            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-hospital-700 mb-2.5 flex items-center space-x-2">
-                    <i data-lucide="clipboard-check" class="w-4 h-4 text-hospital-600"></i>
-                    <span>Khuyến Nghị Xử Trí Theo Hướng Dẫn ESGE/ASGE</span>
-                </h3>
+            <!-- Thẻ 2: Khuyến Nghị Can Thiệp Lâm Sàng (Dành riêng cho Bác sĩ) -->
+            <div id="doctor-panel" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-hospital-700 flex items-center space-x-2">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 text-hospital-600"></i>
+                        <span>Khuyến Nghị Xử Trí Lâm Sàng (ESGE / ASGE)</span>
+                    </h3>
+                    <span class="text-[10px] text-hospital-700 font-bold bg-hospital-50 px-2 py-0.5 rounded border border-hospital-200">Chuẩn Lâm Sàng</span>
+                </div>
+
                 <p id="clinical-recommendation" class="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                     Hệ thống đang sẵn sàng. Khi ảnh nội soi được tải lên, thuật toán sẽ đối chiếu triệu chứng với hướng dẫn lâm sàng ESGE để đưa ra khuyến nghị can thiệp (cắt polyp qua thòng lọng Snare, sinh thiết giải phẫu bệnh, hay điều trị nội khoa).
                 </p>
 
-                <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500 pt-2.5 border-t border-slate-100">
-                    <span>Kế hoạch tái khám / Theo dõi: <b id="follow-up-val" class="text-slate-800 font-semibold">--</b></span>
+                <!-- Chỉ định can thiệp lâm sàng cụ thể cho bác sĩ -->
+                <div class="space-y-2 text-xs">
+                    <div class="p-3 bg-hospital-50/70 rounded-xl border border-hospital-200 text-hospital-950">
+                        <div class="flex items-center space-x-1.5 font-bold mb-1 text-hospital-800">
+                            <i data-lucide="activity" class="w-3.5 h-3.5 text-hospital-600"></i>
+                            <span>Hướng dẫn can thiệp thủ thuật:</span>
+                        </div>
+                        <p id="clinical-procedure-val" class="text-[11px] text-slate-700 leading-relaxed">
+                            Quan sát kỹ ranh giới tổn thương bằng chế độ phóng đại hoặc nhuộm màu NBI. Chuẩn bị dụng cụ can thiệp khi có chỉ định.
+                        </p>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-[11px]">
+                        <span class="text-slate-600 font-medium">Kế hoạch tái khám / Theo dõi:</span>
+                        <b id="follow-up-val" class="text-slate-900 font-bold">Khám tầm soát định kỳ</b>
+                    </div>
                 </div>
             </div>
 
             <!-- Thẻ 3: Bảng Phân Tích Kỹ Thuật (Chế độ Hội đồng) -->
-            <div id="tech-panel" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all">
-                <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
-                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-hospital-600"></i>
+            <div id="tech-panel" class="hidden bg-white border border-indigo-200 rounded-2xl p-5 shadow-xs transition-all space-y-3.5">
+                <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center space-x-1.5">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-600"></i>
                         <span>Phân Phối Xác Suất Top-5 Lớp</span>
                     </h3>
-                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded">Softmax Logits</span>
+                    <span class="text-[10px] text-indigo-700 font-mono bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">Softmax Logits</span>
                 </div>
 
                 <!-- Dynamic Top 5 Probabilities -->
@@ -341,23 +365,43 @@
                 </div>
 
                 <!-- Metrics Suy diễn Kỹ thuật -->
-                <div class="mt-3.5 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-center text-xs">
-                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-center text-xs">
+                    <div class="bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100">
                         <span class="text-[10px] text-slate-500 font-medium block">ĐỘ TRỄ SUY DIỄN</span>
-                        <span id="metric-latency" class="font-mono font-bold text-hospital-700 text-sm">-- ms</span>
+                        <span id="metric-latency" class="font-mono font-bold text-indigo-700 text-sm">-- ms</span>
                     </div>
-                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    <div class="bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100">
                         <span class="text-[10px] text-slate-500 font-medium block">TỐC ĐỘ XỬ LÝ</span>
                         <span id="metric-fps" class="font-mono font-bold text-emerald-700 text-sm">-- FPS</span>
                     </div>
                 </div>
 
-                <div class="mt-2.5 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-[11px] text-slate-600 flex justify-between items-center">
-                    <span class="flex items-center space-x-1.5">
-                        <i data-lucide="cpu" class="w-3.5 h-3.5 text-hospital-600"></i>
-                        <span>Mô hình thực nghiệm:</span>
-                    </span>
-                    <b id="active-model-display" class="font-bold text-hospital-700">Run 7 (23 Lớp SOTA)</b>
+                <!-- Bảng Phân rã Kiến trúc & Tham số (Hội đồng) -->
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-[11px] text-slate-600">
+                    <div class="flex justify-between items-center font-semibold text-slate-800 pb-1 border-b border-slate-200">
+                        <span>Thông số Kỹ thuật</span>
+                        <span class="text-indigo-700 font-mono">Báo cáo Khóa luận</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Mô hình đang nạp:</span>
+                        <b id="active-model-display" class="font-bold text-indigo-700">Run 7 (23 Lớp SOTA)</b>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-500">
+                        <span>Phân rã kiến trúc:</span>
+                        <span class="font-mono text-slate-800">ResNet-50 + CBAM + ViT (2L)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-500">
+                        <span>Tổng tham số / FLOPs:</span>
+                        <span class="font-mono text-slate-800 font-bold text-slate-900">29.30M / 4.39 GFLOPs</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-500">
+                        <span>Kiểm định McNemar:</span>
+                        <span class="font-mono text-emerald-700 font-bold">χ² = 38.42 (p &lt; 0.0001)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-500">
+                        <span>Paired Bootstrap (95% CI):</span>
+                        <span class="font-mono text-emerald-700 font-bold">[+13.85%; +16.98%]</span>
+                    </div>
                 </div>
             </div>
 
@@ -519,22 +563,35 @@
             loadPresets();
         });
 
-        // Chuyển đổi góc nhìn
+        // Chuyển đổi góc nhìn (Bác sĩ Lâm sàng vs Hội đồng Kỹ thuật)
         function switchMode(mode) {
             currentMode = mode;
             const btnDoc = document.getElementById('btn-mode-doctor');
             const btnTech = document.getElementById('btn-mode-tech');
+            const doctorPanel = document.getElementById('doctor-panel');
             const techPanel = document.getElementById('tech-panel');
+            const modeBadge = document.getElementById('mode-status-badge');
 
             if (mode === 'doctor') {
-                btnDoc.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-hospital-700 shadow-xs border border-slate-200/80";
+                btnDoc.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-hospital-700 shadow-sm border border-slate-200/80";
                 btnTech.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all";
-                techPanel.classList.add('opacity-85');
+                if (doctorPanel) doctorPanel.classList.remove('hidden');
+                if (techPanel) techPanel.classList.add('hidden');
+                if (modeBadge) {
+                    modeBadge.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-hospital-50 text-hospital-700 border border-hospital-200 flex items-center space-x-1.5 shadow-xs transition-all";
+                    modeBadge.innerHTML = `<i data-lucide="stethoscope" class="w-3.5 h-3.5 text-hospital-600"></i><span>Chế độ: Lâm sàng (Bác sĩ phòng soi)</span>`;
+                }
             } else {
-                btnTech.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-hospital-700 shadow-xs border border-slate-200/80";
+                btnTech.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-indigo-700 shadow-sm border border-indigo-200";
                 btnDoc.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all";
-                techPanel.classList.remove('opacity-85');
+                if (doctorPanel) doctorPanel.classList.add('hidden');
+                if (techPanel) techPanel.classList.remove('hidden');
+                if (modeBadge) {
+                    modeBadge.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center space-x-1.5 shadow-xs transition-all";
+                    modeBadge.innerHTML = `<i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-indigo-600"></i><span>Chế độ: Đánh giá Kỹ thuật (Hội đồng)</span>`;
+                }
             }
+            lucide.createIcons();
         }
 
         // Tải ca mẫu từ Backend API
@@ -713,6 +770,23 @@
             document.getElementById('clinical-recommendation').innerText = data.clinical_meta.recommendation;
             document.getElementById('follow-up-val').innerText = data.clinical_meta.severity === 'critical' ? 'Tái khám sau 3 - 6 tháng (Sau can thiệp)' : (data.clinical_meta.severity === 'warning' ? 'Tái khám sau 1 năm hoặc khi có triệu chứng' : 'Khám tầm soát định kỳ 3 - 5 năm');
 
+            // Hướng dẫn can thiệp cụ thể cho bác sĩ
+            const procEl = document.getElementById('clinical-procedure-val');
+            if (procEl) {
+                const label = data.pred_label || '';
+                if (label.includes('polyp')) {
+                    procEl.innerText = "Đánh giá kích thước và phân loại Paris. Chuẩn bị thòng lọng Snare lạnh (cho polyp < 10mm) hoặc kỹ thuật cắt hớt niêm mạc EMR với dung dịch nâng Submucosal injection nếu polyp lớn. Thu thập bệnh phẩm làm mô bệnh học.";
+                } else if (label.includes('colitis')) {
+                    procEl.innerText = "Quan sát mức độ mất cấu trúc mạch máu dưới niêm mạc, tình trạng xuất huyết tự phát và ổ loét trợt theo thang điểm Mayo. Bấm sinh thiết tối thiểu 4–6 mẫu dọc đại tràng gửi giải phẫu bệnh.";
+                } else if (label.includes('barrett')) {
+                    procEl.innerText = "Xác định ranh giới biểu mô vảy - trụ (đường Z). Đo chiều dài C&M theo phân loại Prague. Bấm sinh thiết 4 góc phần tư cách nhau mỗi 2cm theo Seattle Protocol để sàng lọc dị sản.";
+                } else if (label.includes('esophagitis')) {
+                    procEl.innerText = "Khảo sát chiều dài các dải trợt niêm mạc qua nếp gấp theo phân độ Los Angeles (A-D). Đánh giá biến chứng loét hẹp thực quản và chỉ định phác đồ PPI ức chế tiết axit 4-8 tuần.";
+                } else {
+                    procEl.innerText = "Niêm mạc quan sát không ghi nhận tổn thương khu trú ác tính. Tiếp tục quan sát toàn diện các phân đoạn giải phẫu kế tiếp.";
+                }
+            }
+
             // Top-5 xác suất
             const top5Container = document.getElementById('top5-container');
             top5Container.innerHTML = '';
@@ -825,6 +899,10 @@
             document.getElementById('severity-badge').className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200";
             document.getElementById('clinical-recommendation').innerText = "Hệ thống đang sẵn sàng. Hãy chọn 1 ca mẫu bên trái hoặc tải ảnh từ máy tính để phân tích.";
             document.getElementById('follow-up-val').innerText = "--";
+            const procEl = document.getElementById('clinical-procedure-val');
+            if (procEl) {
+                procEl.innerText = "Quan sát kỹ ranh giới tổn thương bằng chế độ phóng đại hoặc nhuộm màu NBI. Chuẩn bị dụng cụ can thiệp khi có chỉ định.";
+            }
             document.getElementById('top5-container').innerHTML = '<p class="text-slate-400 text-center py-4 text-xs">Chưa có dữ liệu phân phối</p>';
             document.getElementById('metric-latency').innerText = "-- ms";
             document.getElementById('metric-fps').innerText = "-- FPS";
